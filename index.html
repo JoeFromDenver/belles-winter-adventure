@@ -151,7 +151,7 @@
         }
 
         .title-text {
-            text-shadow: 0 4px 4px rgba(0,0,0,0.1), 0 0 20px rgba(255,255,255,0.8);
+            text-shadow: 0 4px 8px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.5), 0 0 20px rgba(255,255,255,0.5);
         }
     </style>
 </head>
@@ -428,6 +428,22 @@
         /* --- 2. AUDIO SYNTHESIZER --- */
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         
+        // --- GLOBAL AUDIO UNLOCK ---
+        // Browsers require a user gesture to resume AudioContext. We do this once on first touch.
+        function unlockAudio() {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume().then(() => {
+                    console.log('Audio unlocked');
+                });
+            }
+            // Remove listener once done
+            document.removeEventListener('touchstart', unlockAudio);
+            document.removeEventListener('click', unlockAudio);
+        }
+        document.addEventListener('touchstart', unlockAudio, {passive: true});
+        document.addEventListener('click', unlockAudio);
+
+        
         function getVolumeMultiplier() {
             if (state.soundMode === 0) return 1.0;   // Normal
             if (state.soundMode === 1) return 0.5;   // Quiet
@@ -436,146 +452,147 @@
         }
 
         function playSound(type) {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            
-            const vol = getVolumeMultiplier();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            const now = audioCtx.currentTime;
+            try {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                
+                const vol = getVolumeMultiplier();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                const now = audioCtx.currentTime;
 
-            if (type === 'success') {
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(523.25, now);
-                osc.frequency.setValueAtTime(659.25, now + 0.1);
-                osc.frequency.setValueAtTime(783.99, now + 0.2);
-                gain.gain.setValueAtTime(0.1 * vol, now);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
-                osc.start(now);
-                osc.stop(now + 0.6);
-            } else if (type === 'fail') {
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(150, now);
-                osc.frequency.linearRampToValueAtTime(100, now + 0.2);
-                gain.gain.setValueAtTime(0.1 * vol, now);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-                osc.start(now);
-                osc.stop(now + 0.2);
-            } else if (type === 'pop') {
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(800, now);
-                osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
-                gain.gain.setValueAtTime(0.05 * vol, now);
-                gain.gain.linearRampToValueAtTime(0.001, now + 0.1);
-                osc.start(now);
-                osc.stop(now + 0.1);
-            } else if (type === 'wood') {
-                osc.type = 'square';
-                osc.frequency.setValueAtTime(200, now);
-                osc.frequency.exponentialRampToValueAtTime(50, now + 0.1);
-                gain.gain.setValueAtTime(0.05 * vol, now);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
-                osc.start(now);
-                osc.stop(now + 0.1);
-            } else if (type === 'home') {
-                const osc2 = audioCtx.createOscillator();
-                const gain2 = audioCtx.createGain();
-                osc2.connect(gain2);
-                gain2.connect(audioCtx.destination);
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(329.63, now); 
-                gain.gain.setValueAtTime(0.1 * vol, now);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
-                osc2.type = 'sine';
-                osc2.frequency.setValueAtTime(261.63, now + 0.3);
-                gain2.gain.setValueAtTime(0, now);
-                gain2.gain.setValueAtTime(0.1 * vol, now + 0.3);
-                gain2.gain.exponentialRampToValueAtTime(0.001, now + 1.0);
-                osc.start(now); osc.stop(now + 0.5);
-                osc2.start(now); osc2.stop(now + 1.0);
-            } else if (type === 'leaves') {
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(400, now);
-                osc.frequency.linearRampToValueAtTime(500, now + 0.1);
-                gain.gain.setValueAtTime(0.03 * vol, now);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-                osc.start(now);
-                osc.stop(now + 0.2);
-            } else if (type === 'giggle') {
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(600, now);
-                osc.frequency.linearRampToValueAtTime(800, now + 0.1);
-                osc.frequency.linearRampToValueAtTime(600, now + 0.2);
-                gain.gain.setValueAtTime(0.05 * vol, now);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
-                osc.start(now);
-                osc.stop(now + 0.3);
-            } else if (type === 'chime') {
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(1000, now);
-                osc.frequency.exponentialRampToValueAtTime(2000, now + 0.5);
-                gain.gain.setValueAtTime(0.05 * vol, now);
-                gain.gain.linearRampToValueAtTime(0.001, now + 0.5);
-                osc.start(now);
-                osc.stop(now + 0.5);
+                if (type === 'success') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, now);
+                    osc.frequency.setValueAtTime(659.25, now + 0.1);
+                    osc.frequency.setValueAtTime(783.99, now + 0.2);
+                    gain.gain.setValueAtTime(0.1 * vol, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+                    osc.start(now);
+                    osc.stop(now + 0.6);
+                } else if (type === 'fail') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(150, now);
+                    osc.frequency.linearRampToValueAtTime(100, now + 0.2);
+                    gain.gain.setValueAtTime(0.1 * vol, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+                    osc.start(now);
+                    osc.stop(now + 0.2);
+                } else if (type === 'pop') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(800, now);
+                    osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
+                    gain.gain.setValueAtTime(0.05 * vol, now);
+                    gain.gain.linearRampToValueAtTime(0.001, now + 0.1);
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                } else if (type === 'wood') {
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(200, now);
+                    osc.frequency.exponentialRampToValueAtTime(50, now + 0.1);
+                    gain.gain.setValueAtTime(0.05 * vol, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                } else if (type === 'home') {
+                    const osc2 = audioCtx.createOscillator();
+                    const gain2 = audioCtx.createGain();
+                    osc2.connect(gain2);
+                    gain2.connect(audioCtx.destination);
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(329.63, now); 
+                    gain.gain.setValueAtTime(0.1 * vol, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+                    osc2.type = 'sine';
+                    osc2.frequency.setValueAtTime(261.63, now + 0.3);
+                    gain2.gain.setValueAtTime(0, now);
+                    gain2.gain.setValueAtTime(0.1 * vol, now + 0.3);
+                    gain2.gain.exponentialRampToValueAtTime(0.001, now + 1.0);
+                    osc.start(now); osc.stop(now + 0.5);
+                    osc2.start(now); osc2.stop(now + 1.0);
+                } else if (type === 'leaves') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(400, now);
+                    osc.frequency.linearRampToValueAtTime(500, now + 0.1);
+                    gain.gain.setValueAtTime(0.03 * vol, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+                    osc.start(now);
+                    osc.stop(now + 0.2);
+                } else if (type === 'giggle') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(600, now);
+                    osc.frequency.linearRampToValueAtTime(800, now + 0.1);
+                    osc.frequency.linearRampToValueAtTime(600, now + 0.2);
+                    gain.gain.setValueAtTime(0.05 * vol, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                } else if (type === 'chime') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(1000, now);
+                    osc.frequency.exponentialRampToValueAtTime(2000, now + 0.5);
+                    gain.gain.setValueAtTime(0.05 * vol, now);
+                    gain.gain.linearRampToValueAtTime(0.001, now + 0.5);
+                    osc.start(now);
+                    osc.stop(now + 0.5);
+                }
+            } catch (e) {
+                console.log("Audio Error", e);
             }
         }
 
-        // --- WOODEN PURR SOUND (Tactile, Low, Gentle) ---
+        // --- WOODEN PURR SOUND (Additive Rolling Sound) ---
+        // Replacing simple FM with robust additive synthesis (3 detuned waves)
         function startWoodenPurr() {
-            if (state.humOscillators.length > 0) return; // Already playing
-            if (!state.soundEnabled) return;
-            if (audioCtx.state === 'suspended') audioCtx.resume();
+            try {
+                if (state.humOscillators.length > 0) return; 
+                if (!state.soundEnabled) return;
+                if (audioCtx.state === 'suspended') audioCtx.resume();
 
-            const vol = getVolumeMultiplier();
-            const now = audioCtx.currentTime;
-            
-            // Master Gain for this sound
-            state.humGain = audioCtx.createGain();
-            state.humGain.connect(audioCtx.destination);
-            state.humGain.gain.setValueAtTime(0, now);
-            state.humGain.gain.linearRampToValueAtTime(0.3 * vol, now + 0.1); // Fade in fast
+                const vol = getVolumeMultiplier();
+                const now = audioCtx.currentTime;
+                
+                // Master Gain
+                state.humGain = audioCtx.createGain();
+                state.humGain.connect(audioCtx.destination);
+                state.humGain.gain.setValueAtTime(0, now);
+                // Louder than before to ensure it's heard
+                state.humGain.gain.linearRampToValueAtTime(0.3 * vol, now + 0.1); 
 
-            // Carrier: The low rumble
-            const carrier = audioCtx.createOscillator();
-            carrier.type = 'triangle';
-            carrier.frequency.setValueAtTime(65, now); // Low wood tone
+                // Additive Synthesis: 3 oscillators slightly detuned to create a "rolling" interference pattern
+                // Frequencies around 100Hz (Low wood)
+                const freqs = [100, 105, 95];
+                
+                freqs.forEach(f => {
+                    const osc = audioCtx.createOscillator();
+                    osc.type = 'triangle'; // Smooth but audible
+                    osc.frequency.value = f;
+                    osc.connect(state.humGain);
+                    osc.start(now);
+                    state.humOscillators.push(osc);
+                });
 
-            // Modulator: The purr vibrato (FM Synthesis)
-            // LFO modulates the frequency of the carrier
-            const lfo = audioCtx.createOscillator();
-            lfo.type = 'sine';
-            lfo.frequency.setValueAtTime(25, now); // 25Hz purr speed
-
-            const lfoGain = audioCtx.createGain();
-            lfoGain.gain.value = 20; // Depth of vibrato (Hz)
-            
-            lfo.connect(lfoGain);
-            lfoGain.connect(carrier.frequency);
-            
-            carrier.connect(state.humGain);
-            
-            carrier.start(now);
-            lfo.start(now);
-            
-            state.humOscillators.push(carrier);
-            state.humOscillators.push(lfo);
+            } catch (e) {
+                console.error("Purr Error", e);
+            }
         }
 
         function stopWoodenPurr() {
-            if (state.humGain) {
-                const now = audioCtx.currentTime;
-                state.humGain.gain.cancelScheduledValues(now);
-                state.humGain.gain.setValueAtTime(state.humGain.gain.value, now);
-                state.humGain.gain.linearRampToValueAtTime(0, now + 0.15); // Fade out
-                
-                state.humOscillators.forEach(osc => {
-                    osc.stop(now + 0.15);
-                });
-                state.humOscillators = [];
-                state.humGain = null;
-            }
+            try {
+                if (state.humGain) {
+                    const now = audioCtx.currentTime;
+                    state.humGain.gain.cancelScheduledValues(now);
+                    state.humGain.gain.setValueAtTime(state.humGain.gain.value, now);
+                    state.humGain.gain.linearRampToValueAtTime(0, now + 0.15); // Fade out
+                    
+                    state.humOscillators.forEach(osc => {
+                        osc.stop(now + 0.15);
+                    });
+                    state.humOscillators = [];
+                    state.humGain = null;
+                }
+            } catch (e) {}
         }
 
         /* --- 3. STORAGE & CONFIG --- */
@@ -659,24 +676,12 @@
 
         // Logic to calculate safe landing spot
         function getSafeLandingY() {
-            // Check if screen is small/short
             const h = window.innerHeight;
-            
-            // Standard target: 33% from top
             let targetY = h * 0.33;
-            
-            // If screen is very wide (desktop), 33% is fine.
-            // If screen is narrow (mobile portrait), Home/Tree are at bottom.
-            // We want to avoid overlapping the bottom 40% where targets usually sit.
-            
-            // Simple check: Ensure targetY is at least 300px above bottom if possible
             if (h - targetY < 300) {
-                targetY = h * 0.25; // Move up to 25%
+                targetY = h * 0.25; 
             }
-            
-            // Cap at top 15%
             if (targetY < h * 0.15) targetY = h * 0.15;
-            
             return targetY;
         }
 
@@ -710,9 +715,6 @@
             
             document.body.appendChild(el);
             
-            // Launch Animation
-            // Start from Box (approx center-bottom)
-            // Box is at bottom:6rem. 
             const boxY = window.innerHeight - 100;
             const deltaY = boxY - landingY;
 
@@ -745,7 +747,6 @@
                 if (state.inParentMode) return;
                 e.preventDefault();
                 
-                // --- CRITICAL FIX: CANCEL LAUNCH ANIMATION ---
                 if (state.currentAnimation) {
                     state.currentAnimation.cancel();
                     state.currentAnimation = null;
@@ -754,9 +755,8 @@
                 state.isDragging = true;
                 
                 playSound('pop'); 
-                startWoodenPurr(); // NEW SOUND
+                startWoodenPurr(); 
                 
-                // Swap Idle for Drag Wiggle
                 content.classList.remove('wiggle-idle');
                 content.classList.add('wiggle-drag');
 
@@ -764,11 +764,9 @@
                 startX = point.clientX;
                 startY = point.clientY;
                 
-                // Get current position (might be mid-air if caught early, or landed)
                 const rect = el.getBoundingClientRect();
                 
-                // FREEZE position in CSS so it doesn't snap back
-                el.style.transform = 'none'; // Clear any animation transforms
+                el.style.transform = 'none'; 
                 el.style.left = rect.left + 'px';
                 el.style.top = rect.top + 'px';
                 
@@ -777,7 +775,7 @@
 
                 el.style.transition = 'none';
                 el.style.zIndex = 100; 
-                el.style.transform = 'scale(1.15)'; // Lift effect
+                el.style.transform = 'scale(1.15)'; 
                 
                 document.addEventListener('mousemove', onMove, {passive: false});
                 document.addEventListener('touchmove', onMove, {passive: false});
@@ -964,11 +962,7 @@
         /* --- 5. INITIALIZATION --- */
         window.onload = () => {
             document.addEventListener('contextmenu', event => event.preventDefault());
-            if ('wakeLock' in navigator) {
-                document.addEventListener('click', async () => {
-                    try { await navigator.wakeLock.request('screen'); } catch(e){}
-                }, {once: true});
-            }
+            // Wake Lock removed from here as we moved unlock logic to global listener
             loadItems();
             setTimeout(spawnItem, 1000);
         };
