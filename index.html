@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Belle's Winter Adventure</title>
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Using Tailwind for rapid layout -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Mouse Memoirs for that Disney/Playful vibe -->
+    <link href="https://fonts.googleapis.com/css2?family=Mouse+Memoirs&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- CORE DISABLES FOR PARENT MODE --- */
+        body {
+            overscroll-behavior: none;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            font-family: 'Mouse Memoirs', sans-serif;
+            background-color: #dbeafe; /* Light blue winter sky */
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* --- VISUALS --- */
+        .minnie-border {
+            border: 8px solid #E60026;
+            background-image: radial-gradient(white 20%, transparent 20%);
+            background-color: #E60026;
+            background-size: 20px 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+
+        .drop-zone {
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .drop-zone.hovered {
+            transform: scale(1.15);
+            filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.9));
+        }
+
+        /* Success Animation for Barn/Tree */
+        @keyframes happyBounce {
+            0% { transform: scale(1); }
+            40% { transform: scale(1.25); }
+            60% { transform: scale(0.9); }
+            80% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .happy-bounce {
+            animation: happyBounce 0.5s ease-in-out;
+        }
+
+        /* Continuous Wiggle (Dragging) */
+        @keyframes dragWiggle {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(-10deg) scale(1.1); }
+            75% { transform: rotate(10deg) scale(1.1); }
+            100% { transform: rotate(0deg); }
+        }
+        .wiggle-drag {
+            animation: dragWiggle 0.4s ease-in-out infinite;
+        }
+
+        /* Random Idle Wiggle (Attention Grabber) */
+        @keyframes idleShimmy {
+            0%, 90% { transform: rotate(0deg) scale(1); }
+            92% { transform: rotate(-15deg) scale(1.1); }
+            94% { transform: rotate(15deg) scale(1.1); }
+            96% { transform: rotate(-15deg) scale(1.1); }
+            98% { transform: rotate(15deg) scale(1.1); }
+            100% { transform: rotate(0deg) scale(1); }
+        }
+        .wiggle-idle {
+            animation: idleShimmy 4s ease-in-out infinite;
+        }
+
+        /* --- CLOUD ANIMATION --- */
+        @keyframes drift {
+            from { transform: translateX(-150px); }
+            to { transform: translateX(100vw); }
+        }
+        .cloud-slow { animation: drift 60s linear infinite; }
+        .cloud-medium { animation: drift 40s linear infinite; }
+        .cloud-fast { animation: drift 25s linear infinite; }
+
+        @keyframes snowfall {
+            0% { transform: translateY(0) translateX(0); opacity: 1; }
+            100% { transform: translateY(60vh) translateX(20px); opacity: 0; }
+        }
+        .snowflake {
+            position: absolute;
+            color: white;
+            pointer-events: none;
+            animation: snowfall 3s linear forwards;
+            font-size: 24px;
+        }
+
+        /* --- UTILS --- */
+        .draggable-item {
+            touch-action: none; /* Critical for drag logic */
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.3));
+            /* Removed will-change to prevent stacking context weirdness during drag start */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 7.5rem; /* Large Emojis */
+            z-index: 50;
+        }
+        
+        .emoji-content {
+            display: block;
+            pointer-events: none; /* Let drag events pass to parent */
+        }
+        
+        .toy-box-lid {
+            transform-origin: top center;
+            transition: transform 0.3s ease-out;
+        }
+        .toy-box:active .toy-box-lid {
+            transform: rotateX(20deg);
+        }
+        
+        /* Parent Mode Unlock Circle */
+        .unlock-ring {
+            stroke-dasharray: 283;
+            stroke-dashoffset: 283;
+            transition: stroke-dashoffset 2s linear;
+        }
+
+        /* Custom Scrollbar for Parent Mode */
+        .scroller::-webkit-scrollbar {
+            width: 8px;
+        }
+        .scroller::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+            border-radius: 4px;
+        }
+        .scroller::-webkit-scrollbar-thumb {
+            background: #E60026; 
+            border-radius: 4px;
+        }
+
+        .title-text {
+            text-shadow: 0 4px 4px rgba(0,0,0,0.1), 0 0 20px rgba(255,255,255,0.8);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- --- GAME CONTAINER --- -->
+    <div id="game-app" class="relative w-full h-full overflow-hidden">
+        
+        <!-- 1. BACKGROUND LAYER -->
+        <div class="absolute inset-0 z-0">
+            <!-- Organic Horizon (SVG) -->
+            <div class="absolute bottom-0 w-full h-[40%] pointer-events-none">
+                <svg viewBox="0 0 1440 320" class="w-full h-full" preserveAspectRatio="none">
+                    <defs>
+                        <linearGradient id="snowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" style="stop-color:white;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#E3F2FD;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    <path fill="url(#snowGrad)" fill-opacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,149.3C960,160,1056,160,1152,138.7C1248,117,1344,75,1392,53.3L1440,32L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
+                    
+                    <!-- Road -->
+                    <path d="M-100,320 Q300,100 800,280 T1500,180" fill="none" stroke="#cfd8dc" stroke-width="25" opacity="0.8" stroke-linecap="round" stroke-dasharray="20,10" />
+
+                    <!-- Trees Cluster Left -->
+                    <text x="2%" y="85%" font-size="20">🌲</text>
+                    <text x="5%" y="80%" font-size="25">🌲</text>
+                    <text x="8%" y="90%" font-size="22">🌲</text>
+                    <text x="12%" y="82%" font-size="28">🌲</text>
+                    <text x="15%" y="88%" font-size="20">🌲</text>
+
+                    <!-- Trees Cluster Right -->
+                    <text x="85%" y="75%" font-size="22">🌲</text>
+                    <text x="88%" y="65%" font-size="18">🌲</text>
+                    <text x="90%" y="80%" font-size="30">🌲</text>
+                    <text x="95%" y="70%" font-size="25">🌲</text>
+                    
+                    <!-- Mid Ground Trees -->
+                    <text x="35%" y="60%" font-size="18">🌲</text>
+                    <text x="40%" y="65%" font-size="22">🌲</text>
+                    <text x="65%" y="60%" font-size="20">🌲</text>
+
+                    <!-- Tiny Houses & Cars -->
+                    <text x="25%" y="55%" font-size="30">🏠</text>
+                    <text x="30%" y="58%" font-size="20">🚗</text>
+                    
+                    <text x="75%" y="50%" font-size="25">🏠</text>
+                    <text x="70%" y="52%" font-size="20" transform="scale(-1, 1) translate(-100,0)">🚗</text> <!-- Flipped Car -->
+
+                    <!-- Tiny Lake -->
+                    <ellipse cx="20%" cy="85%" rx="60" ry="15" fill="#BBDEFB" stroke="#90CAF9" stroke-width="2" />
+                </svg>
+            </div>
+            
+            <!-- Clouds -->
+            <div onclick="handleCloudTap(event)" class="absolute top-10 left-[-150px] cloud-slow text-white opacity-80 cursor-pointer active:scale-95 z-10 w-48 h-24 flex items-center justify-center">
+                <svg width="100%" height="100%" viewBox="0 0 100 60" fill="currentColor"><path d="M10,40 Q0,40 0,30 Q0,10 20,10 Q25,0 40,0 Q60,0 65,10 Q80,5 90,20 Q100,20 100,40 Z" /></svg>
+            </div>
+            <div onclick="handleCloudTap(event)" class="absolute top-24 left-[-100px] cloud-medium text-white opacity-90 cursor-pointer active:scale-95 z-10 w-36 h-20 flex items-center justify-center" style="animation-delay: -15s">
+                <svg width="100%" height="100%" viewBox="0 0 100 60" fill="currentColor"><path d="M10,40 Q0,40 0,30 Q0,10 20,10 Q25,0 40,0 Q60,0 65,10 Q80,5 90,20 Q100,20 100,40 Z" /></svg>
+            </div>
+            <div onclick="handleCloudTap(event)" class="absolute top-5 left-[-120px] cloud-fast text-white opacity-70 cursor-pointer active:scale-95 z-10 w-32 h-16 flex items-center justify-center" style="animation-delay: -5s">
+                <svg width="100%" height="100%" viewBox="0 0 100 60" fill="currentColor"><path d="M10,40 Q0,40 0,30 Q0,10 20,10 Q25,0 40,0 Q60,0 65,10 Q80,5 90,20 Q100,20 100,40 Z" /></svg>
+            </div>
+        </div>
+
+        <!-- TITLE (Centered Top) -->
+        <div class="absolute top-4 left-0 w-full text-center z-10 pointer-events-none">
+            <h1 class="text-white/90 text-4xl lg:text-6xl font-bold title-text tracking-wide">Belle's Winter Adventure</h1>
+        </div>
+
+        <!-- 2. DROP ZONES LAYER (Raised higher) -->
+        <div class="absolute inset-0 z-10 flex justify-between items-center px-4 lg:px-20 pointer-events-none" style="padding-bottom: 25vh;">
+            
+            <!-- LEFT: HOME -->
+            <div id="zone-barn" onclick="playSound('home')" class="drop-zone relative pointer-events-auto origin-bottom-left active:scale-95 flex flex-col items-center">
+                <div class="text-[12rem] lg:text-[15rem] leading-none filter drop-shadow-xl select-none">🏠</div>
+                <div class="absolute -bottom-20 w-full text-center text-red-700 text-3xl lg:text-4xl font-bold tracking-wider uppercase">HOME</div>
+            </div>
+
+            <!-- RIGHT: CHRISTMAS -->
+            <div id="zone-tree" onclick="playSound('leaves')" class="drop-zone relative pointer-events-auto origin-bottom-right active:scale-95 flex flex-col items-center">
+                <div class="relative">
+                    <div class="text-[12rem] lg:text-[15rem] leading-none filter drop-shadow-xl select-none">🎄</div>
+                    <!-- Hidden Pickle -->
+                    <div id="hidden-pickle" class="absolute top-1/2 left-1/2 cursor-pointer opacity-80 pointer-events-auto" onclick="foundPickle(event)">
+                        <text class="text-xl" style="transform: rotate(15deg);">🥒</text>
+                    </div>
+                </div>
+                <div class="absolute -bottom-20 w-full text-center text-green-800 text-3xl lg:text-4xl font-bold tracking-wider uppercase">CHRISTMAS</div>
+            </div>
+        </div>
+
+        <!-- 3. TOY BOX (CENTER) -->
+        <div id="toy-box-container" onclick="playSound('wood')" class="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-20 pointer-events-auto cursor-pointer toy-box active:scale-95 transition-transform flex flex-col items-center">
+             <div class="relative flex items-center justify-center">
+                <div class="text-[7rem] lg:text-[9rem] leading-none filter drop-shadow-2xl select-none">📦</div>
+                <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-[60%] text-[4rem] lg:text-[6rem] font-bold text-white drop-shadow-md select-none">?</div>
+             </div>
+             <div class="bg-amber-900/20 px-4 py-1 rounded-full mt-[-10px] backdrop-blur-sm">
+                 <text class="font-family-mouse text-3xl text-amber-900 font-bold">BOX</text>
+             </div>
+        </div>
+
+        <!-- 4. SPAWN ANCHOR (Hidden anchor for logic) -->
+        <div id="spawn-anchor" class="absolute bottom-20 left-1/2 transform -translate-x-1/2 w-1 h-1"></div>
+
+        <!-- SCORE (Upper Left) -->
+        <div onclick="playSound('chime')" class="absolute top-6 left-4 z-30 flex items-center bg-white/80 rounded-full px-4 py-2 border-2 border-blue-300 cursor-pointer active:scale-95 transition-transform backdrop-blur-sm shadow-md h-16">
+            <span class="text-3xl mr-2">⭐</span>
+            <span id="score-display" class="text-3xl text-blue-800 font-bold">0</span>
+        </div>
+
+        <!-- 5. ANGEL (Upper Right - Matching Score Height) -->
+        <div onclick="playSound('giggle'); updateBeau('success')" class="absolute top-6 right-4 z-30 flex flex-col items-center cursor-pointer active:scale-95 transition-transform">
+            <div id="beau-container" class="w-16 h-16 bg-white/80 backdrop-blur-sm rounded-full border-2 border-yellow-400 shadow-lg flex items-center justify-center overflow-hidden">
+                <span class="text-4xl select-none">👼</span>
+            </div>
+            <!-- Speech bubble hidden by default -->
+            <div id="beau-speech" class="absolute top-16 mt-2 bg-white px-3 py-1 rounded-xl shadow-md text-gray-800 text-lg opacity-0 transition-opacity duration-300">
+                Yay!
+            </div>
+        </div>
+
+        <!-- 6. PARENT MODE -->
+        <div id="parent-overlay" class="absolute inset-0 z-50 bg-black/80 flex items-center justify-center hidden">
+            <div class="bg-white rounded-2xl p-4 lg:p-8 w-[90%] max-h-[90%] text-center minnie-border flex flex-col">
+                <div class="flex justify-between items-center mb-4 border-b-2 border-red-200 pb-2">
+                    <h2 class="text-3xl text-gray-800">Parent Mode</h2>
+                    <div class="flex gap-2">
+                        <button id="btn-sound-toggle" onclick="toggleSound()" class="px-4 py-2 bg-blue-500 text-white rounded-full text-lg shadow-lg active:scale-95 transition-colors w-32">
+                            Sound: 100%
+                        </button>
+                        <button onclick="resumeGame()" class="px-4 py-2 bg-green-500 text-white rounded-full text-lg shadow-lg active:scale-95">
+                            Resume
+                        </button>
+                    </div>
+                </div>
+                
+                <p class="text-gray-500 text-sm mb-2">Tap an item to change its category. Moves to top.</p>
+
+                <!-- Category Manager Grid -->
+                <div class="flex-1 overflow-y-auto scroller">
+                    <div class="grid grid-cols-3 gap-2 text-center select-none">
+                        <!-- Headers -->
+                        <div class="font-bold text-red-700 bg-red-100 rounded py-1 sticky top-0 z-10 shadow-sm">HOME</div>
+                        <div class="font-bold text-blue-700 bg-blue-100 rounded py-1 sticky top-0 z-10 shadow-sm">BOTH</div>
+                        <div class="font-bold text-green-700 bg-green-100 rounded py-1 sticky top-0 z-10 shadow-sm">CHRISTMAS</div>
+                        
+                        <!-- Content injected via JS -->
+                        <div id="col-home" class="flex flex-col gap-2 p-2 bg-red-50/50 rounded min-h-[100px]"></div>
+                        <div id="col-both" class="flex flex-col gap-2 p-2 bg-blue-50/50 rounded min-h-[100px]"></div>
+                        <div id="col-tree" class="flex flex-col gap-2 p-2 bg-green-50/50 rounded min-h-[100px]"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 7. UNLOCK INDICATOR -->
+        <div id="unlock-indicator" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-0 transition-opacity z-50">
+            <svg width="100" height="100" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="45" stroke="#ffffff" stroke-width="5" fill="none" opacity="0.3"/>
+                <circle id="unlock-progress" cx="50" cy="50" r="45" stroke="#ffffff" stroke-width="5" fill="none" class="unlock-ring" stroke-linecap="round" transform="rotate(-90 50 50)"/>
+            </svg>
+            <div class="text-white text-center font-bold mt-2 text-xl drop-shadow-md">Hold...</div>
+        </div>
+
+    </div>
+
+    <!-- GAME ENGINE -->
+    <script>
+        /* --- 1. STATE & ASSETS --- */
+        const state = {
+            currentItem: null,
+            currentAnimation: null,
+            recentItems: [],
+            isDragging: false,
+            soundMode: 0, // 0: Normal, 1: Quiet, 2: Night
+            score: 0,
+            inParentMode: false,
+            humOscillators: [],
+            humGain: null,
+            items: []
+        };
+
+        const defaultItems = [
+            // --- BARN / HOME ITEMS ---
+            { id: 'dino_t_rex', type: 'barn', emoji: '🦖' },
+            { id: 'dino_sauropod', type: 'barn', emoji: '🦕' },
+            { id: 'dino_hatch', type: 'barn', emoji: '🥚' },
+            { id: 'dino_croc', type: 'barn', emoji: '🐊' },
+            { id: 'dog', type: 'barn', emoji: '🐕' },
+            { id: 'cat', type: 'barn', emoji: '🐈' },
+            { id: 'cow', type: 'barn', emoji: '🐄' },
+            { id: 'pig', type: 'barn', emoji: '🐖' },
+            { id: 'tractor', type: 'barn', emoji: '🚜' },
+            { id: 'red_car', type: 'barn', emoji: '🚗' },
+            { id: 'truck', type: 'barn', emoji: '🚚' },
+            { id: 'shirt', type: 'barn', emoji: '👕' },
+            { id: 'jeans', type: 'barn', emoji: '👖' },
+            { id: 'dress', type: 'barn', emoji: '👗' },
+            { id: 'duck', type: 'barn', emoji: '🦆' },
+            { id: 'apple', type: 'barn', emoji: '🍎' },
+            { id: 'milk', type: 'barn', emoji: '🍼' },
+            { id: 'crayon', type: 'barn', emoji: '🖍️' },
+            { id: 'soccer', type: 'barn', emoji: '⚽' },
+            { id: 'bed', type: 'barn', emoji: '🛏️' },
+            { id: 'bath', type: 'barn', emoji: '🛁' },
+            { id: 'toothbrush', type: 'barn', emoji: '🪥' },
+            { id: 'spoon', type: 'barn', emoji: '🥄' },
+            { id: 'tv', type: 'barn', emoji: '📺' },
+            { id: 'lamp', type: 'barn', emoji: '🛋️' },
+            { id: 'phone', type: 'barn', emoji: '📱' },
+            { id: 'key', type: 'barn', emoji: '🔑' },
+            
+            // Toddler Food
+            { id: 'apple', type: 'barn', emoji: '🍎' },
+            { id: 'banana', type: 'barn', emoji: '🍌' },
+            { id: 'carrot', type: 'barn', emoji: '🥕' },
+            { id: 'cheese', type: 'barn', emoji: '🧀' },
+            { id: 'bread', type: 'barn', emoji: '🍞' },
+            { id: 'broccoli', type: 'barn', emoji: '🥦' },
+            { id: 'corn', type: 'barn', emoji: '🌽' },
+            { id: 'grapes', type: 'barn', emoji: '🍇' },
+            { id: 'strawberry', type: 'barn', emoji: '🍓' },
+            { id: 'egg', type: 'barn', emoji: '🥚' },
+            { id: 'pancake', type: 'barn', emoji: '🥞' },
+            { id: 'pizza', type: 'barn', emoji: '🍕' },
+            { id: 'cookie_plain', type: 'barn', emoji: '🍪' },
+
+            // --- TREE / CHRISTMAS ITEMS ---
+            { id: 'santa', type: 'tree', emoji: '🎅' },
+            { id: 'star', type: 'tree', emoji: '⭐' },
+            { id: 'snowman', type: 'tree', emoji: '⛄' },
+            { id: 'candy', type: 'tree', emoji: '🍬' },
+            { id: 'reindeer', type: 'tree', emoji: '🦌' },
+            { id: 'bell', type: 'tree', emoji: '🔔' },
+            { id: 'candle', type: 'tree', emoji: '🕯️' },
+            { id: 'bow', type: 'tree', emoji: '🎀' },
+            { id: 'elf', type: 'tree', emoji: '🧝' },
+            { id: 'drum', type: 'tree', emoji: '🥁' },
+            { id: 'trumpet', type: 'tree', emoji: '🎺' },
+            { id: 'skate', type: 'tree', emoji: '⛸️' },
+            { id: 'sled', type: 'tree', emoji: '🛷' },
+            { id: 'nutcracker', type: 'tree', emoji: '💂' },
+            { id: 'pie', type: 'tree', emoji: '🥧' },
+            { id: 'orange', type: 'tree', emoji: '🍊' },
+            { id: 'wreath', type: 'tree', emoji: '🎄' },
+            { id: 'snowflake_item', type: 'tree', emoji: '❄️' },
+            { id: 'angel', type: 'tree', emoji: '👼' },
+            { id: 'card', type: 'tree', emoji: '💌' },
+            { id: 'chocolate', type: 'tree', emoji: '🍫' },
+            { id: 'pudding', type: 'tree', emoji: '🍮' },
+
+            // --- BOTH (Can go anywhere) ---
+            { id: 'bear', type: 'both', emoji: '🧸' },
+            { id: 'train', type: 'both', emoji: '🚂' },
+            { id: 'gift_box', type: 'both', emoji: '🎁' },
+            { id: 'book', type: 'both', emoji: '📚' },
+            { id: 'socks', type: 'both', emoji: '🧦' },
+            { id: 'scarf', type: 'both', emoji: '🧣' },
+            { id: 'gloves', type: 'both', emoji: '🧤' },
+            { id: 'coat', type: 'both', emoji: '🧥' },
+            { id: 'robot', type: 'both', emoji: '🤖' },
+            { id: 'guitar', type: 'both', emoji: '🎸' },
+            { id: 'headphones', type: 'both', emoji: '🎧' },
+            { id: 'ball', type: 'both', emoji: '🏀' },
+            { id: 'camera', type: 'both', emoji: '📷' },
+            { id: 'hat', type: 'both', emoji: '🧢' },
+            { id: 'boot', type: 'both', emoji: '👢' },
+            { id: 'umbrella', type: 'both', emoji: '☂️' }
+        ];
+
+        /* --- 2. AUDIO SYNTHESIZER --- */
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function getVolumeMultiplier() {
+            if (state.soundMode === 0) return 1.0;   // Normal
+            if (state.soundMode === 1) return 0.5;   // Quiet
+            if (state.soundMode === 2) return 0.1;   // Night
+            return 1.0;
+        }
+
+        function playSound(type) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            
+            const vol = getVolumeMultiplier();
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
+
+            if (type === 'success') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(523.25, now);
+                osc.frequency.setValueAtTime(659.25, now + 0.1);
+                osc.frequency.setValueAtTime(783.99, now + 0.2);
+                gain.gain.setValueAtTime(0.1 * vol, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+                osc.start(now);
+                osc.stop(now + 0.6);
+            } else if (type === 'fail') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.linearRampToValueAtTime(100, now + 0.2);
+                gain.gain.setValueAtTime(0.1 * vol, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+                osc.start(now);
+                osc.stop(now + 0.2);
+            } else if (type === 'pop') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(800, now);
+                osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
+                gain.gain.setValueAtTime(0.05 * vol, now);
+                gain.gain.linearRampToValueAtTime(0.001, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            } else if (type === 'wood') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(200, now);
+                osc.frequency.exponentialRampToValueAtTime(50, now + 0.1);
+                gain.gain.setValueAtTime(0.05 * vol, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            } else if (type === 'home') {
+                const osc2 = audioCtx.createOscillator();
+                const gain2 = audioCtx.createGain();
+                osc2.connect(gain2);
+                gain2.connect(audioCtx.destination);
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(329.63, now); 
+                gain.gain.setValueAtTime(0.1 * vol, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+                osc2.type = 'sine';
+                osc2.frequency.setValueAtTime(261.63, now + 0.3);
+                gain2.gain.setValueAtTime(0, now);
+                gain2.gain.setValueAtTime(0.1 * vol, now + 0.3);
+                gain2.gain.exponentialRampToValueAtTime(0.001, now + 1.0);
+                osc.start(now); osc.stop(now + 0.5);
+                osc2.start(now); osc2.stop(now + 1.0);
+            } else if (type === 'leaves') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.linearRampToValueAtTime(500, now + 0.1);
+                gain.gain.setValueAtTime(0.03 * vol, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+                osc.start(now);
+                osc.stop(now + 0.2);
+            } else if (type === 'giggle') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, now);
+                osc.frequency.linearRampToValueAtTime(800, now + 0.1);
+                osc.frequency.linearRampToValueAtTime(600, now + 0.2);
+                gain.gain.setValueAtTime(0.05 * vol, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+                osc.start(now);
+                osc.stop(now + 0.3);
+            } else if (type === 'chime') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(1000, now);
+                osc.frequency.exponentialRampToValueAtTime(2000, now + 0.5);
+                gain.gain.setValueAtTime(0.05 * vol, now);
+                gain.gain.linearRampToValueAtTime(0.001, now + 0.5);
+                osc.start(now);
+                osc.stop(now + 0.5);
+            }
+        }
+
+        // --- WOODEN PURR SOUND (Tactile, Low, Gentle) ---
+        function startWoodenPurr() {
+            if (state.humOscillators.length > 0) return; // Already playing
+            if (!state.soundEnabled) return;
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            const vol = getVolumeMultiplier();
+            const now = audioCtx.currentTime;
+            
+            // Master Gain for this sound
+            state.humGain = audioCtx.createGain();
+            state.humGain.connect(audioCtx.destination);
+            state.humGain.gain.setValueAtTime(0, now);
+            state.humGain.gain.linearRampToValueAtTime(0.3 * vol, now + 0.1); // Fade in fast
+
+            // Carrier: The low rumble
+            const carrier = audioCtx.createOscillator();
+            carrier.type = 'triangle';
+            carrier.frequency.setValueAtTime(65, now); // Low wood tone
+
+            // Modulator: The purr vibrato (FM Synthesis)
+            // LFO modulates the frequency of the carrier
+            const lfo = audioCtx.createOscillator();
+            lfo.type = 'sine';
+            lfo.frequency.setValueAtTime(25, now); // 25Hz purr speed
+
+            const lfoGain = audioCtx.createGain();
+            lfoGain.gain.value = 20; // Depth of vibrato (Hz)
+            
+            lfo.connect(lfoGain);
+            lfoGain.connect(carrier.frequency);
+            
+            carrier.connect(state.humGain);
+            
+            carrier.start(now);
+            lfo.start(now);
+            
+            state.humOscillators.push(carrier);
+            state.humOscillators.push(lfo);
+        }
+
+        function stopWoodenPurr() {
+            if (state.humGain) {
+                const now = audioCtx.currentTime;
+                state.humGain.gain.cancelScheduledValues(now);
+                state.humGain.gain.setValueAtTime(state.humGain.gain.value, now);
+                state.humGain.gain.linearRampToValueAtTime(0, now + 0.15); // Fade out
+                
+                state.humOscillators.forEach(osc => {
+                    osc.stop(now + 0.15);
+                });
+                state.humOscillators = [];
+                state.humGain = null;
+            }
+        }
+
+        /* --- 3. STORAGE & CONFIG --- */
+        function loadItems() {
+            const saved = localStorage.getItem('belle_adventure_items_v2');
+            if (saved) {
+                try {
+                    state.items = JSON.parse(saved);
+                } catch(e) {
+                    state.items = [...defaultItems];
+                }
+            } else {
+                state.items = [...defaultItems];
+            }
+        }
+
+        function saveItems() {
+            localStorage.setItem('belle_adventure_items_v2', JSON.stringify(state.items));
+        }
+
+        function cycleCategory(id) {
+            const index = state.items.findIndex(i => i.id === id);
+            if (index === -1) return;
+            
+            const item = state.items[index];
+            if (item.type === 'barn') item.type = 'both';
+            else if (item.type === 'both') item.type = 'tree';
+            else if (item.type === 'tree') item.type = 'barn';
+            
+            state.items.splice(index, 1);
+            state.items.unshift(item);
+
+            saveItems();
+            renderParentModeItems();
+            playSound('pop');
+        }
+
+        function renderParentModeItems() {
+            const cols = {
+                home: document.getElementById('col-home'),
+                both: document.getElementById('col-both'),
+                tree: document.getElementById('col-tree')
+            };
+            
+            cols.home.innerHTML = '';
+            cols.both.innerHTML = '';
+            cols.tree.innerHTML = '';
+
+            state.items.forEach(item => {
+                const el = document.createElement('div');
+                el.className = 'text-4xl cursor-pointer hover:scale-110 transition-transform p-2 bg-white rounded shadow-sm';
+                el.innerHTML = item.emoji;
+                el.onclick = () => cycleCategory(item.id);
+                
+                if (item.type === 'barn') cols.home.appendChild(el);
+                else if (item.type === 'tree') cols.tree.appendChild(el);
+                else cols.both.appendChild(el);
+            });
+        }
+
+        function toggleSound() {
+            state.soundMode = (state.soundMode + 1) % 3;
+            const btn = document.getElementById('btn-sound-toggle');
+            if (state.soundMode === 0) {
+                btn.innerText = "Sound: 100%";
+                btn.className = "px-4 py-2 bg-blue-500 text-white rounded-full text-lg shadow-lg active:scale-95 transition-colors w-32";
+            } else if (state.soundMode === 1) {
+                btn.innerText = "Sound: 50%";
+                btn.className = "px-4 py-2 bg-yellow-500 text-white rounded-full text-lg shadow-lg active:scale-95 transition-colors w-32";
+            } else {
+                btn.innerText = "Sound: 10%";
+                btn.className = "px-4 py-2 bg-purple-900 text-white rounded-full text-lg shadow-lg active:scale-95 transition-colors w-32";
+            }
+            playSound('pop');
+        }
+
+        /* --- 4. GAME LOGIC --- */
+        const zoneBarn = document.getElementById('zone-barn');
+        const zoneTree = document.getElementById('zone-tree');
+        const spawnAnchor = document.getElementById('spawn-anchor');
+
+        // Logic to calculate safe landing spot
+        function getSafeLandingY() {
+            // Check if screen is small/short
+            const h = window.innerHeight;
+            
+            // Standard target: 33% from top
+            let targetY = h * 0.33;
+            
+            // If screen is very wide (desktop), 33% is fine.
+            // If screen is narrow (mobile portrait), Home/Tree are at bottom.
+            // We want to avoid overlapping the bottom 40% where targets usually sit.
+            
+            // Simple check: Ensure targetY is at least 300px above bottom if possible
+            if (h - targetY < 300) {
+                targetY = h * 0.25; // Move up to 25%
+            }
+            
+            // Cap at top 15%
+            if (targetY < h * 0.15) targetY = h * 0.15;
+            
+            return targetY;
+        }
+
+        function spawnItem() {
+            let data;
+            let attempts = 0;
+            do {
+                data = state.items[Math.floor(Math.random() * state.items.length)];
+                attempts++;
+            } while (state.recentItems.includes(data.id) && attempts < 20);
+            
+            state.recentItems.push(data.id);
+            if (state.recentItems.length > 5) state.recentItems.shift();
+
+            // Create Container
+            const el = document.createElement('div');
+            el.className = 'draggable-item absolute cursor-pointer pointer-events-auto z-10 select-none';
+            // Create Inner Content for Wiggling
+            const content = document.createElement('span');
+            content.className = 'emoji-content';
+            content.innerHTML = data.emoji;
+            el.appendChild(content);
+
+            const landingY = getSafeLandingY();
+            const centerX = window.innerWidth / 2;
+            const itemSize = 120; // Approx 7.5rem
+
+            el.style.left = (centerX - itemSize/2) + 'px';
+            el.style.top = landingY + 'px';
+            el.dataset.type = data.type;
+            
+            document.body.appendChild(el);
+            
+            // Launch Animation
+            // Start from Box (approx center-bottom)
+            // Box is at bottom:6rem. 
+            const boxY = window.innerHeight - 100;
+            const deltaY = boxY - landingY;
+
+            state.currentAnimation = el.animate([
+                { transform: `translateY(${deltaY}px) scale(0)`, opacity: 0, offset: 0 },
+                { transform: `translateY(0px) scale(1.1)`, opacity: 1, offset: 0.6 },
+                { transform: `translateY(-30px) scale(1)`, opacity: 1, offset: 0.8 }, 
+                { transform: `translateY(0px) scale(1)`, opacity: 1, offset: 1 }
+            ], {
+                duration: 800,
+                easing: 'cubic-bezier(0.175, 0.885, 0.32, 1.275)', 
+                fill: 'forwards'
+            });
+            
+            state.currentAnimation.onfinish = () => {
+                content.classList.add('wiggle-idle');
+                state.currentAnimation = null;
+            };
+
+            makeDraggable(el, content);
+            state.currentItem = el;
+            playSound('pop'); 
+            updateBeau('idle');
+        }
+
+        function makeDraggable(el, content) {
+            let startX, startY, initialLeft, initialTop;
+            
+            const onStart = (e) => {
+                if (state.inParentMode) return;
+                e.preventDefault();
+                
+                // --- CRITICAL FIX: CANCEL LAUNCH ANIMATION ---
+                if (state.currentAnimation) {
+                    state.currentAnimation.cancel();
+                    state.currentAnimation = null;
+                }
+                
+                state.isDragging = true;
+                
+                playSound('pop'); 
+                startWoodenPurr(); // NEW SOUND
+                
+                // Swap Idle for Drag Wiggle
+                content.classList.remove('wiggle-idle');
+                content.classList.add('wiggle-drag');
+
+                const point = e.touches ? e.touches[0] : e;
+                startX = point.clientX;
+                startY = point.clientY;
+                
+                // Get current position (might be mid-air if caught early, or landed)
+                const rect = el.getBoundingClientRect();
+                
+                // FREEZE position in CSS so it doesn't snap back
+                el.style.transform = 'none'; // Clear any animation transforms
+                el.style.left = rect.left + 'px';
+                el.style.top = rect.top + 'px';
+                
+                initialLeft = rect.left;
+                initialTop = rect.top;
+
+                el.style.transition = 'none';
+                el.style.zIndex = 100; 
+                el.style.transform = 'scale(1.15)'; // Lift effect
+                
+                document.addEventListener('mousemove', onMove, {passive: false});
+                document.addEventListener('touchmove', onMove, {passive: false});
+                document.addEventListener('mouseup', onEnd);
+                document.addEventListener('touchend', onEnd);
+            };
+
+            const onMove = (e) => {
+                if (!state.isDragging) return;
+                e.preventDefault(); 
+
+                const point = e.touches ? e.touches[0] : e;
+                const dx = point.clientX - startX;
+                const dy = point.clientY - startY;
+
+                el.style.left = `${initialLeft + dx}px`;
+                el.style.top = `${initialTop + dy}px`;
+
+                checkHover(point.clientX, point.clientY);
+            };
+
+            const onEnd = (e) => {
+                if (!state.isDragging) return;
+                state.isDragging = false;
+                stopWoodenPurr();
+                content.classList.remove('wiggle-drag');
+
+                document.removeEventListener('mousemove', onMove);
+                document.removeEventListener('touchmove', onMove);
+                document.removeEventListener('mouseup', onEnd);
+                document.removeEventListener('touchend', onEnd);
+
+                const rect = el.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                const targetZone = checkCollision(centerX, centerY);
+
+                let isSuccess = false;
+                if (targetZone) {
+                    if (el.dataset.type === 'both') {
+                        isSuccess = true; 
+                    } else if (el.dataset.type === targetZone) {
+                        isSuccess = true;
+                    }
+                }
+
+                if (isSuccess) {
+                    handleSuccess(el, targetZone);
+                } else {
+                    handleFail(el, content);
+                }
+                
+                zoneBarn.classList.remove('hovered');
+                zoneTree.classList.remove('hovered');
+            };
+
+            el.addEventListener('mousedown', onStart);
+            el.addEventListener('touchstart', onStart, {passive: false});
+        }
+
+        function checkHover(x, y) {
+            if (isInside(x, y, zoneBarn.getBoundingClientRect())) zoneBarn.classList.add('hovered');
+            else zoneBarn.classList.remove('hovered');
+
+            if (isInside(x, y, zoneTree.getBoundingClientRect())) zoneTree.classList.add('hovered');
+            else zoneTree.classList.remove('hovered');
+        }
+
+        function checkCollision(x, y) {
+            if (isInside(x, y, zoneBarn.getBoundingClientRect())) return 'barn';
+            if (isInside(x, y, zoneTree.getBoundingClientRect())) return 'tree';
+            return null;
+        }
+
+        function isInside(x, y, rect) {
+            return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+        }
+
+        function handleSuccess(el, targetZone) {
+            state.score++;
+            document.getElementById('score-display').innerText = state.score;
+            playSound('success');
+            updateBeau('success');
+            
+            const targetEl = targetZone === 'barn' ? zoneBarn : zoneTree;
+            targetEl.classList.add('happy-bounce');
+            setTimeout(() => targetEl.classList.remove('happy-bounce'), 500);
+
+            const rect = el.getBoundingClientRect();
+            createConfetti(rect.left, rect.top);
+            
+            el.style.transition = 'transform 0.3s, opacity 0.3s';
+            el.style.transform = 'scale(0)';
+            el.style.opacity = '0';
+
+            setTimeout(() => {
+                el.remove();
+                setTimeout(spawnItem, 600);
+            }, 300);
+        }
+
+        function handleFail(el, content) {
+            playSound('fail');
+            updateBeau('idle');
+            
+            el.style.transition = 'all 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55)';
+            // Reset to safe landing spot
+            const landingY = getSafeLandingY();
+            const centerX = window.innerWidth / 2;
+            const itemSize = 120;
+            
+            el.style.left = (centerX - itemSize/2) + 'px';
+            el.style.top = landingY + 'px';
+            el.style.transform = 'scale(1)';
+            el.style.zIndex = 10;
+            
+            // Re-enable Idle wiggle after returning
+            setTimeout(() => {
+                content.classList.add('wiggle-idle');
+            }, 600);
+        }
+
+        function updateBeau(mood) {
+            const speech = document.getElementById('beau-speech');
+            if (mood === 'success') {
+                speech.style.opacity = '1';
+                setTimeout(() => updateBeau('idle'), 2000);
+            } else {
+                speech.style.opacity = '0';
+            }
+        }
+
+        function createConfetti(x, y) {
+            for (let i = 0; i < 20; i++) {
+                const conf = document.createElement('div');
+                conf.className = 'confetti-piece';
+                conf.style.left = (x + 40) + 'px';
+                conf.style.top = (y + 40) + 'px';
+                conf.style.backgroundColor = ['#FFD700', '#FF69B4', '#00BFFF'][Math.floor(Math.random()*3)];
+                conf.style.transform = `rotate(${Math.random() * 360}deg)`;
+                
+                const angle = Math.random() * Math.PI * 2;
+                const velocity = 50 + Math.random() * 50;
+                const tx = Math.cos(angle) * velocity;
+                const ty = Math.sin(angle) * velocity - 100; 
+
+                conf.animate([
+                    { transform: 'translate(0,0) rotate(0)', opacity: 1 },
+                    { transform: `translate(${tx}px, ${ty}px) rotate(360deg)`, opacity: 0 }
+                ], { duration: 800 + Math.random() * 400, easing: 'ease-out' });
+
+                document.body.appendChild(conf);
+                setTimeout(() => conf.remove(), 1200);
+            }
+        }
+
+        function handleCloudTap(e) {
+            playSound('pop');
+            const xPct = (e.clientX / window.innerWidth) * 100;
+            const yPct = (e.clientY / window.innerHeight) * 100;
+            spawnSnow(xPct, yPct);
+        }
+
+        function spawnSnow(xPercent, yPercent) {
+            for(let i=0; i<5; i++) {
+                const flake = document.createElement('div');
+                flake.className = 'snowflake';
+                flake.innerText = '❄️';
+                flake.style.left = `${xPercent + (Math.random()*6 - 3)}%`;
+                flake.style.top = `${yPercent}%`;
+                flake.style.animationDuration = `${3 + Math.random() * 2}s`;
+                document.body.appendChild(flake);
+                setTimeout(() => flake.remove(), 5000);
+            }
+        }
+        
+        function foundPickle(e) {
+            e.stopPropagation();
+            playSound('success');
+            createConfetti(e.clientX - 50, e.clientY - 50);
+            alert("You found the Christmas Pickle!");
+        }
+
+        /* --- 5. INITIALIZATION --- */
+        window.onload = () => {
+            document.addEventListener('contextmenu', event => event.preventDefault());
+            if ('wakeLock' in navigator) {
+                document.addEventListener('click', async () => {
+                    try { await navigator.wakeLock.request('screen'); } catch(e){}
+                }, {once: true});
+            }
+            loadItems();
+            setTimeout(spawnItem, 1000);
+        };
+
+        // --- PARENT MODE & UNLOCK ---
+        let touchTimer = null;
+        const parentOverlay = document.getElementById('parent-overlay');
+        const indicator = document.getElementById('unlock-indicator');
+        const progressCircle = document.getElementById('unlock-progress');
+        
+        document.addEventListener('touchstart', (e) => {
+            if (state.inParentMode) return;
+            if (e.touches.length === 3) {
+                indicator.style.opacity = '1';
+                progressCircle.style.transition = 'stroke-dashoffset 2s linear';
+                progressCircle.style.strokeDashoffset = '0';
+                touchTimer = setTimeout(() => {
+                    state.inParentMode = true;
+                    parentOverlay.classList.remove('hidden');
+                    indicator.style.opacity = '0';
+                    renderParentModeItems();
+                }, 2000);
+            }
+        }, {passive: false});
+
+        document.addEventListener('touchend', (e) => {
+            if (e.touches.length < 3 && touchTimer) {
+                clearTimeout(touchTimer);
+                touchTimer = null;
+                indicator.style.opacity = '0';
+                progressCircle.style.transition = 'none';
+                progressCircle.style.strokeDashoffset = '283';
+            }
+        });
+
+        function resumeGame() {
+            state.inParentMode = false;
+            parentOverlay.classList.add('hidden');
+        }
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('SW registered!', reg))
+                .catch(err => console.log('SW failed (likely preview mode):', err));
+        }
+    </script>
+</body>
+</html>
