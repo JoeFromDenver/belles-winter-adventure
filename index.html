@@ -337,7 +337,9 @@
             humGain: null,
             items: [],
             dropTimeout: null,
-            pickleFoundCount: 0, // Track pickle finds
+            returnTimer: null, // NEW: For handleFail delay
+            isProcessingSuccess: false, // NEW: Prevent double trigger
+            pickleFoundCount: 0, 
             
             // Parent Mode Trigger State
             unlockState: { star: false, angel: false, timer: null }
@@ -547,7 +549,6 @@
         }
 
         // --- WOODEN PURR SOUND (Additive Rolling Sound) ---
-        // Replacing simple FM with robust additive synthesis (3 detuned waves)
         function startWoodenPurr() {
             try {
                 if (state.humOscillators.length > 0) return; 
@@ -561,16 +562,13 @@
                 state.humGain = audioCtx.createGain();
                 state.humGain.connect(audioCtx.destination);
                 state.humGain.gain.setValueAtTime(0, now);
-                // Louder than before to ensure it's heard
                 state.humGain.gain.linearRampToValueAtTime(0.3 * vol, now + 0.1); 
 
-                // Additive Synthesis: 3 oscillators slightly detuned to create a "rolling" interference pattern
-                // Frequencies around 100Hz (Low wood)
                 const freqs = [100, 105, 95];
                 
                 freqs.forEach(f => {
                     const osc = audioCtx.createOscillator();
-                    osc.type = 'triangle'; // Smooth but audible
+                    osc.type = 'triangle'; 
                     osc.frequency.value = f;
                     osc.connect(state.humGain);
                     osc.start(now);
@@ -706,6 +704,7 @@
         }
 
         function spawnItem() {
+            state.isProcessingSuccess = false; // RESET LOCK
             let data;
             let attempts = 0;
             do {
@@ -779,6 +778,12 @@
 
                 e.preventDefault(); // Prevent default touch actions (scroll/zoom)
                 
+                // CLEAR PREVIOUS FAILED DROP TIMER if re-grabbed
+                if (state.returnTimer) {
+                    clearTimeout(state.returnTimer);
+                    state.returnTimer = null;
+                }
+
                 if (state.currentAnimation) {
                     state.currentAnimation.cancel();
                     state.currentAnimation = null;
@@ -829,15 +834,25 @@
                 const dx = point.clientX - startX;
                 const dy = point.clientY - startY;
 
-                const curLeft = initialLeft + dx;
-                const curTop = initialTop + dy;
+                let newLeft = initialLeft + dx;
+                let newTop = initialTop + dy;
 
-                el.style.left = `${curLeft}px`;
-                el.style.top = `${curTop}px`;
+                // --- INVISIBLE BORDER (Keep item on screen) ---
+                // Get window dimensions
+                const maxLeft = window.innerWidth - itemWidth;
+                const maxTop = window.innerHeight - itemHeight;
 
-                // Calculate center of ITEM, not finger pointer
-                const centerX = curLeft + itemWidth / 2;
-                const centerY = curTop + itemHeight / 2;
+                // Clamp the values so it can't go < 0 or > max
+                // We allow a tiny 10px buffer so it doesn't feel stuck on the very pixel
+                newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+                newTop = Math.max(0, Math.min(newTop, maxTop));
+
+                el.style.left = `${newLeft}px`;
+                el.style.top = `${newTop}px`;
+
+                // Calculate center of ITEM based on clamped position
+                const centerX = newLeft + itemWidth / 2;
+                const centerY = newTop + itemHeight / 2;
 
                 checkHover(centerX, centerY);
             };
@@ -977,6 +992,12 @@
         }
 
         function handleSuccess(el, targetZone) {
+            if (state.isProcessingSuccess) return; // PREVENT DOUBLE TRIGGER
+            state.isProcessingSuccess = true;
+            
+            // Clear any return timer if it existed
+            if (state.returnTimer) { clearTimeout(state.returnTimer); state.returnTimer = null; }
+
             state.score++;
             document.getElementById('score-display').innerText = state.score;
             playSound('success');
@@ -1003,19 +1024,26 @@
             playSound('fail');
             updateBeau('idle');
             
-            el.style.transition = 'all 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55)';
-            // Reset to safe landing spot
-            const landingY = getSafeLandingY();
+            // NEW: Stay put logic (3 seconds grace)
+            if (state.returnTimer) clearTimeout(state.returnTimer);
             
-            el.style.left = '50%'; 
-            el.style.transform = 'translate(-50%, 0) scale(1)';
-            el.style.top = landingY + 'px';
-            el.style.zIndex = 10;
-            
-            // Re-enable Idle wiggle after returning
-            setTimeout(() => {
-                content.classList.add('wiggle-idle');
-            }, 600);
+            state.returnTimer = setTimeout(() => {
+                el.style.transition = 'all 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55)';
+                // Reset to safe landing spot
+                const landingY = getSafeLandingY();
+                
+                el.style.left = '50%'; 
+                el.style.transform = 'translate(-50%, 0) scale(1)';
+                el.style.top = landingY + 'px';
+                el.style.zIndex = 10;
+                
+                // Re-enable Idle wiggle after returning
+                setTimeout(() => {
+                    content.classList.add('wiggle-idle');
+                }, 600);
+                
+                state.returnTimer = null;
+            }, 3000); // 3 Seconds
         }
 
         function updateBeau(mood) {
