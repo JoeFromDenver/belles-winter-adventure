@@ -337,6 +337,7 @@
             humGain: null,
             items: [],
             dropTimeout: null,
+            pickleFoundCount: 0, // Track pickle finds
             
             // Parent Mode Trigger State
             unlockState: { star: false, angel: false, timer: null }
@@ -545,7 +546,8 @@
             }
         }
 
-        // --- WOODEN PURR SOUND ---
+        // --- WOODEN PURR SOUND (Additive Rolling Sound) ---
+        // Replacing simple FM with robust additive synthesis (3 detuned waves)
         function startWoodenPurr() {
             try {
                 if (state.humOscillators.length > 0) return; 
@@ -555,16 +557,20 @@
                 const vol = getVolumeMultiplier();
                 const now = audioCtx.currentTime;
                 
+                // Master Gain
                 state.humGain = audioCtx.createGain();
                 state.humGain.connect(audioCtx.destination);
                 state.humGain.gain.setValueAtTime(0, now);
+                // Louder than before to ensure it's heard
                 state.humGain.gain.linearRampToValueAtTime(0.3 * vol, now + 0.1); 
 
+                // Additive Synthesis: 3 oscillators slightly detuned to create a "rolling" interference pattern
+                // Frequencies around 100Hz (Low wood)
                 const freqs = [100, 105, 95];
                 
                 freqs.forEach(f => {
                     const osc = audioCtx.createOscillator();
-                    osc.type = 'triangle'; 
+                    osc.type = 'triangle'; // Smooth but audible
                     osc.frequency.value = f;
                     osc.connect(state.humGain);
                     osc.start(now);
@@ -760,6 +766,7 @@
         function makeDraggable(el, content) {
             let startX, startY;
             let initialLeft, initialTop;
+            let itemWidth = 0, itemHeight = 0; // NEW: Track size
             
             const onStart = (e) => {
                 if (state.inParentMode) return;
@@ -796,10 +803,13 @@
                 el.style.transform = 'none'; 
                 el.style.left = rect.left + 'px';
                 el.style.top = rect.top + 'px';
-                // Remove centering transform since we are now setting exact rect
                 
                 initialLeft = rect.left;
                 initialTop = rect.top;
+                
+                // Store dimensions for center calculation later
+                itemWidth = rect.width;
+                itemHeight = rect.height;
 
                 el.style.transition = 'none';
                 el.style.zIndex = 1000; 
@@ -819,10 +829,17 @@
                 const dx = point.clientX - startX;
                 const dy = point.clientY - startY;
 
-                el.style.left = `${initialLeft + dx}px`;
-                el.style.top = `${initialTop + dy}px`;
+                const curLeft = initialLeft + dx;
+                const curTop = initialTop + dy;
 
-                checkHover(point.clientX, point.clientY);
+                el.style.left = `${curLeft}px`;
+                el.style.top = `${curTop}px`;
+
+                // Calculate center of ITEM, not finger pointer
+                const centerX = curLeft + itemWidth / 2;
+                const centerY = curTop + itemHeight / 2;
+
+                checkHover(centerX, centerY);
             };
 
             const onEnd = (e) => {
@@ -856,6 +873,8 @@
                             const rect = el.getBoundingClientRect();
                             initialLeft = rect.left;
                             initialTop = rect.top;
+                            itemWidth = rect.width;
+                            itemHeight = rect.height;
                             // Continues using existing move listeners
                         }
                     };
@@ -1055,23 +1074,35 @@
         
         function foundPickle(e) {
             e.stopPropagation();
+            state.pickleFoundCount++;
+            
             playSound('success');
             createConfetti(e.clientX - 50, e.clientY - 50);
-            updateBeau('success'); // Reusing existing visual
-            // Display speech bubble with custom text for a moment
-            const speech = document.getElementById('beau-speech');
-            const oldText = speech.innerText;
-            speech.innerText = "You found the pickle!";
-            speech.style.opacity = '1';
-            speech.style.width = '200px';
-            speech.style.left = '-60px'; // Adjust centering manually for this specific container
             
-            setTimeout(() => {
-                speech.innerText = oldText;
+            const speech = document.getElementById('beau-speech');
+            
+            if (state.pickleFoundCount <= 2) {
+                // First 2 times: Special Message
+                updateBeau('success'); 
+                speech.innerText = "You found the pickle!";
+                speech.style.width = '200px';
+                speech.style.left = '-60px'; // Adjust centering manually for this specific container
+                
+                // Revert text later
+                setTimeout(() => {
+                    speech.innerText = "Yay!";
+                    speech.style.width = '';
+                    speech.style.left = '';
+                    updateBeau('idle');
+                }, 3000);
+            } else {
+                // 3rd time onwards: Just Yay!
+                // Reset styles just in case rapid clicking kept old styles
+                speech.innerText = "Yay!";
                 speech.style.width = '';
                 speech.style.left = '';
-                updateBeau('idle');
-            }, 3000);
+                updateBeau('success');
+            }
         }
 
         /* --- 5. INITIALIZATION --- */
