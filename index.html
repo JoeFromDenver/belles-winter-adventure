@@ -108,14 +108,19 @@
             justify-content: center;
             /* Responsive Scaling: 4rem min, 15% viewport width preferred, 8rem max */
             font-size: clamp(4rem, 15vw, 8rem); 
-            z-index: 1000; /* Always on top */
+            z-index: 1000; /* Always on top when active/default */
         }
         
-        /* Oversized Hitbox logic */
+        /* Oversized Hitbox logic - Circular & Generous */
         .draggable-item::after {
             content: '';
             position: absolute;
-            top: -20px; bottom: -20px; left: -20px; right: -20px;
+            top: -30px; 
+            bottom: -30px; 
+            left: -30px; 
+            right: -30px;
+            border-radius: 50%;
+            /* background: rgba(255, 0, 0, 0.2);  Uncomment to debug hitbox */
         }
         
         .emoji-content {
@@ -1035,7 +1040,7 @@
                 el.style.left = '50%'; 
                 el.style.transform = 'translate(-50%, 0) scale(1)';
                 el.style.top = landingY + 'px';
-                el.style.zIndex = 10;
+                el.style.zIndex = 50;
                 
                 // Re-enable Idle wiggle after returning
                 setTimeout(() => {
