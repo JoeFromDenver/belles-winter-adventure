@@ -8,14 +8,11 @@
     <title>Belle's Winter Adventure</title>
     <link rel="manifest" href="manifest.json">
     
-    <!-- Using Tailwind for rapid layout -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Google Fonts: Mouse Memoirs for that Disney/Playful vibe -->
     <link href="https://fonts.googleapis.com/css2?family=Mouse+Memoirs&display=swap" rel="stylesheet">
 
     <style>
-        /* --- CORE DISABLES FOR PARENT MODE --- */
+        /* --- CORE DISABLES --- */
         body {
             overscroll-behavior: none;
             touch-action: none;
@@ -23,7 +20,7 @@
             -webkit-user-select: none;
             -webkit-touch-callout: none;
             font-family: 'Mouse Memoirs', sans-serif;
-            background-color: #dbeafe; /* Light blue winter sky */
+            background-color: #dbeafe;
             overflow: hidden;
             position: fixed;
             width: 100%;
@@ -48,7 +45,6 @@
             filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.9));
         }
 
-        /* Success Animation for Barn/Tree */
         @keyframes happyBounce {
             0% { transform: scale(1); }
             40% { transform: scale(1.25); }
@@ -60,7 +56,6 @@
             animation: happyBounce 0.5s ease-in-out;
         }
 
-        /* Continuous Wiggle (Dragging) */
         @keyframes dragWiggle {
             0% { transform: rotate(0deg); }
             25% { transform: rotate(-10deg) scale(1.1); }
@@ -71,13 +66,12 @@
             animation: dragWiggle 0.4s ease-in-out infinite;
         }
 
-        /* Random Idle Wiggle (Attention Grabber) */
         @keyframes idleShimmy {
             0%, 90% { transform: rotate(0deg) scale(1); }
-            92% { transform: rotate(-15deg) scale(1.1); }
-            94% { transform: rotate(15deg) scale(1.1); }
-            96% { transform: rotate(-15deg) scale(1.1); }
-            98% { transform: rotate(15deg) scale(1.1); }
+            92% { transform: rotate(-10deg) scale(1.05); }
+            94% { transform: rotate(10deg) scale(1.05); }
+            96% { transform: rotate(-10deg) scale(1.05); }
+            98% { transform: rotate(10deg) scale(1.05); }
             100% { transform: rotate(0deg) scale(1); }
         }
         .wiggle-idle {
@@ -107,19 +101,26 @@
 
         /* --- UTILS --- */
         .draggable-item {
-            touch-action: none; /* Critical for drag logic */
+            touch-action: none;
             filter: drop-shadow(0 10px 20px rgba(0,0,0,0.3));
-            /* Removed will-change to prevent stacking context weirdness during drag start */
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 7.5rem; /* Large Emojis */
-            z-index: 50;
+            /* Responsive Scaling: 4rem min, 15% viewport width preferred, 8rem max */
+            font-size: clamp(4rem, 15vw, 8rem); 
+            z-index: 1000; /* Always on top */
+        }
+        
+        /* Oversized Hitbox logic */
+        .draggable-item::after {
+            content: '';
+            position: absolute;
+            top: -20px; bottom: -20px; left: -20px; right: -20px;
         }
         
         .emoji-content {
             display: block;
-            pointer-events: none; /* Let drag events pass to parent */
+            pointer-events: none; 
         }
         
         .toy-box-lid {
@@ -134,24 +135,22 @@
         .unlock-ring {
             stroke-dasharray: 283;
             stroke-dashoffset: 283;
-            transition: stroke-dashoffset 2s linear;
+            transition: stroke-dashoffset 3s linear;
         }
 
-        /* Custom Scrollbar for Parent Mode */
-        .scroller::-webkit-scrollbar {
-            width: 8px;
-        }
-        .scroller::-webkit-scrollbar-track {
-            background: #f1f1f1; 
-            border-radius: 4px;
-        }
-        .scroller::-webkit-scrollbar-thumb {
-            background: #E60026; 
-            border-radius: 4px;
-        }
+        .scroller::-webkit-scrollbar { width: 8px; }
+        .scroller::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .scroller::-webkit-scrollbar-thumb { background: #E60026; border-radius: 4px; }
 
         .title-text {
             text-shadow: 0 4px 8px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.5), 0 0 20px rgba(255,255,255,0.5);
+        }
+        
+        .zone-bg {
+            background-color: rgba(66, 30, 10, 0.2);
+            backdrop-filter: blur(4px);
+            border-radius: 9999px;
+            padding: 1rem;
         }
     </style>
 </head>
@@ -218,9 +217,9 @@
             </div>
         </div>
 
-        <!-- TITLE (Centered Top) -->
-        <div class="absolute top-4 left-0 w-full text-center z-10 pointer-events-none">
-            <h1 class="text-white/90 text-4xl lg:text-6xl font-bold title-text tracking-wide">Belle's Winter Adventure</h1>
+        <!-- TITLE (Perfectly Centered) -->
+        <div class="absolute top-4 left-0 right-0 flex justify-center z-10 pointer-events-none">
+            <h1 class="text-white/90 text-4xl lg:text-6xl font-bold title-text tracking-wide text-center px-4">Belle's Winter Adventure</h1>
         </div>
 
         <!-- 2. DROP ZONES LAYER (Raised higher) -->
@@ -228,20 +227,22 @@
             
             <!-- LEFT: HOME -->
             <div id="zone-barn" onclick="playSound('home')" class="drop-zone relative pointer-events-auto origin-bottom-left active:scale-95 flex flex-col items-center">
-                <div class="text-[12rem] lg:text-[15rem] leading-none filter drop-shadow-xl select-none">🏠</div>
-                <div class="absolute -bottom-20 w-full text-center text-red-700 text-3xl lg:text-4xl font-bold tracking-wider uppercase">HOME</div>
+                <div class="zone-bg flex flex-col items-center justify-center p-2">
+                    <div class="text-[clamp(6rem,12vw,12rem)] leading-none filter drop-shadow-xl select-none">🏠</div>
+                </div>
+                <div class="absolute -bottom-16 w-full text-center text-red-700 text-3xl lg:text-4xl font-bold tracking-wider uppercase">HOME</div>
             </div>
 
             <!-- RIGHT: CHRISTMAS -->
             <div id="zone-tree" onclick="playSound('leaves')" class="drop-zone relative pointer-events-auto origin-bottom-right active:scale-95 flex flex-col items-center">
-                <div class="relative">
-                    <div class="text-[12rem] lg:text-[15rem] leading-none filter drop-shadow-xl select-none">🎄</div>
+                <div class="zone-bg relative flex flex-col items-center justify-center p-2">
+                    <div class="text-[clamp(6rem,12vw,12rem)] leading-none filter drop-shadow-xl select-none">🎄</div>
                     <!-- Hidden Pickle -->
                     <div id="hidden-pickle" class="absolute top-1/2 left-1/2 cursor-pointer opacity-80 pointer-events-auto" onclick="foundPickle(event)">
                         <text class="text-xl" style="transform: rotate(15deg);">🥒</text>
                     </div>
                 </div>
-                <div class="absolute -bottom-20 w-full text-center text-green-800 text-3xl lg:text-4xl font-bold tracking-wider uppercase">CHRISTMAS</div>
+                <div class="absolute -bottom-16 w-full text-center text-green-800 text-3xl lg:text-4xl font-bold tracking-wider uppercase">CHRISTMAS</div>
             </div>
         </div>
 
@@ -260,18 +261,18 @@
         <div id="spawn-anchor" class="absolute bottom-20 left-1/2 transform -translate-x-1/2 w-1 h-1"></div>
 
         <!-- SCORE (Upper Left) -->
-        <div onclick="playSound('chime')" class="absolute top-6 left-4 z-30 flex items-center bg-white/80 rounded-full px-4 py-2 border-2 border-blue-300 cursor-pointer active:scale-95 transition-transform backdrop-blur-sm shadow-md h-16">
+        <div id="score-btn" onclick="playSound('chime')" class="absolute top-6 left-4 z-30 flex items-center bg-white/80 rounded-full px-4 py-2 border-2 border-blue-300 cursor-pointer active:scale-95 transition-transform backdrop-blur-sm shadow-md h-16 pointer-events-auto">
             <span class="text-3xl mr-2">⭐</span>
             <span id="score-display" class="text-3xl text-blue-800 font-bold">0</span>
         </div>
 
         <!-- 5. ANGEL (Upper Right - Matching Score Height) -->
-        <div onclick="playSound('giggle'); updateBeau('success')" class="absolute top-6 right-4 z-30 flex flex-col items-center cursor-pointer active:scale-95 transition-transform">
+        <div id="angel-btn" onclick="playSound('giggle'); updateBeau('success')" class="absolute top-6 right-4 z-30 flex flex-col items-center cursor-pointer active:scale-95 transition-transform pointer-events-auto">
             <div id="beau-container" class="w-16 h-16 bg-white/80 backdrop-blur-sm rounded-full border-2 border-yellow-400 shadow-lg flex items-center justify-center overflow-hidden">
                 <span class="text-4xl select-none">👼</span>
             </div>
             <!-- Speech bubble hidden by default -->
-            <div id="beau-speech" class="absolute top-16 mt-2 bg-white px-3 py-1 rounded-xl shadow-md text-gray-800 text-lg opacity-0 transition-opacity duration-300">
+            <div id="beau-speech" class="absolute top-16 mt-2 bg-white px-3 py-1 rounded-xl shadow-md text-gray-800 text-lg opacity-0 transition-opacity duration-300 w-32 text-center pointer-events-none">
                 Yay!
             </div>
         </div>
@@ -329,12 +330,16 @@
             currentAnimation: null,
             recentItems: [],
             isDragging: false,
-            soundMode: 0, // 0: Normal, 1: Quiet, 2: Night
+            soundMode: 0, 
             score: 0,
             inParentMode: false,
             humOscillators: [],
             humGain: null,
-            items: []
+            items: [],
+            dropTimeout: null,
+            
+            // Parent Mode Trigger State
+            unlockState: { star: false, angel: false, timer: null }
         };
 
         const defaultItems = [
@@ -429,14 +434,12 @@
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         
         // --- GLOBAL AUDIO UNLOCK ---
-        // Browsers require a user gesture to resume AudioContext. We do this once on first touch.
         function unlockAudio() {
             if (audioCtx.state === 'suspended') {
                 audioCtx.resume().then(() => {
                     console.log('Audio unlocked');
                 });
             }
-            // Remove listener once done
             document.removeEventListener('touchstart', unlockAudio);
             document.removeEventListener('click', unlockAudio);
         }
@@ -445,9 +448,9 @@
 
         
         function getVolumeMultiplier() {
-            if (state.soundMode === 0) return 1.0;   // Normal
-            if (state.soundMode === 1) return 0.5;   // Quiet
-            if (state.soundMode === 2) return 0.1;   // Night
+            if (state.soundMode === 0) return 1.0;   
+            if (state.soundMode === 1) return 0.5;   
+            if (state.soundMode === 2) return 0.1;   
             return 1.0;
         }
 
@@ -542,8 +545,7 @@
             }
         }
 
-        // --- WOODEN PURR SOUND (Additive Rolling Sound) ---
-        // Replacing simple FM with robust additive synthesis (3 detuned waves)
+        // --- WOODEN PURR SOUND ---
         function startWoodenPurr() {
             try {
                 if (state.humOscillators.length > 0) return; 
@@ -553,20 +555,16 @@
                 const vol = getVolumeMultiplier();
                 const now = audioCtx.currentTime;
                 
-                // Master Gain
                 state.humGain = audioCtx.createGain();
                 state.humGain.connect(audioCtx.destination);
                 state.humGain.gain.setValueAtTime(0, now);
-                // Louder than before to ensure it's heard
                 state.humGain.gain.linearRampToValueAtTime(0.3 * vol, now + 0.1); 
 
-                // Additive Synthesis: 3 oscillators slightly detuned to create a "rolling" interference pattern
-                // Frequencies around 100Hz (Low wood)
                 const freqs = [100, 105, 95];
                 
                 freqs.forEach(f => {
                     const osc = audioCtx.createOscillator();
-                    osc.type = 'triangle'; // Smooth but audible
+                    osc.type = 'triangle'; 
                     osc.frequency.value = f;
                     osc.connect(state.humGain);
                     osc.start(now);
@@ -678,11 +676,27 @@
         function getSafeLandingY() {
             const h = window.innerHeight;
             let targetY = h * 0.33;
-            if (h - targetY < 300) {
-                targetY = h * 0.25; 
+            // Responsive check: on small screens move higher to avoid targets
+            if (h - targetY < 350) { 
+                targetY = h * 0.20; 
             }
             if (targetY < h * 0.15) targetY = h * 0.15;
             return targetY;
+        }
+
+        // --- PALM REJECTION UTILS ---
+        function isPalm(e) {
+            const touch = e.touches ? e.touches[0] : e;
+            const x = touch.clientX;
+            const y = touch.clientY;
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            const edge = 30; // 30px buffer on edges
+            
+            // Allow top zone for UI
+            if (y < 100) return false;
+
+            return (x < edge || x > w - edge || y > h - edge);
         }
 
         function spawnItem() {
@@ -698,7 +712,7 @@
 
             // Create Container
             const el = document.createElement('div');
-            el.className = 'draggable-item absolute cursor-pointer pointer-events-auto z-10 select-none';
+            el.className = 'draggable-item absolute cursor-pointer pointer-events-auto select-none';
             // Create Inner Content for Wiggling
             const content = document.createElement('span');
             content.className = 'emoji-content';
@@ -707,9 +721,10 @@
 
             const landingY = getSafeLandingY();
             const centerX = window.innerWidth / 2;
-            const itemSize = 120; // Approx 7.5rem
-
-            el.style.left = (centerX - itemSize/2) + 'px';
+            // Note: size is controlled by CSS, JS positioning centers it loosely
+            // We use transform translate to center it properly based on its dynamic width
+            el.style.left = '50%'; 
+            el.style.transform = 'translate(-50%, 0)';
             el.style.top = landingY + 'px';
             el.dataset.type = data.type;
             
@@ -719,10 +734,10 @@
             const deltaY = boxY - landingY;
 
             state.currentAnimation = el.animate([
-                { transform: `translateY(${deltaY}px) scale(0)`, opacity: 0, offset: 0 },
-                { transform: `translateY(0px) scale(1.1)`, opacity: 1, offset: 0.6 },
-                { transform: `translateY(-30px) scale(1)`, opacity: 1, offset: 0.8 }, 
-                { transform: `translateY(0px) scale(1)`, opacity: 1, offset: 1 }
+                { transform: `translate(-50%, ${deltaY}px) scale(0)`, opacity: 0, offset: 0 },
+                { transform: `translate(-50%, 0px) scale(1.1)`, opacity: 1, offset: 0.6 },
+                { transform: `translate(-50%, -30px) scale(1)`, opacity: 1, offset: 0.8 }, 
+                { transform: `translate(-50%, 0px) scale(1)`, opacity: 1, offset: 1 }
             ], {
                 duration: 800,
                 easing: 'cubic-bezier(0.175, 0.885, 0.32, 1.275)', 
@@ -732,6 +747,8 @@
             state.currentAnimation.onfinish = () => {
                 content.classList.add('wiggle-idle');
                 state.currentAnimation = null;
+                // Bake final position into styles to remove dependency on animation fill
+                el.style.transform = 'translate(-50%, 0)';
             };
 
             makeDraggable(el, content);
@@ -741,11 +758,19 @@
         }
 
         function makeDraggable(el, content) {
-            let startX, startY, initialLeft, initialTop;
+            let startX, startY;
+            let initialLeft, initialTop;
             
             const onStart = (e) => {
                 if (state.inParentMode) return;
-                e.preventDefault();
+                
+                // Palm Rejection
+                if (e.touches && isPalm(e)) {
+                    console.log("Palm rejected");
+                    return; 
+                }
+
+                e.preventDefault(); // Prevent default touch actions (scroll/zoom)
                 
                 if (state.currentAnimation) {
                     state.currentAnimation.cancel();
@@ -764,17 +789,20 @@
                 startX = point.clientX;
                 startY = point.clientY;
                 
+                // Get current position (might be mid-air if caught early, or landed)
                 const rect = el.getBoundingClientRect();
                 
+                // Switch from % positioning to absolute pixel positioning for drag
                 el.style.transform = 'none'; 
                 el.style.left = rect.left + 'px';
                 el.style.top = rect.top + 'px';
+                // Remove centering transform since we are now setting exact rect
                 
                 initialLeft = rect.left;
                 initialTop = rect.top;
 
                 el.style.transition = 'none';
-                el.style.zIndex = 100; 
+                el.style.zIndex = 1000; 
                 el.style.transform = 'scale(1.15)'; 
                 
                 document.addEventListener('mousemove', onMove, {passive: false});
@@ -799,6 +827,48 @@
 
             const onEnd = (e) => {
                 if (!state.isDragging) return;
+                
+                // --- FORGIVING DRAG LOGIC ---
+                // If it's a touch end, we wait briefly to see if it's just a slip
+                if (e.type === 'touchend') {
+                    // Temporarily pause visuals but don't commit drop
+                    stopWoodenPurr();
+                    
+                    state.dropTimeout = setTimeout(() => {
+                        commitDrop(el, content);
+                    }, 400); // 400ms grace period
+
+                    // Add global listener to catch re-grab anywhere
+                    const reGrab = (ev) => {
+                        if (ev.type === 'touchstart') {
+                            clearTimeout(state.dropTimeout);
+                            state.dropTimeout = null;
+                            document.removeEventListener('touchstart', reGrab);
+                            
+                            // Resume drag from new position
+                            // We essentially restart the logic
+                            stopWoodenPurr(); // Restart sound
+                            startWoodenPurr();
+                            
+                            const point = ev.touches[0];
+                            startX = point.clientX;
+                            startY = point.clientY;
+                            const rect = el.getBoundingClientRect();
+                            initialLeft = rect.left;
+                            initialTop = rect.top;
+                            // Continues using existing move listeners
+                        }
+                    };
+                    document.addEventListener('touchstart', reGrab, {once: true});
+                    
+                    return; // Exit here, wait for timeout or regrab
+                }
+
+                // Mouse up commits immediately
+                commitDrop(el, content);
+            };
+            
+            const commitDrop = (el, content) => {
                 state.isDragging = false;
                 stopWoodenPurr();
                 content.classList.remove('wiggle-drag');
@@ -814,11 +884,31 @@
                 const targetZone = checkCollision(centerX, centerY);
 
                 let isSuccess = false;
+                
                 if (targetZone) {
+                    // Logic check
                     if (el.dataset.type === 'both') {
                         isSuccess = true; 
                     } else if (el.dataset.type === targetZone) {
                         isSuccess = true;
+                    }
+                } else {
+                    // Gravity / Magnetic check for near misses
+                    const distBarn = getDistance(centerX, centerY, zoneBarn);
+                    const distTree = getDistance(centerX, centerY, zoneTree);
+                    const threshold = 150; // Pixels
+
+                    let snapTarget = null;
+                    if (distBarn < threshold) snapTarget = 'barn';
+                    else if (distTree < threshold) snapTarget = 'tree';
+
+                    if (snapTarget) {
+                        // Check if valid
+                        if (el.dataset.type === 'both' || el.dataset.type === snapTarget) {
+                            isSuccess = true;
+                            handleSuccess(el, snapTarget); // Snap to it
+                            return; 
+                        }
                     }
                 }
 
@@ -836,11 +926,24 @@
             el.addEventListener('touchstart', onStart, {passive: false});
         }
 
+        function getDistance(x, y, element) {
+            const rect = element.getBoundingClientRect();
+            const elX = rect.left + rect.width/2;
+            const elY = rect.top + rect.height/2;
+            return Math.sqrt(Math.pow(x - elX, 2) + Math.pow(y - elY, 2));
+        }
+
         function checkHover(x, y) {
-            if (isInside(x, y, zoneBarn.getBoundingClientRect())) zoneBarn.classList.add('hovered');
+            // Use distance for broader highlight (220px radius)
+            // This gives visual feedback before the snap triggers
+            const distBarn = getDistance(x, y, zoneBarn);
+            const distTree = getDistance(x, y, zoneTree);
+            const threshold = 220; 
+
+            if (distBarn < threshold) zoneBarn.classList.add('hovered');
             else zoneBarn.classList.remove('hovered');
 
-            if (isInside(x, y, zoneTree.getBoundingClientRect())) zoneTree.classList.add('hovered');
+            if (distTree < threshold) zoneTree.classList.add('hovered');
             else zoneTree.classList.remove('hovered');
         }
 
@@ -884,12 +987,10 @@
             el.style.transition = 'all 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55)';
             // Reset to safe landing spot
             const landingY = getSafeLandingY();
-            const centerX = window.innerWidth / 2;
-            const itemSize = 120;
             
-            el.style.left = (centerX - itemSize/2) + 'px';
+            el.style.left = '50%'; 
+            el.style.transform = 'translate(-50%, 0) scale(1)';
             el.style.top = landingY + 'px';
-            el.style.transform = 'scale(1)';
             el.style.zIndex = 10;
             
             // Re-enable Idle wiggle after returning
@@ -956,51 +1057,102 @@
             e.stopPropagation();
             playSound('success');
             createConfetti(e.clientX - 50, e.clientY - 50);
-            alert("You found the Christmas Pickle!");
+            updateBeau('success'); // Reusing existing visual
+            // Display speech bubble with custom text for a moment
+            const speech = document.getElementById('beau-speech');
+            const oldText = speech.innerText;
+            speech.innerText = "You found the pickle!";
+            speech.style.opacity = '1';
+            speech.style.width = '200px';
+            speech.style.left = '-60px'; // Adjust centering manually for this specific container
+            
+            setTimeout(() => {
+                speech.innerText = oldText;
+                speech.style.width = '';
+                speech.style.left = '';
+                updateBeau('idle');
+            }, 3000);
         }
 
         /* --- 5. INITIALIZATION --- */
         window.onload = () => {
             document.addEventListener('contextmenu', event => event.preventDefault());
-            // Wake Lock removed from here as we moved unlock logic to global listener
             loadItems();
             setTimeout(spawnItem, 1000);
-        };
-
-        // --- PARENT MODE & UNLOCK ---
-        let touchTimer = null;
-        const parentOverlay = document.getElementById('parent-overlay');
-        const indicator = document.getElementById('unlock-indicator');
-        const progressCircle = document.getElementById('unlock-progress');
-        
-        document.addEventListener('touchstart', (e) => {
-            if (state.inParentMode) return;
-            if (e.touches.length === 3) {
-                indicator.style.opacity = '1';
-                progressCircle.style.transition = 'stroke-dashoffset 2s linear';
-                progressCircle.style.strokeDashoffset = '0';
-                touchTimer = setTimeout(() => {
-                    state.inParentMode = true;
-                    parentOverlay.classList.remove('hidden');
-                    indicator.style.opacity = '0';
-                    renderParentModeItems();
-                }, 2000);
+            
+            // --- NEW PARENT MODE LISTENERS (Two Handed) ---
+            const star = document.getElementById('score-btn');
+            const angel = document.getElementById('angel-btn');
+            const ring = document.getElementById('unlock-progress');
+            const indicator = document.getElementById('unlock-indicator');
+            const overlay = document.getElementById('parent-overlay');
+            
+            function checkParentUnlock() {
+                if (state.unlockState.star && state.unlockState.angel) {
+                    // Both held! Start timer
+                    if (!state.unlockState.timer) {
+                        indicator.style.opacity = '1';
+                        ring.style.transition = 'stroke-dashoffset 3s linear'; // 3s hold
+                        ring.getBoundingClientRect(); // flush
+                        ring.style.strokeDashoffset = '0';
+                        
+                        state.unlockState.timer = setTimeout(() => {
+                            state.inParentMode = true;
+                            // Hide item so it doesn't block controls
+                            if (state.currentItem) state.currentItem.style.display = 'none';
+                            
+                            overlay.classList.remove('hidden');
+                            indicator.style.opacity = '0';
+                            renderParentModeItems();
+                            resetParentUnlock(); // Clear state
+                        }, 3000);
+                    }
+                } else {
+                    // One released, cancel
+                    if (state.unlockState.timer) {
+                        clearTimeout(state.unlockState.timer);
+                        state.unlockState.timer = null;
+                        indicator.style.opacity = '0';
+                        ring.style.transition = 'none';
+                        ring.style.strokeDashoffset = '283';
+                    }
+                }
             }
-        }, {passive: false});
-
-        document.addEventListener('touchend', (e) => {
-            if (e.touches.length < 3 && touchTimer) {
-                clearTimeout(touchTimer);
-                touchTimer = null;
+            
+            function resetParentUnlock() {
+                state.unlockState.star = false;
+                state.unlockState.angel = false;
+                if (state.unlockState.timer) clearTimeout(state.unlockState.timer);
+                state.unlockState.timer = null;
                 indicator.style.opacity = '0';
-                progressCircle.style.transition = 'none';
-                progressCircle.style.strokeDashoffset = '283';
+                ring.style.transition = 'none';
+                ring.style.strokeDashoffset = '283';
             }
-        });
+
+            const bindHold = (el, prop) => {
+                el.addEventListener('touchstart', (e) => { 
+                    e.preventDefault(); // Stop click emulation
+                    state.unlockState[prop] = true; 
+                    checkParentUnlock(); 
+                });
+                el.addEventListener('touchend', () => { 
+                    state.unlockState[prop] = false; 
+                    checkParentUnlock(); 
+                });
+                // Mouse fallback
+                el.addEventListener('mousedown', () => { state.unlockState[prop] = true; checkParentUnlock(); });
+                el.addEventListener('mouseup', () => { state.unlockState[prop] = false; checkParentUnlock(); });
+            };
+            
+            bindHold(star, 'star');
+            bindHold(angel, 'angel');
+        };
 
         function resumeGame() {
             state.inParentMode = false;
-            parentOverlay.classList.add('hidden');
+            // Show item again
+            if (state.currentItem) state.currentItem.style.display = 'flex';
+            document.getElementById('parent-overlay').classList.add('hidden');
         }
 
         if ('serviceWorker' in navigator) {
@@ -1011,3 +1163,6 @@
     </script>
 </body>
 </html>
+
+
+
