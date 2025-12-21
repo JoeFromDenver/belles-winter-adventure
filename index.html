@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Belle's Winter Adventure</title>
+    <title>Belle's Winter Adventure 2.0</title>
     <link rel="manifest" href="manifest.json">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -106,19 +106,14 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            /* Responsive Scaling: 4rem min, 15% viewport width preferred, 8rem max */
             font-size: clamp(4rem, 15vw, 8rem); 
-            z-index: 1000; /* Always on top when active/default */
+            z-index: 1000; 
         }
         
-        /* Oversized Hitbox logic - Circular & Generous */
         .draggable-item::after {
             content: '';
             position: absolute;
-            top: -30px; 
-            bottom: -30px; 
-            left: -30px; 
-            right: -30px;
+            top: -30px; bottom: -30px; left: -30px; right: -30px;
             border-radius: 50%;
         }
         
@@ -135,7 +130,10 @@
             transform: rotateX(20deg);
         }
         
-        /* Parent Mode Unlock Circle */
+        .toy-box-reject {
+            animation: happyBounce 0.3s ease-in-out;
+        }
+        
         .unlock-ring {
             stroke-dasharray: 283;
             stroke-dashoffset: 283;
@@ -151,10 +149,11 @@
         }
         
         .zone-bg {
-            background-color: rgba(66, 30, 10, 0.2);
-            backdrop-filter: blur(4px);
+            background-color: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(8px);
             border-radius: 9999px;
             padding: 1rem;
+            border: 4px solid rgba(255,255,255,0.6);
         }
     </style>
 </head>
@@ -221,32 +220,32 @@
             </div>
         </div>
 
-        <!-- TITLE (Perfectly Centered) -->
+        <!-- TITLE -->
         <div class="absolute top-4 left-0 right-0 flex justify-center z-10 pointer-events-none">
             <h1 class="text-white/90 text-4xl lg:text-6xl font-bold title-text tracking-wide text-center px-4">Belle's Winter Adventure</h1>
         </div>
 
-        <!-- 2. DROP ZONES LAYER (Raised higher) -->
+        <!-- 2. DROP ZONES LAYER -->
         <div class="absolute inset-0 z-10 flex justify-between items-center px-4 lg:px-20 pointer-events-none" style="padding-bottom: 25vh;">
             
-            <!-- LEFT: HOME -->
-            <div id="zone-barn" onclick="playSound('home')" class="drop-zone relative pointer-events-auto origin-bottom-left active:scale-95 flex flex-col items-center">
-                <div class="zone-bg flex flex-col items-center justify-center p-2">
-                    <div class="text-[clamp(6rem,12vw,12rem)] leading-none filter drop-shadow-xl select-none">🏠</div>
+            <!-- LEFT ZONE -->
+            <div id="zone-left" class="drop-zone relative pointer-events-auto origin-bottom-left active:scale-95 flex flex-col items-center">
+                <div class="zone-bg flex flex-col items-center justify-center p-2 min-w-[140px]">
+                    <div id="left-icon" class="text-[clamp(6rem,12vw,12rem)] leading-none filter drop-shadow-xl select-none"></div>
                 </div>
-                <div class="absolute -bottom-20 w-full text-center text-red-700 text-3xl lg:text-4xl font-bold tracking-wider uppercase">HOME</div>
+                <div id="left-label" class="absolute -bottom-20 w-full text-center text-3xl lg:text-4xl font-bold tracking-wider uppercase text-blue-800 drop-shadow-md"></div>
             </div>
 
-            <!-- RIGHT: CHRISTMAS -->
-            <div id="zone-tree" onclick="playSound('leaves')" class="drop-zone relative pointer-events-auto origin-bottom-right active:scale-95 flex flex-col items-center">
-                <div class="zone-bg relative flex flex-col items-center justify-center p-2">
-                    <div class="text-[clamp(6rem,12vw,12rem)] leading-none filter drop-shadow-xl select-none">🎄</div>
-                    <!-- Hidden Pickle -->
-                    <div id="hidden-pickle" class="absolute top-1/2 left-1/2 cursor-pointer opacity-80 pointer-events-auto" onclick="foundPickle(event)">
+            <!-- RIGHT ZONE -->
+            <div id="zone-right" class="drop-zone relative pointer-events-auto origin-bottom-right active:scale-95 flex flex-col items-center">
+                <div class="zone-bg relative flex flex-col items-center justify-center p-2 min-w-[140px]">
+                    <div id="right-icon" class="text-[clamp(6rem,12vw,12rem)] leading-none filter drop-shadow-xl select-none"></div>
+                    <!-- Hidden Pickle (Only appears if Christmas is active, handled in JS) -->
+                    <div id="hidden-pickle" class="absolute top-1/2 left-1/2 cursor-pointer opacity-80 pointer-events-auto hidden" onclick="foundPickle(event)">
                         <text class="text-xl" style="transform: rotate(15deg);">🥒</text>
                     </div>
                 </div>
-                <div class="absolute -bottom-20 w-full text-center text-green-800 text-3xl lg:text-4xl font-bold tracking-wider uppercase">CHRISTMAS</div>
+                <div id="right-label" class="absolute -bottom-20 w-full text-center text-3xl lg:text-4xl font-bold tracking-wider uppercase text-blue-800 drop-shadow-md"></div>
             </div>
         </div>
 
@@ -261,21 +260,20 @@
              </div>
         </div>
 
-        <!-- 4. SPAWN ANCHOR (Hidden anchor for logic) -->
+        <!-- 4. SPAWN ANCHOR -->
         <div id="spawn-anchor" class="absolute bottom-20 left-1/2 transform -translate-x-1/2 w-1 h-1"></div>
 
-        <!-- SCORE (Upper Left) -->
+        <!-- SCORE -->
         <div id="score-btn" onclick="playSound('chime')" class="absolute top-6 left-4 z-30 flex items-center bg-white/80 rounded-full px-4 py-2 border-2 border-blue-300 cursor-pointer active:scale-95 transition-transform backdrop-blur-sm shadow-md h-16 pointer-events-auto">
             <span class="text-3xl mr-2">⭐</span>
             <span id="score-display" class="text-3xl text-blue-800 font-bold">0</span>
         </div>
 
-        <!-- 5. ANGEL (Upper Right - Matching Score Height) -->
+        <!-- 5. ANGEL -->
         <div id="angel-btn" onclick="playSound('giggle'); updateBeau('success')" class="absolute top-6 right-4 z-30 flex flex-col items-center cursor-pointer active:scale-95 transition-transform pointer-events-auto">
             <div id="beau-container" class="w-16 h-16 bg-white/80 backdrop-blur-sm rounded-full border-2 border-yellow-400 shadow-lg flex items-center justify-center overflow-hidden">
                 <span class="text-4xl select-none">👼</span>
             </div>
-            <!-- Speech bubble hidden by default -->
             <div id="beau-speech" class="absolute top-16 mt-2 bg-white px-3 py-1 rounded-xl shadow-md text-gray-800 text-lg opacity-0 transition-opacity duration-300 w-32 text-center pointer-events-none">
                 Yay!
             </div>
@@ -284,34 +282,16 @@
         <!-- 6. PARENT MODE -->
         <div id="parent-overlay" class="absolute inset-0 z-50 bg-black/80 flex items-center justify-center hidden">
             <div class="bg-white rounded-2xl p-4 lg:p-8 w-[90%] max-h-[90%] text-center minnie-border flex flex-col">
-                <div class="flex justify-between items-center mb-4 border-b-2 border-red-200 pb-2">
-                    <h2 class="text-3xl text-gray-800">Parent Mode</h2>
-                    <div class="flex gap-2">
-                        <button id="btn-sound-toggle" onclick="toggleSound()" class="px-4 py-2 bg-blue-500 text-white rounded-full text-lg shadow-lg active:scale-95 transition-colors w-32">
-                            Sound: 100%
-                        </button>
-                        <button onclick="resumeGame()" class="px-4 py-2 bg-green-500 text-white rounded-full text-lg shadow-lg active:scale-95">
-                            Resume
-                        </button>
-                    </div>
+                <h2 class="text-3xl text-gray-800 mb-4">Parent Mode</h2>
+                <div class="flex gap-2 justify-center">
+                    <button id="btn-sound-toggle" onclick="toggleSound()" class="px-4 py-2 bg-blue-500 text-white rounded-full text-lg shadow-lg active:scale-95 transition-colors w-32">
+                        Sound: 100%
+                    </button>
+                    <button onclick="resumeGame()" class="px-4 py-2 bg-green-500 text-white rounded-full text-lg shadow-lg active:scale-95">
+                        Resume
+                    </button>
                 </div>
-                
-                <p class="text-gray-500 text-sm mb-2">Tap an item to change its category. Moves to top.</p>
-
-                <!-- Category Manager Grid -->
-                <div class="flex-1 overflow-y-auto scroller">
-                    <div class="grid grid-cols-3 gap-2 text-center select-none">
-                        <!-- Headers -->
-                        <div class="font-bold text-red-700 bg-red-100 rounded py-1 sticky top-0 z-10 shadow-sm">HOME</div>
-                        <div class="font-bold text-blue-700 bg-blue-100 rounded py-1 sticky top-0 z-10 shadow-sm">BOTH</div>
-                        <div class="font-bold text-green-700 bg-green-100 rounded py-1 sticky top-0 z-10 shadow-sm">CHRISTMAS</div>
-                        
-                        <!-- Content injected via JS -->
-                        <div id="col-home" class="flex flex-col gap-2 p-2 bg-red-50/50 rounded min-h-[100px]"></div>
-                        <div id="col-both" class="flex flex-col gap-2 p-2 bg-blue-50/50 rounded min-h-[100px]"></div>
-                        <div id="col-tree" class="flex flex-col gap-2 p-2 bg-green-50/50 rounded min-h-[100px]"></div>
-                    </div>
-                </div>
+                <p class="text-gray-500 text-sm mt-4">Categories are randomized on reload.</p>
             </div>
         </div>
 
@@ -328,7 +308,15 @@
 
     <!-- GAME ENGINE -->
     <script>
-        /* --- 1. STATE & ASSETS --- */
+        /* --- DATASETS --- */
+        const CATEGORIES = {
+            smileys: { id: 'smileys', label: "FACES", icon: "😃", items: ["😀","😃","😄","😁","😆","😅","🤣","😂","🙂","🙃","😉","😊","😇","🥰","😍","🤩","😘","😗","😚","😙","😋","😛","😜","🤪","😝","🤑","🤗","🤭","🤫","🤔","🤐","🤨","😐","😑","😶","😏","😒","🙄","😬","🤥","😌","😔","😪","🤤","😴","😷","🤒","🤕","🤢","🤮","🤧","🥵","🥶","🥴","😵","🤯","🤠","🥳","😎","🤓","🧐","😕","😟","🙁","☹️","😮","😯","😲","😳","🥺","😦","😧","😨","😰","😥","😢","😭","😱","😖","😣","😞","😓","😩","😫","🥱","😤","😡","😠","🤬","😈","👿","💀","☠️"] },
+            animals: { id: 'animals', label: "ANIMALS", icon: "🦁", items: ["🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼","🐨","🐯","🦁","🐮","🐷","🐽","🐸","🐵","🙈","🙉","🙊","🐒","🐔","🐧","🐦","🐤","🐣","🐥","🦆","🦅","🦉","🦇","🐺","🐗","🐴","🦄","🐝","🐛","🦋","🐌","🐞","🐜","🦟","🦗","🕷️","🕸️","🦂","🐢","🐍","🦎","🦖","🦕","🐙","🦑","🦐","🦞","🦀","🐡","🐠","🐟","🐬","🐳","🐋","🦈","🐊","🐅","🐆","🦓","🦍","🦧","🐘","🦛","🦏","🐪","🐫","🦒","🦘","🐃","🐂","🐄","🐎","🐖","🐏","🐑","🦙","🐐","🦌","🐕","🐩","🦮","🐕‍🦺","🐈","🐓","🦃","🦚","🦜","🦢","🦩","🕊️","🐇","🦝","🦨","🦡","🦦","🦥","🐁","🐀","🐿️","🦔"] },
+            food: { id: 'food', label: "FOOD", icon: "🍎", items: ["🍏","🍎","🍐","🍊","🍋","🍌","🍉","🍇","🍓","🍈","🍒","🍑","🥭","🍍","🥥","🥝","🍅","🍆","🥑","🥦","🥬","🥒","🌶️","🌽","🥕","🧄","🧅","🥔","🍠","🥐","🥯","🍞","🥖","🥨","🧀","🥚","🍳","🥞","🧇","🥓","🥩","🍗","🍖","🦴","🌭","🍔","🍟","🍕","🥪","🥙","🧆","🌮","🌯","🥗","🥘","🥫","🍝","🍜","🍲","🍛","🍣","🍱","🥟","🦪","🍤","🍙","🍚","🍘","🍥","🥠","🍢","🍡","🍧","🍨","🍦","🥧","🧁","🍰","🎂","🍮","🍭","🍬","🍫","🍿","🍩","🍪"] },
+            vehicles: { id: 'vehicles', label: "VEHICLES", icon: "🚗", items: ["🚗","🚕","🚙","🚌","🚎","🏎️","🚓","🚑","🚒","🚐","🚚","🚛","🚜","🛴","🚲","🛵","🏍️","🚨","🚔","🚍","🚘","🚖","🚡","🚠","🚟","🚃","🚋","🚞","🚝","🚄","🚅","🚈","🚂","🚆","🚇","🚊","🚉","✈️","🛫","🛬","🛩️","💺","🛰️","🚀","🛸","🚁","🛶","⛵","🚤","🛥️","🛳️","⛴️","🚢"] }
+        };
+
+        /* --- 1. STATE --- */
         const state = {
             currentItem: null,
             currentAnimation: null,
@@ -339,113 +327,50 @@
             inParentMode: false,
             humOscillators: [],
             humGain: null,
-            items: [],
-            dropTimeout: null,
+            
+            // Dynamic Categories
+            activeLeft: null,
+            activeRight: null,
+            
+            // Skip Logic
+            spawnTime: 0,
+            skipsInMinute: [], // Array of timestamps
+            
+            // Physics
             returnTimer: null, 
             isProcessingSuccess: false, 
-            pickleFoundCount: 0, 
+            dropTimeout: null,
+            pickleFoundCount: 0,
             
-            // Parent Mode Trigger State
+            // Parent Mode
             unlockState: { star: false, angel: false, timer: null }
         };
 
-        const defaultItems = [
-            // --- BARN / HOME ITEMS ---
-            { id: 'dino_t_rex', type: 'barn', emoji: '🦖' },
-            { id: 'dino_sauropod', type: 'barn', emoji: '🦕' },
-            { id: 'dino_hatch', type: 'barn', emoji: '🥚' },
-            { id: 'dino_croc', type: 'barn', emoji: '🐊' },
-            { id: 'dog', type: 'barn', emoji: '🐕' },
-            { id: 'cat', type: 'barn', emoji: '🐈' },
-            { id: 'cow', type: 'barn', emoji: '🐄' },
-            { id: 'pig', type: 'barn', emoji: '🐖' },
-            { id: 'tractor', type: 'barn', emoji: '🚜' },
-            { id: 'red_car', type: 'barn', emoji: '🚗' },
-            { id: 'truck', type: 'barn', emoji: '🚚' },
-            { id: 'shirt', type: 'barn', emoji: '👕' },
-            { id: 'jeans', type: 'barn', emoji: '👖' },
-            { id: 'dress', type: 'barn', emoji: '👗' },
-            { id: 'duck', type: 'barn', emoji: '🦆' },
-            { id: 'apple', type: 'barn', emoji: '🍎' },
-            { id: 'milk', type: 'barn', emoji: '🍼' },
-            { id: 'crayon', type: 'barn', emoji: '🖍️' },
-            { id: 'soccer', type: 'barn', emoji: '⚽' },
-            { id: 'bed', type: 'barn', emoji: '🛏️' },
-            { id: 'bath', type: 'barn', emoji: '🛁' },
-            { id: 'toothbrush', type: 'barn', emoji: '🪥' },
-            { id: 'spoon', type: 'barn', emoji: '🥄' },
-            { id: 'tv', type: 'barn', emoji: '📺' },
-            { id: 'lamp', type: 'barn', emoji: '🛋️' },
-            { id: 'phone', type: 'barn', emoji: '📱' },
-            { id: 'key', type: 'barn', emoji: '🔑' },
+        /* --- 2. SETUP --- */
+        function initCategories() {
+            const keys = Object.keys(CATEGORIES);
+            // Shuffle
+            keys.sort(() => Math.random() - 0.5);
             
-            // Toddler Food
-            { id: 'apple', type: 'barn', emoji: '🍎' },
-            { id: 'banana', type: 'barn', emoji: '🍌' },
-            { id: 'carrot', type: 'barn', emoji: '🥕' },
-            { id: 'cheese', type: 'barn', emoji: '🧀' },
-            { id: 'bread', type: 'barn', emoji: '🍞' },
-            { id: 'broccoli', type: 'barn', emoji: '🥦' },
-            { id: 'corn', type: 'barn', emoji: '🌽' },
-            { id: 'grapes', type: 'barn', emoji: '🍇' },
-            { id: 'strawberry', type: 'barn', emoji: '🍓' },
-            { id: 'egg', type: 'barn', emoji: '🥚' },
-            { id: 'pancake', type: 'barn', emoji: '🥞' },
-            { id: 'pizza', type: 'barn', emoji: '🍕' },
-            { id: 'cookie_plain', type: 'barn', emoji: '🍪' },
+            state.activeLeft = CATEGORIES[keys[0]];
+            state.activeRight = CATEGORIES[keys[1]];
+            
+            // Render UI
+            document.getElementById('left-icon').innerText = state.activeLeft.icon;
+            document.getElementById('left-label').innerText = state.activeLeft.label;
+            
+            document.getElementById('right-icon').innerText = state.activeRight.icon;
+            document.getElementById('right-label').innerText = state.activeRight.label;
+            
+            // Color tints? Maybe later. Blue/Red/Green theme works well enough universally.
+        }
 
-            // --- TREE / CHRISTMAS ITEMS ---
-            { id: 'santa', type: 'tree', emoji: '🎅' },
-            { id: 'star', type: 'tree', emoji: '⭐' },
-            { id: 'snowman', type: 'tree', emoji: '⛄' },
-            { id: 'candy', type: 'tree', emoji: '🍬' },
-            { id: 'reindeer', type: 'tree', emoji: '🦌' },
-            { id: 'bell', type: 'tree', emoji: '🔔' },
-            { id: 'candle', type: 'tree', emoji: '🕯️' },
-            { id: 'bow', type: 'tree', emoji: '🎀' },
-            { id: 'elf', type: 'tree', emoji: '🧝' },
-            { id: 'drum', type: 'tree', emoji: '🥁' },
-            { id: 'trumpet', type: 'tree', emoji: '🎺' },
-            { id: 'skate', type: 'tree', emoji: '⛸️' },
-            { id: 'sled', type: 'tree', emoji: '🛷' },
-            { id: 'nutcracker', type: 'tree', emoji: '💂' },
-            { id: 'pie', type: 'tree', emoji: '🥧' },
-            { id: 'orange', type: 'tree', emoji: '🍊' },
-            { id: 'wreath', type: 'tree', emoji: '🎄' },
-            { id: 'snowflake_item', type: 'tree', emoji: '❄️' },
-            { id: 'angel', type: 'tree', emoji: '👼' },
-            { id: 'card', type: 'tree', emoji: '💌' },
-            { id: 'chocolate', type: 'tree', emoji: '🍫' },
-            { id: 'pudding', type: 'tree', emoji: '🍮' },
-
-            // --- BOTH (Can go anywhere) ---
-            { id: 'bear', type: 'both', emoji: '🧸' },
-            { id: 'train', type: 'both', emoji: '🚂' },
-            { id: 'gift_box', type: 'both', emoji: '🎁' },
-            { id: 'book', type: 'both', emoji: '📚' },
-            { id: 'socks', type: 'both', emoji: '🧦' },
-            { id: 'scarf', type: 'both', emoji: '🧣' },
-            { id: 'gloves', type: 'both', emoji: '🧤' },
-            { id: 'coat', type: 'both', emoji: '🧥' },
-            { id: 'robot', type: 'both', emoji: '🤖' },
-            { id: 'guitar', type: 'both', emoji: '🎸' },
-            { id: 'headphones', type: 'both', emoji: '🎧' },
-            { id: 'ball', type: 'both', emoji: '🏀' },
-            { id: 'camera', type: 'both', emoji: '📷' },
-            { id: 'hat', type: 'both', emoji: '🧢' },
-            { id: 'boot', type: 'both', emoji: '👢' },
-            { id: 'umbrella', type: 'both', emoji: '☂️' }
-        ];
-
-        /* --- 2. AUDIO SYNTHESIZER --- */
+        /* --- 3. AUDIO --- */
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         
-        // --- GLOBAL AUDIO UNLOCK ---
         function unlockAudio() {
             if (audioCtx.state === 'suspended') {
-                audioCtx.resume().then(() => {
-                    console.log('Audio unlocked');
-                });
+                audioCtx.resume().then(() => console.log('Audio unlocked'));
             }
             document.removeEventListener('touchstart', unlockAudio);
             document.removeEventListener('click', unlockAudio);
@@ -453,7 +378,6 @@
         document.addEventListener('touchstart', unlockAudio, {passive: true});
         document.addEventListener('click', unlockAudio);
 
-        
         function getVolumeMultiplier() {
             if (state.soundMode === 0) return 1.0;   
             if (state.soundMode === 1) return 0.5;   
@@ -464,7 +388,6 @@
         function playSound(type) {
             try {
                 if (audioCtx.state === 'suspended') audioCtx.resume();
-                
                 const vol = getVolumeMultiplier();
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
@@ -473,38 +396,17 @@
                 const now = audioCtx.currentTime;
 
                 if (type === 'success') {
-                    // BIGGER FANFARE (4 notes)
-                    // C5
-                    const o1 = audioCtx.createOscillator();
-                    o1.type = 'triangle';
-                    o1.frequency.setValueAtTime(523.25, now);
-                    o1.connect(gain);
-                    o1.start(now); o1.stop(now + 0.8);
-
-                    // E5
-                    const o2 = audioCtx.createOscillator();
-                    o2.type = 'triangle';
-                    o2.frequency.setValueAtTime(659.25, now + 0.1);
-                    o2.connect(gain);
-                    o2.start(now + 0.1); o2.stop(now + 0.8);
-
-                    // G5
-                    const o3 = audioCtx.createOscillator();
-                    o3.type = 'triangle';
-                    o3.frequency.setValueAtTime(783.99, now + 0.2);
-                    o3.connect(gain);
-                    o3.start(now + 0.2); o3.stop(now + 0.8);
-
-                    // High C
-                    const o4 = audioCtx.createOscillator();
-                    o4.type = 'sine';
-                    o4.frequency.setValueAtTime(1046.50, now + 0.3);
-                    o4.connect(gain);
-                    o4.start(now + 0.3); o4.stop(now + 1.0);
-
+                    // C5-E5-G5-C6 Fanfare
+                    const freqs = [523.25, 659.25, 783.99, 1046.50];
+                    freqs.forEach((f, i) => {
+                        const o = audioCtx.createOscillator();
+                        o.type = i===3 ? 'sine' : 'triangle';
+                        o.frequency.setValueAtTime(f, now + (i*0.1));
+                        o.connect(gain);
+                        o.start(now + (i*0.1)); o.stop(now + 0.8 + (i*0.1));
+                    });
                     gain.gain.setValueAtTime(0.15 * vol, now);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + 1.0);
-
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
                 } else if (type === 'fail') {
                     osc.type = 'triangle';
                     osc.frequency.setValueAtTime(150, now);
@@ -529,27 +431,11 @@
                     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
                     osc.start(now);
                     osc.stop(now + 0.1);
-                } else if (type === 'home') {
-                    const osc2 = audioCtx.createOscillator();
-                    const gain2 = audioCtx.createGain();
-                    osc2.connect(gain2);
-                    gain2.connect(audioCtx.destination);
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(329.63, now); 
-                    gain.gain.setValueAtTime(0.1 * vol, now);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
-                    osc2.type = 'sine';
-                    osc2.frequency.setValueAtTime(261.63, now + 0.3);
-                    gain2.gain.setValueAtTime(0, now);
-                    gain2.gain.setValueAtTime(0.1 * vol, now + 0.3);
-                    gain2.gain.exponentialRampToValueAtTime(0.001, now + 1.0);
-                    osc.start(now); osc.stop(now + 0.5);
-                    osc2.start(now); osc2.stop(now + 1.0);
-                } else if (type === 'leaves') {
+                } else if (type === 'home' || type === 'leaves') {
+                    // Generic zone touch sound
                     osc.type = 'triangle';
                     osc.frequency.setValueAtTime(400, now);
-                    osc.frequency.linearRampToValueAtTime(500, now + 0.1);
-                    gain.gain.setValueAtTime(0.03 * vol, now);
+                    gain.gain.setValueAtTime(0.05 * vol, now);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
                     osc.start(now);
                     osc.stop(now + 0.2);
@@ -565,18 +451,24 @@
                 } else if (type === 'chime') {
                     osc.type = 'sine';
                     osc.frequency.setValueAtTime(1000, now);
-                    osc.frequency.exponentialRampToValueAtTime(2000, now + 0.5);
                     gain.gain.setValueAtTime(0.05 * vol, now);
                     gain.gain.linearRampToValueAtTime(0.001, now + 0.5);
                     osc.start(now);
                     osc.stop(now + 0.5);
+                } else if (type === 'whoosh') {
+                    // Box return sound
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(400, now);
+                    osc.frequency.exponentialRampToValueAtTime(100, now + 0.3);
+                    gain.gain.setValueAtTime(0.1 * vol, now);
+                    gain.gain.linearRampToValueAtTime(0.001, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
                 }
-            } catch (e) {
-                console.log("Audio Error", e);
-            }
+            } catch (e) {}
         }
 
-        // --- WOODEN PURR SOUND (Additive Rolling Sound) ---
+        // Additive Synthesis for Wooden Purr
         function startWoodenPurr() {
             try {
                 if (state.humOscillators.length > 0) return; 
@@ -586,14 +478,12 @@
                 const vol = getVolumeMultiplier();
                 const now = audioCtx.currentTime;
                 
-                // Master Gain
                 state.humGain = audioCtx.createGain();
                 state.humGain.connect(audioCtx.destination);
                 state.humGain.gain.setValueAtTime(0, now);
                 state.humGain.gain.linearRampToValueAtTime(0.3 * vol, now + 0.1); 
 
                 const freqs = [100, 105, 95];
-                
                 freqs.forEach(f => {
                     const osc = audioCtx.createOscillator();
                     osc.type = 'triangle'; 
@@ -602,10 +492,7 @@
                     osc.start(now);
                     state.humOscillators.push(osc);
                 });
-
-            } catch (e) {
-                console.error("Purr Error", e);
-            }
+            } catch (e) {}
         }
 
         function stopWoodenPurr() {
@@ -614,139 +501,74 @@
                     const now = audioCtx.currentTime;
                     state.humGain.gain.cancelScheduledValues(now);
                     state.humGain.gain.setValueAtTime(state.humGain.gain.value, now);
-                    state.humGain.gain.linearRampToValueAtTime(0, now + 0.15); // Fade out
+                    state.humGain.gain.linearRampToValueAtTime(0, now + 0.15); 
                     
-                    state.humOscillators.forEach(osc => {
-                        osc.stop(now + 0.15);
-                    });
+                    state.humOscillators.forEach(osc => { osc.stop(now + 0.15); });
                     state.humOscillators = [];
                     state.humGain = null;
                 }
             } catch (e) {}
         }
 
-        /* --- 3. STORAGE & CONFIG --- */
-        function loadItems() {
-            const saved = localStorage.getItem('belle_adventure_items_v2');
-            if (saved) {
-                try {
-                    state.items = JSON.parse(saved);
-                } catch(e) {
-                    state.items = [...defaultItems];
-                }
-            } else {
-                state.items = [...defaultItems];
-            }
-        }
-
-        function saveItems() {
-            localStorage.setItem('belle_adventure_items_v2', JSON.stringify(state.items));
-        }
-
-        function cycleCategory(id) {
-            const index = state.items.findIndex(i => i.id === id);
-            if (index === -1) return;
-            
-            const item = state.items[index];
-            if (item.type === 'barn') item.type = 'both';
-            else if (item.type === 'both') item.type = 'tree';
-            else if (item.type === 'tree') item.type = 'barn';
-            
-            state.items.splice(index, 1);
-            state.items.unshift(item);
-
-            saveItems();
-            renderParentModeItems();
-            playSound('pop');
-        }
-
-        function renderParentModeItems() {
-            const cols = {
-                home: document.getElementById('col-home'),
-                both: document.getElementById('col-both'),
-                tree: document.getElementById('col-tree')
-            };
-            
-            cols.home.innerHTML = '';
-            cols.both.innerHTML = '';
-            cols.tree.innerHTML = '';
-
-            state.items.forEach(item => {
-                const el = document.createElement('div');
-                el.className = 'text-4xl cursor-pointer hover:scale-110 transition-transform p-2 bg-white rounded shadow-sm';
-                el.innerHTML = item.emoji;
-                el.onclick = () => cycleCategory(item.id);
-                
-                if (item.type === 'barn') cols.home.appendChild(el);
-                else if (item.type === 'tree') cols.tree.appendChild(el);
-                else cols.both.appendChild(el);
-            });
-        }
-
-        function toggleSound() {
-            state.soundMode = (state.soundMode + 1) % 3;
-            const btn = document.getElementById('btn-sound-toggle');
-            if (state.soundMode === 0) {
-                btn.innerText = "Sound: 100%";
-                btn.className = "px-4 py-2 bg-blue-500 text-white rounded-full text-lg shadow-lg active:scale-95 transition-colors w-32";
-            } else if (state.soundMode === 1) {
-                btn.innerText = "Sound: 50%";
-                btn.className = "px-4 py-2 bg-yellow-500 text-white rounded-full text-lg shadow-lg active:scale-95 transition-colors w-32";
-            } else {
-                btn.innerText = "Sound: 10%";
-                btn.className = "px-4 py-2 bg-purple-900 text-white rounded-full text-lg shadow-lg active:scale-95 transition-colors w-32";
-            }
-            playSound('pop');
-        }
-
         /* --- 4. GAME LOGIC --- */
-        const zoneBarn = document.getElementById('zone-barn');
-        const zoneTree = document.getElementById('zone-tree');
-        const spawnAnchor = document.getElementById('spawn-anchor');
+        const zoneLeft = document.getElementById('zone-left');
+        const zoneRight = document.getElementById('zone-right');
+        const toyBox = document.getElementById('toy-box-container');
 
-        // Logic to calculate safe landing spot
         function getSafeLandingY() {
             const h = window.innerHeight;
             let targetY = h * 0.33;
-            // Responsive check: on small screens move higher to avoid targets
-            if (h - targetY < 350) { 
-                targetY = h * 0.20; 
-            }
+            if (h - targetY < 350) targetY = h * 0.20; 
             if (targetY < h * 0.15) targetY = h * 0.15;
             return targetY;
         }
 
-        // --- PALM REJECTION UTILS ---
         function isPalm(e) {
             const touch = e.touches ? e.touches[0] : e;
             const x = touch.clientX;
             const y = touch.clientY;
             const w = window.innerWidth;
             const h = window.innerHeight;
-            const edge = 30; // 30px buffer on edges
-            
-            // Allow top zone for UI
+            const edge = 30; 
             if (y < 100) return false;
-
             return (x < edge || x > w - edge || y > h - edge);
         }
 
+        function canSkip() {
+            const now = Date.now();
+            // Rule 1: Must be out for 5 seconds
+            if (now - state.spawnTime < 5000) return false;
+            
+            // Rule 2: Max 2 skips per minute
+            // Clean up old skips
+            state.skipsInMinute = state.skipsInMinute.filter(t => now - t < 60000);
+            if (state.skipsInMinute.length >= 2) return false;
+            
+            return true;
+        }
+
         function spawnItem() {
-            state.isProcessingSuccess = false; // RESET LOCK
+            state.isProcessingSuccess = false;
             let data;
             let attempts = 0;
-            do {
-                data = state.items[Math.floor(Math.random() * state.items.length)];
-                attempts++;
-            } while (state.recentItems.includes(data.id) && attempts < 20);
             
-            state.recentItems.push(data.id);
+            // Pick from either active category
+            const pool = [...state.activeLeft.items.map(i => ({emoji: i, cat: 'left'})), 
+                          ...state.activeRight.items.map(i => ({emoji: i, cat: 'right'}))];
+            
+            do {
+                data = pool[Math.floor(Math.random() * pool.length)];
+                attempts++;
+            } while (state.recentItems.includes(data.emoji) && attempts < 20);
+            
+            state.recentItems.push(data.emoji);
             if (state.recentItems.length > 5) state.recentItems.shift();
+            
+            // Record spawn time for Skip Logic
+            state.spawnTime = Date.now();
 
-            // Create Container
             const el = document.createElement('div');
             el.className = 'draggable-item absolute cursor-pointer pointer-events-auto select-none';
-            // Create Inner Content for Wiggling
             const content = document.createElement('span');
             content.className = 'emoji-content';
             content.innerHTML = data.emoji;
@@ -754,12 +576,10 @@
 
             const landingY = getSafeLandingY();
             const centerX = window.innerWidth / 2;
-            // Note: size is controlled by CSS, JS positioning centers it loosely
-            // We use transform translate to center it properly based on its dynamic width
             el.style.left = '50%'; 
             el.style.transform = 'translate(-50%, 0)';
             el.style.top = landingY + 'px';
-            el.dataset.type = data.type;
+            el.dataset.type = data.cat; // 'left' or 'right'
             
             document.body.appendChild(el);
             
@@ -780,7 +600,6 @@
             state.currentAnimation.onfinish = () => {
                 content.classList.add('wiggle-idle');
                 state.currentAnimation = null;
-                // Bake final position into styles to remove dependency on animation fill
                 el.style.transform = 'translate(-50%, 0)';
             };
 
@@ -793,32 +612,18 @@
         function makeDraggable(el, content) {
             let startX, startY;
             let initialLeft, initialTop;
-            let itemWidth = 0, itemHeight = 0; // NEW: Track size
+            let itemWidth = 0, itemHeight = 0;
             
             const onStart = (e) => {
                 if (state.inParentMode) return;
-                
-                // Palm Rejection
-                if (e.touches && isPalm(e)) {
-                    console.log("Palm rejected");
-                    return; 
-                }
+                if (e.touches && isPalm(e)) return; 
 
-                e.preventDefault(); // Prevent default touch actions (scroll/zoom)
+                e.preventDefault(); 
                 
-                // CLEAR PREVIOUS FAILED DROP TIMER if re-grabbed
-                if (state.returnTimer) {
-                    clearTimeout(state.returnTimer);
-                    state.returnTimer = null;
-                }
-
-                if (state.currentAnimation) {
-                    state.currentAnimation.cancel();
-                    state.currentAnimation = null;
-                }
+                if (state.returnTimer) { clearTimeout(state.returnTimer); state.returnTimer = null; }
+                if (state.currentAnimation) { state.currentAnimation.cancel(); state.currentAnimation = null; }
                 
                 state.isDragging = true;
-                
                 playSound('pop'); 
                 startWoodenPurr(); 
                 
@@ -829,18 +634,13 @@
                 startX = point.clientX;
                 startY = point.clientY;
                 
-                // Get current position (might be mid-air if caught early, or landed)
                 const rect = el.getBoundingClientRect();
-                
-                // Switch from % positioning to absolute pixel positioning for drag
                 el.style.transform = 'none'; 
                 el.style.left = rect.left + 'px';
                 el.style.top = rect.top + 'px';
                 
                 initialLeft = rect.left;
                 initialTop = rect.top;
-                
-                // Store dimensions for center calculation later
                 itemWidth = rect.width;
                 itemHeight = rect.height;
 
@@ -865,20 +665,15 @@
                 let newLeft = initialLeft + dx;
                 let newTop = initialTop + dy;
 
-                // --- INVISIBLE BORDER (Keep item on screen) ---
-                // Get window dimensions
+                // Invisible border
                 const maxLeft = window.innerWidth - itemWidth;
                 const maxTop = window.innerHeight - itemHeight;
-
-                // Clamp the values so it can't go < 0 or > max
-                // We allow a tiny 10px buffer so it doesn't feel stuck on the very pixel
                 newLeft = Math.max(0, Math.min(newLeft, maxLeft));
                 newTop = Math.max(0, Math.min(newTop, maxTop));
 
                 el.style.left = `${newLeft}px`;
                 el.style.top = `${newTop}px`;
 
-                // Calculate center of ITEM based on clamped position
                 const centerX = newLeft + itemWidth / 2;
                 const centerY = newTop + itemHeight / 2;
 
@@ -888,28 +683,15 @@
             const onEnd = (e) => {
                 if (!state.isDragging) return;
                 
-                // --- FORGIVING DRAG LOGIC ---
-                // If it's a touch end, we wait briefly to see if it's just a slip
                 if (e.type === 'touchend') {
-                    // Temporarily pause visuals but don't commit drop
                     stopWoodenPurr();
-                    
-                    state.dropTimeout = setTimeout(() => {
-                        commitDrop(el, content);
-                    }, 400); // 400ms grace period
-
-                    // Add global listener to catch re-grab anywhere
+                    state.dropTimeout = setTimeout(() => { commitDrop(el, content); }, 400); 
                     const reGrab = (ev) => {
                         if (ev.type === 'touchstart') {
                             clearTimeout(state.dropTimeout);
                             state.dropTimeout = null;
                             document.removeEventListener('touchstart', reGrab);
-                            
-                            // Resume drag from new position
-                            // We essentially restart the logic
-                            stopWoodenPurr(); // Restart sound
-                            startWoodenPurr();
-                            
+                            stopWoodenPurr(); startWoodenPurr();
                             const point = ev.touches[0];
                             startX = point.clientX;
                             startY = point.clientY;
@@ -918,15 +700,11 @@
                             initialTop = rect.top;
                             itemWidth = rect.width;
                             itemHeight = rect.height;
-                            // Continues using existing move listeners
                         }
                     };
                     document.addEventListener('touchstart', reGrab, {once: true});
-                    
-                    return; // Exit here, wait for timeout or regrab
+                    return; 
                 }
-
-                // Mouse up commits immediately
                 commitDrop(el, content);
             };
             
@@ -943,34 +721,40 @@
                 const rect = el.getBoundingClientRect();
                 const centerX = rect.left + rect.width / 2;
                 const centerY = rect.top + rect.height / 2;
-                const targetZone = checkCollision(centerX, centerY);
+                
+                // 1. Check for Box Return (Skip)
+                const distBox = getDistance(centerX, centerY, toyBox);
+                if (distBox < 200) { // Box proximity
+                    if (canSkip()) {
+                        handleSkip(el);
+                        return;
+                    } else {
+                        // Box reject animation (visual feedback why it failed)
+                        toyBox.classList.add('toy-box-reject');
+                        setTimeout(() => toyBox.classList.remove('toy-box-reject'), 300);
+                        playSound('fail'); // Soft fail sound
+                    }
+                }
 
+                // 2. Check Zones
+                const targetZone = checkCollision(centerX, centerY);
                 let isSuccess = false;
                 
                 if (targetZone) {
-                    // Logic check
-                    if (el.dataset.type === 'both') {
-                        isSuccess = true; 
-                    } else if (el.dataset.type === targetZone) {
-                        isSuccess = true;
-                    }
+                    if (el.dataset.type === targetZone) isSuccess = true;
                 } else {
-                    // Gravity / Magnetic check for near misses
-                    const distBarn = getDistance(centerX, centerY, zoneBarn);
-                    const distTree = getDistance(centerX, centerY, zoneTree);
-                    const threshold = 250; // Increased magnetic threshold
+                    const distLeft = getDistance(centerX, centerY, zoneLeft);
+                    const distRight = getDistance(centerX, centerY, zoneRight);
+                    const threshold = 250; 
 
                     let snapTarget = null;
-                    if (distBarn < threshold) snapTarget = 'barn';
-                    else if (distTree < threshold) snapTarget = 'tree';
+                    if (distLeft < threshold) snapTarget = 'left';
+                    else if (distRight < threshold) snapTarget = 'right';
 
-                    if (snapTarget) {
-                        // Check if valid
-                        if (el.dataset.type === 'both' || el.dataset.type === snapTarget) {
-                            isSuccess = true;
-                            handleSuccess(el, snapTarget); // Snap to it
-                            return; 
-                        }
+                    if (snapTarget && el.dataset.type === snapTarget) {
+                        isSuccess = true;
+                        handleSuccess(el, snapTarget); 
+                        return; 
                     }
                 }
 
@@ -980,8 +764,8 @@
                     handleFail(el, content);
                 }
                 
-                zoneBarn.classList.remove('hovered');
-                zoneTree.classList.remove('hovered');
+                zoneLeft.classList.remove('hovered');
+                zoneRight.classList.remove('hovered');
             };
 
             el.addEventListener('mousedown', onStart);
@@ -996,22 +780,20 @@
         }
 
         function checkHover(x, y) {
-            // Use distance for broader highlight (220px radius)
-            // This gives visual feedback before the snap triggers
-            const distBarn = getDistance(x, y, zoneBarn);
-            const distTree = getDistance(x, y, zoneTree);
+            const distLeft = getDistance(x, y, zoneLeft);
+            const distRight = getDistance(x, y, zoneRight);
             const threshold = 220; 
 
-            if (distBarn < threshold) zoneBarn.classList.add('hovered');
-            else zoneBarn.classList.remove('hovered');
+            if (distLeft < threshold) zoneLeft.classList.add('hovered');
+            else zoneLeft.classList.remove('hovered');
 
-            if (distTree < threshold) zoneTree.classList.add('hovered');
-            else zoneTree.classList.remove('hovered');
+            if (distRight < threshold) zoneRight.classList.add('hovered');
+            else zoneRight.classList.remove('hovered');
         }
 
         function checkCollision(x, y) {
-            if (isInside(x, y, zoneBarn.getBoundingClientRect())) return 'barn';
-            if (isInside(x, y, zoneTree.getBoundingClientRect())) return 'tree';
+            if (isInside(x, y, zoneLeft.getBoundingClientRect())) return 'left';
+            if (isInside(x, y, zoneRight.getBoundingClientRect())) return 'right';
             return null;
         }
 
@@ -1020,10 +802,8 @@
         }
 
         function handleSuccess(el, targetZone) {
-            if (state.isProcessingSuccess) return; // PREVENT DOUBLE TRIGGER
+            if (state.isProcessingSuccess) return; 
             state.isProcessingSuccess = true;
-            
-            // Clear any return timer if it existed
             if (state.returnTimer) { clearTimeout(state.returnTimer); state.returnTimer = null; }
 
             state.score++;
@@ -1031,29 +811,23 @@
             playSound('success');
             updateBeau('success');
             
-            const targetEl = targetZone === 'barn' ? zoneBarn : zoneTree;
+            const targetEl = targetZone === 'left' ? zoneLeft : zoneRight;
             targetEl.classList.add('happy-bounce');
             setTimeout(() => targetEl.classList.remove('happy-bounce'), 500);
 
-            // Pull Animation
-            const rect = targetEl.getBoundingClientRect();
-            const targetX = rect.left + rect.width / 2;
-            const targetY = rect.top + rect.height / 2;
-            const currentRect = el.getBoundingClientRect();
+            const rect = el.getBoundingClientRect();
+            createConfetti(rect.left, rect.top);
             
+            // Black hole animation
+            const targetRect = targetEl.getBoundingClientRect();
+            const tx = targetRect.left + targetRect.width/2 - rect.width/2;
+            const ty = targetRect.top + targetRect.height/2 - rect.height/2;
+
             el.style.transition = 'all 0.8s cubic-bezier(0.25, 1, 0.5, 1)';
-            // Calculate center offset relative to the item's top-left corner
-            el.style.left = (targetX - currentRect.width / 2) + 'px';
-            el.style.top = (targetY - currentRect.height / 2) + 'px';
+            el.style.left = tx + 'px';
+            el.style.top = ty + 'px';
             el.style.transform = 'scale(0.1) rotate(180deg)';
             el.style.opacity = '0';
-
-            // More Confetti!
-            for(let i=0; i<3; i++) {
-                setTimeout(() => {
-                    createConfetti(rect.left + (Math.random()*rect.width/2), rect.top + (Math.random()*rect.height/2));
-                }, i * 100);
-            }
 
             setTimeout(() => {
                 el.remove();
@@ -1061,30 +835,47 @@
             }, 800);
         }
 
+        function handleSkip(el) {
+            if (state.isProcessingSuccess) return;
+            state.isProcessingSuccess = true;
+            if (state.returnTimer) { clearTimeout(state.returnTimer); state.returnTimer = null; }
+            
+            state.skipsInMinute.push(Date.now());
+            playSound('whoosh');
+            
+            // Shrink back into box
+            const boxRect = toyBox.getBoundingClientRect();
+            const elRect = el.getBoundingClientRect();
+            const tx = boxRect.left + boxRect.width/2 - elRect.width/2;
+            const ty = boxRect.top + boxRect.height/2 - elRect.height/2;
+            
+            el.style.transition = 'all 0.5s ease-in';
+            el.style.left = tx + 'px';
+            el.style.top = ty + 'px';
+            el.style.transform = 'scale(0.1)';
+            el.style.opacity = '0';
+            
+            setTimeout(() => {
+                el.remove();
+                setTimeout(spawnItem, 300);
+            }, 500);
+        }
+
         function handleFail(el, content) {
             playSound('fail');
             updateBeau('idle');
             
-            // NEW: Stay put logic (3 seconds grace)
             if (state.returnTimer) clearTimeout(state.returnTimer);
-            
             state.returnTimer = setTimeout(() => {
                 el.style.transition = 'all 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55)';
-                // Reset to safe landing spot
                 const landingY = getSafeLandingY();
-                
                 el.style.left = '50%'; 
                 el.style.transform = 'translate(-50%, 0) scale(1)';
                 el.style.top = landingY + 'px';
                 el.style.zIndex = 50;
-                
-                // Re-enable Idle wiggle after returning
-                setTimeout(() => {
-                    content.classList.add('wiggle-idle');
-                }, 600);
-                
+                setTimeout(() => { content.classList.add('wiggle-idle'); }, 600);
                 state.returnTimer = null;
-            }, 3000); // 3 Seconds
+            }, 3000); 
         }
 
         function updateBeau(mood) {
@@ -1098,7 +889,6 @@
         }
 
         function createConfetti(x, y) {
-            // Increased to 60 particles
             for (let i = 0; i < 60; i++) {
                 const conf = document.createElement('div');
                 conf.className = 'confetti-piece';
@@ -1108,7 +898,7 @@
                 conf.style.transform = `rotate(${Math.random() * 360}deg)`;
                 
                 const angle = Math.random() * Math.PI * 2;
-                const velocity = 80 + Math.random() * 100; // Faster/Wider spread
+                const velocity = 80 + Math.random() * 100; 
                 const tx = Math.cos(angle) * velocity;
                 const ty = Math.sin(angle) * velocity - 150; 
 
@@ -1145,20 +935,14 @@
         function foundPickle(e) {
             e.stopPropagation();
             state.pickleFoundCount++;
-            
             playSound('success');
             createConfetti(e.clientX - 50, e.clientY - 50);
-            
             const speech = document.getElementById('beau-speech');
-            
             if (state.pickleFoundCount <= 2) {
-                // First 2 times: Special Message
                 updateBeau('success'); 
                 speech.innerText = "You found the pickle!";
                 speech.style.width = '200px';
-                speech.style.left = '-60px'; // Adjust centering manually for this specific container
-                
-                // Revert text later
+                speech.style.left = '-60px'; 
                 setTimeout(() => {
                     speech.innerText = "Yay!";
                     speech.style.width = '';
@@ -1166,8 +950,6 @@
                     updateBeau('idle');
                 }, 3000);
             } else {
-                // 3rd time onwards: Just Yay!
-                // Reset styles just in case rapid clicking kept old styles
                 speech.innerText = "Yay!";
                 speech.style.width = '';
                 speech.style.left = '';
@@ -1178,7 +960,8 @@
         /* --- 5. INITIALIZATION --- */
         window.onload = () => {
             document.addEventListener('contextmenu', event => event.preventDefault());
-            loadItems();
+            
+            initCategories();
             setTimeout(spawnItem, 1000);
             
             // --- NEW PARENT MODE LISTENERS (Two Handed) ---
@@ -1190,26 +973,21 @@
             
             function checkParentUnlock() {
                 if (state.unlockState.star && state.unlockState.angel) {
-                    // Both held! Start timer
                     if (!state.unlockState.timer) {
                         indicator.style.opacity = '1';
-                        ring.style.transition = 'stroke-dashoffset 3s linear'; // 3s hold
-                        ring.getBoundingClientRect(); // flush
+                        ring.style.transition = 'stroke-dashoffset 3s linear'; 
+                        ring.getBoundingClientRect(); 
                         ring.style.strokeDashoffset = '0';
                         
                         state.unlockState.timer = setTimeout(() => {
                             state.inParentMode = true;
-                            // Hide item so it doesn't block controls
                             if (state.currentItem) state.currentItem.style.display = 'none';
-                            
                             overlay.classList.remove('hidden');
                             indicator.style.opacity = '0';
-                            renderParentModeItems();
-                            resetParentUnlock(); // Clear state
+                            resetParentUnlock(); 
                         }, 3000);
                     }
                 } else {
-                    // One released, cancel
                     if (state.unlockState.timer) {
                         clearTimeout(state.unlockState.timer);
                         state.unlockState.timer = null;
@@ -1232,7 +1010,7 @@
 
             const bindHold = (el, prop) => {
                 el.addEventListener('touchstart', (e) => { 
-                    e.preventDefault(); // Stop click emulation
+                    e.preventDefault(); 
                     state.unlockState[prop] = true; 
                     checkParentUnlock(); 
                 });
@@ -1240,7 +1018,6 @@
                     state.unlockState[prop] = false; 
                     checkParentUnlock(); 
                 });
-                // Mouse fallback
                 el.addEventListener('mousedown', () => { state.unlockState[prop] = true; checkParentUnlock(); });
                 el.addEventListener('mouseup', () => { state.unlockState[prop] = false; checkParentUnlock(); });
             };
@@ -1251,7 +1028,6 @@
 
         function resumeGame() {
             state.inParentMode = false;
-            // Show item again
             if (state.currentItem) state.currentItem.style.display = 'flex';
             document.getElementById('parent-overlay').classList.add('hidden');
         }
