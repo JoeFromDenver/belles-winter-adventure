@@ -137,7 +137,7 @@
         .unlock-ring {
             stroke-dasharray: 283;
             stroke-dashoffset: 283;
-            transition: stroke-dashoffset 3s linear;
+            transition: stroke-dashoffset 5s linear;
         }
 
         .scroller::-webkit-scrollbar { width: 8px; }
@@ -208,15 +208,18 @@
                 </svg>
             </div>
             
-            <!-- Clouds -->
-            <div onclick="handleCloudTap(event)" class="absolute top-10 left-[-150px] cloud-slow text-white opacity-80 cursor-pointer active:scale-95 z-10 w-48 h-24 flex items-center justify-center">
-                <svg width="100%" height="100%" viewBox="0 0 100 60" fill="currentColor"><path d="M10,40 Q0,40 0,30 Q0,10 20,10 Q25,0 40,0 Q60,0 65,10 Q80,5 90,20 Q100,20 100,40 Z" /></svg>
-            </div>
-            <div onclick="handleCloudTap(event)" class="absolute top-24 left-[-100px] cloud-medium text-white opacity-90 cursor-pointer active:scale-95 z-10 w-36 h-20 flex items-center justify-center" style="animation-delay: -15s">
-                <svg width="100%" height="100%" viewBox="0 0 100 60" fill="currentColor"><path d="M10,40 Q0,40 0,30 Q0,10 20,10 Q25,0 40,0 Q60,0 65,10 Q80,5 90,20 Q100,20 100,40 Z" /></svg>
-            </div>
-            <div onclick="handleCloudTap(event)" class="absolute top-5 left-[-120px] cloud-fast text-white opacity-70 cursor-pointer active:scale-95 z-10 w-32 h-16 flex items-center justify-center" style="animation-delay: -5s">
-                <svg width="100%" height="100%" viewBox="0 0 100 60" fill="currentColor"><path d="M10,40 Q0,40 0,30 Q0,10 20,10 Q25,0 40,0 Q60,0 65,10 Q80,5 90,20 Q100,20 100,40 Z" /></svg>
+            <!-- Cloud Layer -->
+            <div id="cloud-layer">
+                <!-- Base Clouds -->
+                <div onclick="handleCloudTap(event)" class="absolute top-10 left-[-150px] cloud-slow text-white opacity-80 cursor-pointer active:scale-95 z-10 w-48 h-24 flex items-center justify-center">
+                    <svg width="100%" height="100%" viewBox="0 0 100 60" fill="currentColor"><path d="M10,40 Q0,40 0,30 Q0,10 20,10 Q25,0 40,0 Q60,0 65,10 Q80,5 90,20 Q100,20 100,40 Z" /></svg>
+                </div>
+                <div onclick="handleCloudTap(event)" class="absolute top-24 left-[-100px] cloud-medium text-white opacity-90 cursor-pointer active:scale-95 z-10 w-36 h-20 flex items-center justify-center" style="animation-delay: -15s">
+                    <svg width="100%" height="100%" viewBox="0 0 100 60" fill="currentColor"><path d="M10,40 Q0,40 0,30 Q0,10 20,10 Q25,0 40,0 Q60,0 65,10 Q80,5 90,20 Q100,20 100,40 Z" /></svg>
+                </div>
+                <div onclick="handleCloudTap(event)" class="absolute top-5 left-[-120px] cloud-fast text-white opacity-70 cursor-pointer active:scale-95 z-10 w-32 h-16 flex items-center justify-center" style="animation-delay: -5s">
+                    <svg width="100%" height="100%" viewBox="0 0 100 60" fill="currentColor"><path d="M10,40 Q0,40 0,30 Q0,10 20,10 Q25,0 40,0 Q60,0 65,10 Q80,5 90,20 Q100,20 100,40 Z" /></svg>
+                </div>
             </div>
         </div>
 
@@ -240,7 +243,7 @@
             <div id="zone-right" class="drop-zone relative pointer-events-auto origin-bottom-right active:scale-95 flex flex-col items-center">
                 <div class="zone-bg relative flex flex-col items-center justify-center p-2 min-w-[140px]">
                     <div id="right-icon" class="text-[clamp(6rem,12vw,12rem)] leading-none filter drop-shadow-xl select-none"></div>
-                    <!-- Hidden Pickle (Only appears if Christmas is active, handled in JS) -->
+                    <!-- Hidden Pickle -->
                     <div id="hidden-pickle" class="absolute top-1/2 left-1/2 cursor-pointer opacity-80 pointer-events-auto hidden" onclick="foundPickle(event)">
                         <text class="text-xl" style="transform: rotate(15deg);">🥒</text>
                     </div>
@@ -249,14 +252,10 @@
             </div>
         </div>
 
-        <!-- 3. TOY BOX (CENTER) -->
-        <div id="toy-box-container" onclick="playSound('wood')" class="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-20 pointer-events-auto cursor-pointer toy-box active:scale-95 transition-transform flex flex-col items-center">
+        <!-- 3. TOY BOX (HOUSE) -->
+        <div id="toy-box-container" onclick="playSound('doorbell')" class="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-20 pointer-events-auto cursor-pointer toy-box active:scale-95 transition-transform flex flex-col items-center">
              <div class="relative flex items-center justify-center">
-                <div class="text-[7rem] lg:text-[9rem] leading-none filter drop-shadow-2xl select-none">📦</div>
-                <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-[60%] text-[4rem] lg:text-[6rem] font-bold text-white drop-shadow-md select-none">?</div>
-             </div>
-             <div class="bg-amber-900/20 px-4 py-1 rounded-full mt-[-10px] backdrop-blur-sm">
-                 <text class="font-family-mouse text-3xl text-amber-900 font-bold">BOX</text>
+                <div class="text-[7rem] lg:text-[9rem] leading-none filter drop-shadow-2xl select-none">🏠</div>
              </div>
         </div>
 
@@ -282,16 +281,50 @@
         <!-- 6. PARENT MODE -->
         <div id="parent-overlay" class="absolute inset-0 z-50 bg-black/80 flex items-center justify-center hidden">
             <div class="bg-white rounded-2xl p-4 lg:p-8 w-[90%] max-h-[90%] text-center minnie-border flex flex-col">
-                <h2 class="text-3xl text-gray-800 mb-4">Parent Mode</h2>
-                <div class="flex gap-2 justify-center">
-                    <button id="btn-sound-toggle" onclick="toggleSound()" class="px-4 py-2 bg-blue-500 text-white rounded-full text-lg shadow-lg active:scale-95 transition-colors w-32">
-                        Sound: 100%
-                    </button>
-                    <button onclick="resumeGame()" class="px-4 py-2 bg-green-500 text-white rounded-full text-lg shadow-lg active:scale-95">
+                <div class="flex justify-between items-center mb-4 border-b-2 border-red-200 pb-2">
+                    <h2 class="text-3xl text-gray-800">Parent Mode</h2>
+                    <button onclick="resumeGame()" class="px-6 py-2 bg-green-500 text-white rounded-full text-lg shadow-lg active:scale-95">
                         Resume
                     </button>
                 </div>
-                <p class="text-gray-500 text-sm mt-4">Categories are randomized on reload.</p>
+
+                <!-- Settings Controls -->
+                <div class="flex flex-col gap-4 mb-4">
+                    <div class="flex justify-between items-center bg-gray-100 p-3 rounded-xl">
+                        <span class="text-xl font-bold text-gray-700">Sound</span>
+                        <button id="btn-sound-toggle" onclick="toggleSound()" class="px-4 py-2 bg-blue-500 text-white rounded-full active:scale-95 w-32">
+                            100%
+                        </button>
+                    </div>
+                    
+                    <div class="flex justify-between items-center bg-gray-100 p-3 rounded-xl">
+                        <span class="text-xl font-bold text-gray-700">Left Zone</span>
+                        <button id="btn-cat-left" onclick="cycleCategoryConfig('left')" class="px-4 py-2 bg-indigo-500 text-white rounded-full active:scale-95 w-32">
+                            Faces
+                        </button>
+                    </div>
+
+                    <div class="flex justify-between items-center bg-gray-100 p-3 rounded-xl">
+                        <span class="text-xl font-bold text-gray-700">Right Zone</span>
+                        <button id="btn-cat-right" onclick="cycleCategoryConfig('right')" class="px-4 py-2 bg-indigo-500 text-white rounded-full active:scale-95 w-32">
+                            Animals
+                        </button>
+                    </div>
+                </div>
+                
+                <p class="text-gray-500 text-sm mb-2">Tap item to move it (Top: Home, Mid: Both, Bottom: Xmas)</p>
+
+                <!-- Category Manager Grid -->
+                <div class="flex-1 overflow-y-auto scroller">
+                    <div class="grid grid-cols-3 gap-2 text-center select-none">
+                        <div class="font-bold text-red-700 bg-red-100 rounded py-1 sticky top-0 z-10 shadow-sm">LEFT</div>
+                        <div class="font-bold text-blue-700 bg-blue-100 rounded py-1 sticky top-0 z-10 shadow-sm">BOTH</div>
+                        <div class="font-bold text-green-700 bg-green-100 rounded py-1 sticky top-0 z-10 shadow-sm">RIGHT</div>
+                        <div id="col-home" class="flex flex-col gap-2 p-2 bg-red-50/50 rounded min-h-[100px]"></div>
+                        <div id="col-both" class="flex flex-col gap-2 p-2 bg-blue-50/50 rounded min-h-[100px]"></div>
+                        <div id="col-tree" class="flex flex-col gap-2 p-2 bg-green-50/50 rounded min-h-[100px]"></div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -316,6 +349,8 @@
             vehicles: { id: 'vehicles', label: "VEHICLES", icon: "🚗", items: ["🚗","🚕","🚙","🚌","🚎","🏎️","🚓","🚑","🚒","🚐","🚚","🚛","🚜","🛴","🚲","🛵","🏍️","🚨","🚔","🚍","🚘","🚖","🚡","🚠","🚟","🚃","🚋","🚞","🚝","🚄","🚅","🚈","🚂","🚆","🚇","🚊","🚉","✈️","🛫","🛬","🛩️","💺","🛰️","🚀","🛸","🚁","🛶","⛵","🚤","🛥️","🛳️","⛴️","🚢"] }
         };
 
+        const CAT_KEYS = Object.keys(CATEGORIES);
+
         /* --- 1. STATE --- */
         const state = {
             currentItem: null,
@@ -328,41 +363,89 @@
             humOscillators: [],
             humGain: null,
             
-            // Dynamic Categories
+            // Config
+            config: {
+                leftCat: 'random',
+                rightCat: 'random'
+            },
+            
+            // Active Categories
             activeLeft: null,
             activeRight: null,
             
             // Skip Logic
             spawnTime: 0,
-            skipsInMinute: [], // Array of timestamps
+            skipsInMinute: [], 
             
-            // Physics
+            // Physics & Storm
             returnTimer: null, 
             isProcessingSuccess: false, 
             dropTimeout: null,
             pickleFoundCount: 0,
+            isStorming: false,
+            stormTimer: null,
+            snowInterval: null,
+            totalTouches: 0, // Track global touches for parent mode strictness
             
             // Parent Mode
-            unlockState: { star: false, angel: false, timer: null }
+            unlockState: { star: false, angel: false, timer: null },
+            items: []
         };
+
+        const defaultItems = [
+            // Dummy default, mostly overwritten by categories but kept for fallback
+            { id: 'apple', type: 'barn', emoji: '🍎' }
+        ];
 
         /* --- 2. SETUP --- */
         function initCategories() {
-            const keys = Object.keys(CATEGORIES);
-            // Shuffle
-            keys.sort(() => Math.random() - 0.5);
+            // Determine Left Category
+            let leftKey = state.config.leftCat;
+            if (leftKey === 'random') {
+                leftKey = CAT_KEYS[Math.floor(Math.random() * CAT_KEYS.length)];
+            }
             
-            state.activeLeft = CATEGORIES[keys[0]];
-            state.activeRight = CATEGORIES[keys[1]];
+            // Determine Right Category (try to be different)
+            let rightKey = state.config.rightCat;
+            if (rightKey === 'random') {
+                const remaining = CAT_KEYS.filter(k => k !== leftKey);
+                rightKey = remaining[Math.floor(Math.random() * remaining.length)];
+            }
+
+            state.activeLeft = CATEGORIES[leftKey];
+            state.activeRight = CATEGORIES[rightKey];
             
-            // Render UI
+            // Update UI
             document.getElementById('left-icon').innerText = state.activeLeft.icon;
             document.getElementById('left-label').innerText = state.activeLeft.label;
-            
             document.getElementById('right-icon').innerText = state.activeRight.icon;
             document.getElementById('right-label').innerText = state.activeRight.label;
             
-            // Color tints? Maybe later. Blue/Red/Green theme works well enough universally.
+            // Update Parent Buttons Text
+            updateConfigButtons();
+        }
+
+        function updateConfigButtons() {
+            const lBtn = document.getElementById('btn-cat-left');
+            const rBtn = document.getElementById('btn-cat-right');
+            
+            lBtn.innerText = state.config.leftCat === 'random' ? "Random" : CATEGORIES[state.config.leftCat].label;
+            rBtn.innerText = state.config.rightCat === 'random' ? "Random" : CATEGORIES[state.config.rightCat].label;
+        }
+
+        function cycleCategoryConfig(side) {
+            const current = state.config[side === 'left' ? 'leftCat' : 'rightCat'];
+            const options = ['random', ...CAT_KEYS];
+            const idx = options.indexOf(current);
+            const next = options[(idx + 1) % options.length];
+            
+            if (side === 'left') state.config.leftCat = next;
+            else state.config.rightCat = next;
+            
+            updateConfigButtons();
+            // Re-init immediately to show change
+            initCategories();
+            playSound('pop');
         }
 
         /* --- 3. AUDIO --- */
@@ -372,10 +455,10 @@
             if (audioCtx.state === 'suspended') {
                 audioCtx.resume().then(() => console.log('Audio unlocked'));
             }
-            document.removeEventListener('touchstart', unlockAudio);
-            document.removeEventListener('click', unlockAudio);
         }
+        // Bind to all interaction types for max reliability
         document.addEventListener('touchstart', unlockAudio, {passive: true});
+        document.addEventListener('touchend', unlockAudio, {passive: true});
         document.addEventListener('click', unlockAudio);
 
         function getVolumeMultiplier() {
@@ -396,7 +479,6 @@
                 const now = audioCtx.currentTime;
 
                 if (type === 'success') {
-                    // C5-E5-G5-C6 Fanfare
                     const freqs = [523.25, 659.25, 783.99, 1046.50];
                     freqs.forEach((f, i) => {
                         const o = audioCtx.createOscillator();
@@ -431,11 +513,27 @@
                     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
                     osc.start(now);
                     osc.stop(now + 0.1);
-                } else if (type === 'home' || type === 'leaves') {
-                    // Generic zone touch sound
+                } else if (type === 'home' || type === 'doorbell') {
+                    const osc2 = audioCtx.createOscillator();
+                    const gain2 = audioCtx.createGain();
+                    osc2.connect(gain2);
+                    gain2.connect(audioCtx.destination);
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(329.63, now); 
+                    gain.gain.setValueAtTime(0.1 * vol, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+                    osc2.type = 'sine';
+                    osc2.frequency.setValueAtTime(261.63, now + 0.3);
+                    gain2.gain.setValueAtTime(0, now);
+                    gain2.gain.setValueAtTime(0.1 * vol, now + 0.3);
+                    gain2.gain.exponentialRampToValueAtTime(0.001, now + 1.0);
+                    osc.start(now); osc.stop(now + 0.5);
+                    osc2.start(now); osc2.stop(now + 1.0);
+                } else if (type === 'leaves') {
                     osc.type = 'triangle';
                     osc.frequency.setValueAtTime(400, now);
-                    gain.gain.setValueAtTime(0.05 * vol, now);
+                    osc.frequency.linearRampToValueAtTime(500, now + 0.1);
+                    gain.gain.setValueAtTime(0.03 * vol, now);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
                     osc.start(now);
                     osc.stop(now + 0.2);
@@ -456,7 +554,6 @@
                     osc.start(now);
                     osc.stop(now + 0.5);
                 } else if (type === 'whoosh') {
-                    // Box return sound
                     osc.type = 'sine';
                     osc.frequency.setValueAtTime(400, now);
                     osc.frequency.exponentialRampToValueAtTime(100, now + 0.3);
@@ -510,10 +607,49 @@
             } catch (e) {}
         }
 
-        /* --- 4. GAME LOGIC --- */
+        /* --- 4. GAME LOGIC & SNOWSTORM --- */
         const zoneLeft = document.getElementById('zone-left');
         const zoneRight = document.getElementById('zone-right');
         const toyBox = document.getElementById('toy-box-container');
+
+        function startSnowstormCycle() {
+            // Random time between 15-30 mins (900000ms - 1800000ms)
+            const nextStorm = 900000 + Math.random() * 900000;
+            // Testing: const nextStorm = 10000;
+            setTimeout(triggerSnowstorm, nextStorm);
+        }
+
+        function triggerSnowstorm() {
+            if (state.isStorming) return;
+            state.isStorming = true;
+            console.log("Starting Snowstorm!");
+            
+            // 1. Add extra clouds
+            const layer = document.getElementById('cloud-layer');
+            const extraClouds = [];
+            for (let i = 0; i < 3; i++) {
+                const c = document.createElement('div');
+                c.className = `absolute text-white opacity-60 pointer-events-none cloud-${i%2===0?'fast':'medium'}`;
+                c.style.top = Math.random() * 20 + '%';
+                c.style.animationDelay = `-${Math.random()*10}s`;
+                c.innerHTML = `<svg width="100" height="60" viewBox="0 0 100 60" fill="currentColor"><path d="M10,40 Q0,40 0,30 Q0,10 20,10 Q25,0 40,0 Q60,0 65,10 Q80,5 90,20 Q100,20 100,40 Z" /></svg>`;
+                layer.appendChild(c);
+                extraClouds.push(c);
+            }
+
+            // 2. Heavy Snow Loop
+            state.snowInterval = setInterval(() => {
+                spawnSnow(Math.random() * 100, -10); // Spawn from top
+            }, 300); // Very frequent
+
+            // 3. End after 2 mins
+            setTimeout(() => {
+                state.isStorming = false;
+                clearInterval(state.snowInterval);
+                extraClouds.forEach(c => c.remove());
+                startSnowstormCycle(); // Schedule next one
+            }, 120000);
+        }
 
         function getSafeLandingY() {
             const h = window.innerHeight;
@@ -536,14 +672,9 @@
 
         function canSkip() {
             const now = Date.now();
-            // Rule 1: Must be out for 5 seconds
             if (now - state.spawnTime < 5000) return false;
-            
-            // Rule 2: Max 2 skips per minute
-            // Clean up old skips
             state.skipsInMinute = state.skipsInMinute.filter(t => now - t < 60000);
             if (state.skipsInMinute.length >= 2) return false;
-            
             return true;
         }
 
@@ -552,7 +683,6 @@
             let data;
             let attempts = 0;
             
-            // Pick from either active category
             const pool = [...state.activeLeft.items.map(i => ({emoji: i, cat: 'left'})), 
                           ...state.activeRight.items.map(i => ({emoji: i, cat: 'right'}))];
             
@@ -564,7 +694,6 @@
             state.recentItems.push(data.emoji);
             if (state.recentItems.length > 5) state.recentItems.shift();
             
-            // Record spawn time for Skip Logic
             state.spawnTime = Date.now();
 
             const el = document.createElement('div');
@@ -579,7 +708,7 @@
             el.style.left = '50%'; 
             el.style.transform = 'translate(-50%, 0)';
             el.style.top = landingY + 'px';
-            el.dataset.type = data.cat; // 'left' or 'right'
+            el.dataset.type = data.cat; 
             
             document.body.appendChild(el);
             
@@ -665,7 +794,6 @@
                 let newLeft = initialLeft + dx;
                 let newTop = initialTop + dy;
 
-                // Invisible border
                 const maxLeft = window.innerWidth - itemWidth;
                 const maxTop = window.innerHeight - itemHeight;
                 newLeft = Math.max(0, Math.min(newLeft, maxLeft));
@@ -722,21 +850,18 @@
                 const centerX = rect.left + rect.width / 2;
                 const centerY = rect.top + rect.height / 2;
                 
-                // 1. Check for Box Return (Skip)
                 const distBox = getDistance(centerX, centerY, toyBox);
-                if (distBox < 200) { // Box proximity
+                if (distBox < 200) { 
                     if (canSkip()) {
                         handleSkip(el);
                         return;
                     } else {
-                        // Box reject animation (visual feedback why it failed)
                         toyBox.classList.add('toy-box-reject');
                         setTimeout(() => toyBox.classList.remove('toy-box-reject'), 300);
-                        playSound('fail'); // Soft fail sound
+                        playSound('fail'); 
                     }
                 }
 
-                // 2. Check Zones
                 const targetZone = checkCollision(centerX, centerY);
                 let isSuccess = false;
                 
@@ -818,7 +943,6 @@
             const rect = el.getBoundingClientRect();
             createConfetti(rect.left, rect.top);
             
-            // Black hole animation
             const targetRect = targetEl.getBoundingClientRect();
             const tx = targetRect.left + targetRect.width/2 - rect.width/2;
             const ty = targetRect.top + targetRect.height/2 - rect.height/2;
@@ -843,7 +967,6 @@
             state.skipsInMinute.push(Date.now());
             playSound('whoosh');
             
-            // Shrink back into box
             const boxRect = toyBox.getBoundingClientRect();
             const elRect = el.getBoundingClientRect();
             const tx = boxRect.left + boxRect.width/2 - elRect.width/2;
@@ -960,11 +1083,14 @@
         /* --- 5. INITIALIZATION --- */
         window.onload = () => {
             document.addEventListener('contextmenu', event => event.preventDefault());
+            document.addEventListener('touchstart', (e) => { state.totalTouches = e.touches.length; });
+            document.addEventListener('touchend', (e) => { state.totalTouches = e.touches.length; });
             
             initCategories();
             setTimeout(spawnItem, 1000);
+            startSnowstormCycle();
             
-            // --- NEW PARENT MODE LISTENERS (Two Handed) ---
+            // --- NEW PARENT MODE LISTENERS (Strict) ---
             const star = document.getElementById('score-btn');
             const angel = document.getElementById('angel-btn');
             const ring = document.getElementById('unlock-progress');
@@ -972,10 +1098,15 @@
             const overlay = document.getElementById('parent-overlay');
             
             function checkParentUnlock() {
-                if (state.unlockState.star && state.unlockState.angel) {
+                // Strict: Must have exactly 2 touches total on screen
+                const isStrictTwoFinger = state.totalTouches === 2;
+                const isHoldingBoth = state.unlockState.star && state.unlockState.angel;
+
+                if (isHoldingBoth && isStrictTwoFinger) {
                     if (!state.unlockState.timer) {
                         indicator.style.opacity = '1';
-                        ring.style.transition = 'stroke-dashoffset 3s linear'; 
+                        // 5s hold
+                        ring.style.transition = 'stroke-dashoffset 5s linear'; 
                         ring.getBoundingClientRect(); 
                         ring.style.strokeDashoffset = '0';
                         
@@ -985,9 +1116,10 @@
                             overlay.classList.remove('hidden');
                             indicator.style.opacity = '0';
                             resetParentUnlock(); 
-                        }, 3000);
+                        }, 5000);
                     }
                 } else {
+                    // Fail condition
                     if (state.unlockState.timer) {
                         clearTimeout(state.unlockState.timer);
                         state.unlockState.timer = null;
@@ -1018,8 +1150,9 @@
                     state.unlockState[prop] = false; 
                     checkParentUnlock(); 
                 });
-                el.addEventListener('mousedown', () => { state.unlockState[prop] = true; checkParentUnlock(); });
-                el.addEventListener('mouseup', () => { state.unlockState[prop] = false; checkParentUnlock(); });
+                // Mouse fallback
+                el.addEventListener('mousedown', () => { state.unlockState[prop] = true; state.totalTouches=2; checkParentUnlock(); });
+                el.addEventListener('mouseup', () => { state.unlockState[prop] = false; state.totalTouches=0; checkParentUnlock(); });
             };
             
             bindHold(star, 'star');
