@@ -155,6 +155,12 @@
             padding: 1rem;
             border: 4px solid rgba(255,255,255,0.6);
         }
+
+        .blocked-item {
+            opacity: 0.3;
+            filter: grayscale(100%);
+            transform: scale(0.9);
+        }
     </style>
 </head>
 <body>
@@ -166,7 +172,7 @@
         <div class="absolute inset-0 z-0">
             <!-- Organic Horizon (SVG) -->
             <div class="absolute bottom-0 w-full h-[40%] pointer-events-none">
-                <svg viewBox="0 0 1440 320" class="w-full h-full" preserveAspectRatio="none">
+                <svg viewBox="0 0 1440 320" class="w-full h-full" preserveAspectRatio="none" id="background-svg">
                     <defs>
                         <linearGradient id="snowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
                             <stop offset="0%" style="stop-color:white;stop-opacity:1" />
@@ -175,34 +181,13 @@
                     </defs>
                     <path fill="url(#snowGrad)" fill-opacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,149.3C960,160,1056,160,1152,138.7C1248,117,1344,75,1392,53.3L1440,32L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
                     
+                    <!-- Dynamic Decoration Groups -->
+                    <g id="bg-deco-left"></g>
+                    <g id="bg-deco-right"></g>
+
+                    <!-- Static Features -->
                     <!-- Road -->
                     <path d="M-100,320 Q300,100 800,280 T1500,180" fill="none" stroke="#cfd8dc" stroke-width="25" opacity="0.8" stroke-linecap="round" stroke-dasharray="20,10" />
-
-                    <!-- Trees Cluster Left -->
-                    <text x="2%" y="85%" font-size="20">🌲</text>
-                    <text x="5%" y="80%" font-size="25">🌲</text>
-                    <text x="8%" y="90%" font-size="22">🌲</text>
-                    <text x="12%" y="82%" font-size="28">🌲</text>
-                    <text x="15%" y="88%" font-size="20">🌲</text>
-
-                    <!-- Trees Cluster Right -->
-                    <text x="85%" y="75%" font-size="22">🌲</text>
-                    <text x="88%" y="65%" font-size="18">🌲</text>
-                    <text x="90%" y="80%" font-size="30">🌲</text>
-                    <text x="95%" y="70%" font-size="25">🌲</text>
-                    
-                    <!-- Mid Ground Trees -->
-                    <text x="35%" y="60%" font-size="18">🌲</text>
-                    <text x="40%" y="65%" font-size="22">🌲</text>
-                    <text x="65%" y="60%" font-size="20">🌲</text>
-
-                    <!-- Tiny Houses & Cars -->
-                    <text x="25%" y="55%" font-size="30">🏠</text>
-                    <text x="30%" y="58%" font-size="20">🚗</text>
-                    
-                    <text x="75%" y="50%" font-size="25">🏠</text>
-                    <text x="70%" y="52%" font-size="20" transform="scale(-1, 1) translate(-100,0)">🚗</text> <!-- Flipped Car -->
-
                     <!-- Tiny Lake -->
                     <ellipse cx="20%" cy="85%" rx="60" ry="15" fill="#BBDEFB" stroke="#90CAF9" stroke-width="2" />
                 </svg>
@@ -283,53 +268,48 @@
             <div class="bg-white rounded-2xl p-4 lg:p-8 w-[90%] max-h-[90%] text-center minnie-border flex flex-col">
                 <div class="flex justify-between items-center mb-4 border-b-2 border-red-200 pb-2">
                     <h2 class="text-3xl text-gray-800">Parent Mode</h2>
-                    <button onclick="resumeGame()" class="px-6 py-2 bg-green-500 text-white rounded-full text-lg shadow-lg active:scale-95">
-                        Resume
-                    </button>
+                    <div class="flex gap-2">
+                        <button id="btn-sound-toggle" onclick="toggleSound()" class="px-4 py-2 bg-blue-500 text-white rounded-full text-lg shadow-lg active:scale-95 transition-colors w-32">
+                            Sound: 100%
+                        </button>
+                        <button onclick="resumeGame()" class="px-4 py-2 bg-green-500 text-white rounded-full text-lg shadow-lg active:scale-95">
+                            Resume
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Settings Controls -->
-                <div class="flex flex-col gap-4 mb-4">
-                    <div class="flex justify-between items-center bg-gray-100 p-3 rounded-xl">
-                        <span class="text-xl font-bold text-gray-700">Sound</span>
-                        <button id="btn-sound-toggle" onclick="toggleSound()" class="px-4 py-2 bg-blue-500 text-white rounded-full active:scale-95 w-32">
-                            100%
-                        </button>
-                    </div>
-                    
-                    <div class="flex justify-between items-center bg-gray-100 p-3 rounded-xl">
-                        <span class="text-xl font-bold text-gray-700">Left Zone</span>
-                        <button id="btn-cat-left" onclick="cycleCategoryConfig('left')" class="px-4 py-2 bg-indigo-500 text-white rounded-full active:scale-95 w-32">
+                <div class="flex gap-4 mb-4">
+                    <div class="flex-1 flex flex-col gap-2 bg-gray-100 p-3 rounded-xl">
+                        <span class="text-xl font-bold text-gray-700 text-center">Left Zone</span>
+                        <button id="btn-cat-left" onclick="cycleCategoryConfig('left')" class="w-full px-4 py-2 bg-indigo-500 text-white rounded-full active:scale-95">
                             Faces
                         </button>
                     </div>
 
-                    <div class="flex justify-between items-center bg-gray-100 p-3 rounded-xl">
-                        <span class="text-xl font-bold text-gray-700">Right Zone</span>
-                        <button id="btn-cat-right" onclick="cycleCategoryConfig('right')" class="px-4 py-2 bg-indigo-500 text-white rounded-full active:scale-95 w-32">
+                    <div class="flex-1 flex flex-col gap-2 bg-gray-100 p-3 rounded-xl">
+                        <span class="text-xl font-bold text-gray-700 text-center">Right Zone</span>
+                        <button id="btn-cat-right" onclick="cycleCategoryConfig('right')" class="w-full px-4 py-2 bg-indigo-500 text-white rounded-full active:scale-95">
                             Animals
                         </button>
                     </div>
                 </div>
                 
-                <p class="text-gray-500 text-sm mb-2">Tap item to move it (Top: Home, Mid: Both, Bottom: Xmas)</p>
+                <p class="text-gray-500 text-sm mb-2 text-center">Tap emoji to block/unblock items from appearing.</p>
 
                 <!-- Category Manager Grid -->
                 <div class="flex-1 overflow-y-auto scroller">
-                    <div class="grid grid-cols-3 gap-2 text-center select-none">
-                        <div class="font-bold text-red-700 bg-red-100 rounded py-1 sticky top-0 z-10 shadow-sm">LEFT</div>
-                        <div class="font-bold text-blue-700 bg-blue-100 rounded py-1 sticky top-0 z-10 shadow-sm">BOTH</div>
-                        <div class="font-bold text-green-700 bg-green-100 rounded py-1 sticky top-0 z-10 shadow-sm">RIGHT</div>
-                        <div id="col-home" class="flex flex-col gap-2 p-2 bg-red-50/50 rounded min-h-[100px]"></div>
-                        <div id="col-both" class="flex flex-col gap-2 p-2 bg-blue-50/50 rounded min-h-[100px]"></div>
-                        <div id="col-tree" class="flex flex-col gap-2 p-2 bg-green-50/50 rounded min-h-[100px]"></div>
+                    <div class="grid grid-cols-2 gap-4 text-center select-none">
+                        <!-- Content injected via JS -->
+                        <div id="col-left-preview" class="flex flex-wrap content-start gap-2 p-2 bg-white/50 rounded min-h-[100px]"></div>
+                        <div id="col-right-preview" class="flex flex-wrap content-start gap-2 p-2 bg-white/50 rounded min-h-[100px]"></div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- 7. UNLOCK INDICATOR -->
-        <div id="unlock-indicator" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-0 transition-opacity z-50">
+        <!-- 7. UNLOCK INDICATOR (Z-2000 to be on top) -->
+        <div id="unlock-indicator" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-0 transition-opacity z-[2000]">
             <svg width="100" height="100" viewBox="0 0 100 100">
                 <circle cx="50" cy="50" r="45" stroke="#ffffff" stroke-width="5" fill="none" opacity="0.3"/>
                 <circle id="unlock-progress" cx="50" cy="50" r="45" stroke="#ffffff" stroke-width="5" fill="none" class="unlock-ring" stroke-linecap="round" transform="rotate(-90 50 50)"/>
@@ -369,6 +349,9 @@
                 rightCat: 'random'
             },
             
+            // Blocklist
+            blockedItems: [],
+            
             // Active Categories
             activeLeft: null,
             activeRight: null,
@@ -385,19 +368,13 @@
             isStorming: false,
             stormTimer: null,
             snowInterval: null,
-            totalTouches: 0, // Track global touches for parent mode strictness
+            totalTouches: 0, 
             
             // Parent Mode
-            unlockState: { star: false, angel: false, timer: null },
-            items: []
+            unlockState: { star: false, angel: false, timer: null }
         };
 
-        const defaultItems = [
-            // Dummy default, mostly overwritten by categories but kept for fallback
-            { id: 'apple', type: 'barn', emoji: '🍎' }
-        ];
-
-        /* --- 2. SETUP --- */
+        /* --- 2. SETUP & DECORATIONS --- */
         function initCategories() {
             // Determine Left Category
             let leftKey = state.config.leftCat;
@@ -405,11 +382,15 @@
                 leftKey = CAT_KEYS[Math.floor(Math.random() * CAT_KEYS.length)];
             }
             
-            // Determine Right Category (try to be different)
+            // Determine Right Category (Ensuring diff if random)
             let rightKey = state.config.rightCat;
             if (rightKey === 'random') {
                 const remaining = CAT_KEYS.filter(k => k !== leftKey);
                 rightKey = remaining[Math.floor(Math.random() * remaining.length)];
+            } else if (rightKey === leftKey) {
+                // If user forced same, shift right
+                const remaining = CAT_KEYS.filter(k => k !== leftKey);
+                rightKey = remaining[0];
             }
 
             state.activeLeft = CATEGORIES[leftKey];
@@ -421,8 +402,64 @@
             document.getElementById('right-icon').innerText = state.activeRight.icon;
             document.getElementById('right-label').innerText = state.activeRight.label;
             
+            // Update Backgrounds
+            renderBackgroundDecorations(leftKey, 'left');
+            renderBackgroundDecorations(rightKey, 'right');
+            
             // Update Parent Buttons Text
             updateConfigButtons();
+        }
+
+        function renderBackgroundDecorations(catId, side) {
+            const container = document.getElementById(side === 'left' ? 'bg-deco-left' : 'bg-deco-right');
+            container.innerHTML = ''; // Clear
+            
+            // Helpers
+            const createText = (x, y, size, emoji, scaleX = 1) => {
+                const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                t.setAttribute("x", x + "%");
+                t.setAttribute("y", y + "%");
+                t.setAttribute("font-size", size);
+                t.textContent = emoji;
+                if (scaleX !== 1) t.setAttribute("transform", `scale(${scaleX}, 1) translate(${scaleX < 0 ? -200 : 0}, 0)`); // Rough flip logic
+                container.appendChild(t);
+            };
+
+            // LEFT SIDE DECO (0-50% width)
+            if (side === 'left') {
+                if (catId === 'animals') {
+                    createText(15, 82, 30, "🦆");
+                    createText(22, 85, 25, "🐢");
+                    createText(5, 75, 40, "🌲");
+                } else if (catId === 'vehicles') {
+                    createText(10, 60, 35, "🚜");
+                    createText(25, 62, 30, "🚛");
+                } else if (catId === 'food') {
+                    createText(15, 75, 40, "🧺"); // Basket
+                    createText(20, 80, 20, "🍎");
+                    createText(10, 80, 20, "🍇");
+                } else if (catId === 'smileys') {
+                    createText(15, 65, 40, "⛄");
+                    createText(25, 65, 30, "⛄");
+                }
+            } 
+            // RIGHT SIDE DECO (50-100% width)
+            else {
+                if (catId === 'animals') {
+                    createText(85, 75, 35, "🦌");
+                    createText(75, 65, 30, "🐻");
+                    createText(92, 70, 40, "🌲");
+                } else if (catId === 'vehicles') {
+                    createText(80, 20, 40, "✈️");
+                    createText(65, 25, 30, "🚁");
+                } else if (catId === 'food') {
+                    createText(85, 70, 40, "🍭");
+                    createText(75, 75, 35, "🍬");
+                    createText(90, 60, 35, "🍩");
+                } else if (catId === 'smileys') {
+                    createText(90, 15, 50, "🌞");
+                }
+            }
         }
 
         function updateConfigButtons() {
@@ -437,26 +474,73 @@
             const current = state.config[side === 'left' ? 'leftCat' : 'rightCat'];
             const options = ['random', ...CAT_KEYS];
             const idx = options.indexOf(current);
-            const next = options[(idx + 1) % options.length];
+            let next = options[(idx + 1) % options.length];
+            
+            // Check collision with other side
+            const otherSide = side === 'left' ? state.config.rightCat : state.config.leftCat;
+            if (next !== 'random' && next === otherSide) {
+                // Skip if same
+                next = options[(idx + 2) % options.length];
+            }
             
             if (side === 'left') state.config.leftCat = next;
             else state.config.rightCat = next;
             
             updateConfigButtons();
-            // Re-init immediately to show change
-            initCategories();
+            initCategories(); // Refresh game board
+            renderParentModeItems(); // Refresh preview grid
             playSound('pop');
+            saveConfig();
+        }
+
+        function toggleBlockItem(emoji) {
+            const idx = state.blockedItems.indexOf(emoji);
+            if (idx >= 0) {
+                state.blockedItems.splice(idx, 1); // Unblock
+            } else {
+                state.blockedItems.push(emoji); // Block
+            }
+            saveConfig();
+            renderParentModeItems(); // Re-render grid
+        }
+
+        function renderParentModeItems() {
+            const leftCol = document.getElementById('col-left-preview');
+            const rightCol = document.getElementById('col-right-preview');
+            
+            leftCol.innerHTML = '';
+            rightCol.innerHTML = '';
+
+            // Left Items
+            state.activeLeft.items.forEach(emoji => {
+                const el = document.createElement('div');
+                el.className = 'text-4xl cursor-pointer p-1 rounded hover:bg-gray-200 transition-opacity';
+                el.innerText = emoji;
+                if (state.blockedItems.includes(emoji)) el.classList.add('blocked-item');
+                el.onclick = () => toggleBlockItem(emoji);
+                leftCol.appendChild(el);
+            });
+
+            // Right Items
+            state.activeRight.items.forEach(emoji => {
+                const el = document.createElement('div');
+                el.className = 'text-4xl cursor-pointer p-1 rounded hover:bg-gray-200 transition-opacity';
+                el.innerText = emoji;
+                if (state.blockedItems.includes(emoji)) el.classList.add('blocked-item');
+                el.onclick = () => toggleBlockItem(emoji);
+                rightCol.appendChild(el);
+            });
         }
 
         /* --- 3. AUDIO --- */
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         
+        // GLOBAL AUDIO UNLOCK
         function unlockAudio() {
             if (audioCtx.state === 'suspended') {
                 audioCtx.resume().then(() => console.log('Audio unlocked'));
             }
         }
-        // Bind to all interaction types for max reliability
         document.addEventListener('touchstart', unlockAudio, {passive: true});
         document.addEventListener('touchend', unlockAudio, {passive: true});
         document.addEventListener('click', unlockAudio);
@@ -613,8 +697,8 @@
         const toyBox = document.getElementById('toy-box-container');
 
         function startSnowstormCycle() {
-            // Random time between 15-30 mins (900000ms - 1800000ms)
-            const nextStorm = 900000 + Math.random() * 900000;
+            // Random time between 3-6 mins (180000ms - 360000ms)
+            const nextStorm = 180000 + Math.random() * 180000;
             // Testing: const nextStorm = 10000;
             setTimeout(triggerSnowstorm, nextStorm);
         }
@@ -683,9 +767,18 @@
             let data;
             let attempts = 0;
             
-            const pool = [...state.activeLeft.items.map(i => ({emoji: i, cat: 'left'})), 
-                          ...state.activeRight.items.map(i => ({emoji: i, cat: 'right'}))];
+            // Build pool from Active Categories, excluding Blocked items
+            const leftItems = state.activeLeft.items.filter(i => !state.blockedItems.includes(i));
+            const rightItems = state.activeRight.items.filter(i => !state.blockedItems.includes(i));
             
+            const pool = [...leftItems.map(i => ({emoji: i, cat: 'left'})), 
+                          ...rightItems.map(i => ({emoji: i, cat: 'right'}))];
+            
+            if (pool.length === 0) {
+                // Fallback if everything is blocked
+                pool.push({emoji: "⭐", cat: 'left'});
+            }
+
             do {
                 data = pool[Math.floor(Math.random() * pool.length)];
                 attempts++;
@@ -1086,6 +1179,16 @@
             document.addEventListener('touchstart', (e) => { state.totalTouches = e.touches.length; });
             document.addEventListener('touchend', (e) => { state.totalTouches = e.touches.length; });
             
+            // Load Config
+            const savedConfig = localStorage.getItem('belle_config_v2');
+            if (savedConfig) {
+                try {
+                    const c = JSON.parse(savedConfig);
+                    state.config = c;
+                    if (c.blockedItems) state.blockedItems = c.blockedItems;
+                } catch(e) {}
+            }
+
             initCategories();
             setTimeout(spawnItem, 1000);
             startSnowstormCycle();
@@ -1116,6 +1219,7 @@
                             overlay.classList.remove('hidden');
                             indicator.style.opacity = '0';
                             resetParentUnlock(); 
+                            renderParentModeItems();
                         }, 5000);
                     }
                 } else {
@@ -1144,20 +1248,45 @@
                 el.addEventListener('touchstart', (e) => { 
                     e.preventDefault(); 
                     state.unlockState[prop] = true; 
-                    checkParentUnlock(); 
+                    // touchstart updates state.totalTouches via window listener
+                    // but we need to wait a tick for it to propagate or check length here
+                    setTimeout(checkParentUnlock, 10);
                 });
                 el.addEventListener('touchend', () => { 
                     state.unlockState[prop] = false; 
                     checkParentUnlock(); 
                 });
                 // Mouse fallback
-                el.addEventListener('mousedown', () => { state.unlockState[prop] = true; state.totalTouches=2; checkParentUnlock(); });
-                el.addEventListener('mouseup', () => { state.unlockState[prop] = false; state.totalTouches=0; checkParentUnlock(); });
+                el.addEventListener('mousedown', () => { 
+                    state.unlockState[prop] = true; 
+                    state.totalTouches=2; 
+                    // Mouse Hack for testing: Set BOTH true
+                    state.unlockState.star = true;
+                    state.unlockState.angel = true;
+                    checkParentUnlock(); 
+                });
+                el.addEventListener('mouseup', () => { 
+                    state.unlockState[prop] = false; 
+                    state.totalTouches=0; 
+                    // Reset Both
+                    state.unlockState.star = false;
+                    state.unlockState.angel = false;
+                    checkParentUnlock(); 
+                });
             };
             
             bindHold(star, 'star');
             bindHold(angel, 'angel');
         };
+
+        function saveConfig() {
+            const data = {
+                leftCat: state.config.leftCat,
+                rightCat: state.config.rightCat,
+                blockedItems: state.blockedItems
+            };
+            localStorage.setItem('belle_config_v2', JSON.stringify(data));
+        }
 
         function resumeGame() {
             state.inParentMode = false;
