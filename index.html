@@ -161,6 +161,16 @@
             filter: grayscale(100%);
             transform: scale(0.9);
         }
+        
+        /* Decoration Container - No distortions */
+        .deco-container {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 40%;
+            pointer-events: none;
+            overflow: hidden;
+        }
     </style>
 </head>
 <body>
@@ -172,7 +182,7 @@
         <div class="absolute inset-0 z-0">
             <!-- Organic Horizon (SVG) -->
             <div class="absolute bottom-0 w-full h-[40%] pointer-events-none">
-                <svg viewBox="0 0 1440 320" class="w-full h-full" preserveAspectRatio="none" id="background-svg">
+                <svg viewBox="0 0 1440 320" class="w-full h-full" preserveAspectRatio="none">
                     <defs>
                         <linearGradient id="snowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
                             <stop offset="0%" style="stop-color:white;stop-opacity:1" />
@@ -181,18 +191,57 @@
                     </defs>
                     <path fill="url(#snowGrad)" fill-opacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,149.3C960,160,1056,160,1152,138.7C1248,117,1344,75,1392,53.3L1440,32L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
                     
-                    <!-- Dynamic Decoration Groups -->
-                    <g id="bg-deco-left"></g>
-                    <g id="bg-deco-right"></g>
-
-                    <!-- Static Features -->
                     <!-- Road -->
                     <path d="M-100,320 Q300,100 800,280 T1500,180" fill="none" stroke="#cfd8dc" stroke-width="25" opacity="0.8" stroke-linecap="round" stroke-dasharray="20,10" />
+
+                    <!-- Trees Cluster Left -->
+                    <text x="2%" y="85%" font-size="20">🌲</text>
+                    <text x="5%" y="80%" font-size="25">🌲</text>
+                    <text x="8%" y="90%" font-size="22">🌲</text>
+                    <text x="12%" y="82%" font-size="28">🌲</text>
+                    <text x="15%" y="88%" font-size="20">🌲</text>
+
+                    <!-- Trees Cluster Right -->
+                    <text x="85%" y="75%" font-size="22">🌲</text>
+                    <text x="88%" y="65%" font-size="18">🌲</text>
+                    <text x="90%" y="80%" font-size="30">🌲</text>
+                    <text x="95%" y="70%" font-size="25">🌲</text>
+                    
+                    <!-- Mid Ground Trees -->
+                    <text x="35%" y="60%" font-size="18">🌲</text>
+                    <text x="40%" y="65%" font-size="22">🌲</text>
+                    <text x="65%" y="60%" font-size="20">🌲</text>
+
+                    <!-- Tiny Houses & Cars -->
+                    <text x="25%" y="55%" font-size="30">🏠</text>
+                    <text x="30%" y="58%" font-size="20">🚗</text>
+                    
+                    <text x="75%" y="50%" font-size="25">🏠</text>
+                    <text x="70%" y="52%" font-size="20" transform="scale(-1, 1) translate(-100,0)">🚗</text> <!-- Flipped Car -->
+
                     <!-- Tiny Lake -->
                     <ellipse cx="20%" cy="85%" rx="60" ry="15" fill="#BBDEFB" stroke="#90CAF9" stroke-width="2" />
                 </svg>
             </div>
             
+            <!-- Decoration Layer (HTML for Aspect Ratio Correctness) -->
+            <div id="bg-decorations" class="deco-container">
+                <!-- Static elements -->
+                <div style="position:absolute; left:2%; bottom:15%; font-size:20px;">🌲</div>
+                <div style="position:absolute; left:5%; bottom:20%; font-size:25px;">🌲</div>
+                <div style="position:absolute; left:8%; bottom:10%; font-size:22px;">🌲</div>
+                <div style="position:absolute; left:12%; bottom:18%; font-size:28px;">🌲</div>
+                
+                <div style="position:absolute; left:85%; bottom:25%; font-size:22px;">🌲</div>
+                <div style="position:absolute; left:88%; bottom:35%; font-size:18px;">🌲</div>
+                <div style="position:absolute; left:90%; bottom:20%; font-size:30px;">🌲</div>
+                <div style="position:absolute; left:95%; bottom:30%; font-size:25px;">🌲</div>
+                
+                <!-- Dynamic Groups -->
+                <div id="deco-left"></div>
+                <div id="deco-right"></div>
+            </div>
+
             <!-- Cloud Layer -->
             <div id="cloud-layer">
                 <!-- Base Clouds -->
@@ -300,6 +349,8 @@
                 <!-- Category Manager Grid -->
                 <div class="flex-1 overflow-y-auto scroller">
                     <div class="grid grid-cols-2 gap-4 text-center select-none">
+                        <div class="font-bold text-red-700 bg-red-100 rounded py-1 sticky top-0 z-10 shadow-sm">LEFT</div>
+                        <div class="font-bold text-blue-700 bg-blue-100 rounded py-1 sticky top-0 z-10 shadow-sm">RIGHT</div>
                         <!-- Content injected via JS -->
                         <div id="col-left-preview" class="flex flex-wrap content-start gap-2 p-2 bg-white/50 rounded min-h-[100px]"></div>
                         <div id="col-right-preview" class="flex flex-wrap content-start gap-2 p-2 bg-white/50 rounded min-h-[100px]"></div>
@@ -370,6 +421,8 @@
             snowInterval: null,
             totalTouches: 0, 
             
+            cancelReGrab: null, // Cleanup reference
+            
             // Parent Mode
             unlockState: { star: false, angel: false, timer: null }
         };
@@ -388,7 +441,6 @@
                 const remaining = CAT_KEYS.filter(k => k !== leftKey);
                 rightKey = remaining[Math.floor(Math.random() * remaining.length)];
             } else if (rightKey === leftKey) {
-                // If user forced same, shift right
                 const remaining = CAT_KEYS.filter(k => k !== leftKey);
                 rightKey = remaining[0];
             }
@@ -411,53 +463,71 @@
         }
 
         function renderBackgroundDecorations(catId, side) {
-            const container = document.getElementById(side === 'left' ? 'bg-deco-left' : 'bg-deco-right');
+            const container = document.getElementById(side === 'left' ? 'deco-left' : 'deco-right');
             container.innerHTML = ''; // Clear
             
-            // Helpers
-            const createText = (x, y, size, emoji, scaleX = 1) => {
-                const t = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                t.setAttribute("x", x + "%");
-                t.setAttribute("y", y + "%");
-                t.setAttribute("font-size", size);
-                t.textContent = emoji;
-                if (scaleX !== 1) t.setAttribute("transform", `scale(${scaleX}, 1) translate(${scaleX < 0 ? -200 : 0}, 0)`); // Rough flip logic
-                container.appendChild(t);
+            // Helper to place emoji divs
+            const createEmoji = (x, y, size, emoji, scaleX = 1) => {
+                const d = document.createElement('div');
+                d.style.position = 'absolute';
+                d.style.left = x + '%';
+                d.style.bottom = y + '%';
+                d.style.fontSize = size + 'px';
+                d.innerText = emoji;
+                if (scaleX !== 1) d.style.transform = `scaleX(${scaleX})`;
+                container.appendChild(d);
             };
 
             // LEFT SIDE DECO (0-50% width)
             if (side === 'left') {
                 if (catId === 'animals') {
-                    createText(15, 82, 30, "🦆");
-                    createText(22, 85, 25, "🐢");
-                    createText(5, 75, 40, "🌲");
+                    // Lake Party
+                    createEmoji(15, 12, 30, "🦆");
+                    createEmoji(22, 15, 25, "🐢");
+                    createEmoji(18, 20, 20, "🐸");
+                    createEmoji(5, 45, 40, "🌲");
                 } else if (catId === 'vehicles') {
-                    createText(10, 60, 35, "🚜");
-                    createText(25, 62, 30, "🚛");
+                    // Road Work
+                    createEmoji(10, 30, 35, "🚜");
+                    createEmoji(25, 32, 30, "🚛");
+                    createEmoji(5, 28, 20, "🚧");
                 } else if (catId === 'food') {
-                    createText(15, 75, 40, "🧺"); // Basket
-                    createText(20, 80, 20, "🍎");
-                    createText(10, 80, 20, "🍇");
+                    // Picnic
+                    createEmoji(15, 45, 40, "🧺"); 
+                    createEmoji(20, 40, 20, "🍎");
+                    createEmoji(10, 40, 20, "🍇");
+                    createEmoji(18, 50, 15, "🐜");
                 } else if (catId === 'smileys') {
-                    createText(15, 65, 40, "⛄");
-                    createText(25, 65, 30, "⛄");
+                    // Snow Family
+                    createEmoji(15, 35, 40, "⛄");
+                    createEmoji(25, 35, 30, "⛄");
+                    createEmoji(20, 32, 20, "❄️");
                 }
             } 
-            // RIGHT SIDE DECO (50-100% width)
+            // RIGHT SIDE DECO (50-100% width, x coordinates are relative to whole screen)
             else {
                 if (catId === 'animals') {
-                    createText(85, 75, 35, "🦌");
-                    createText(75, 65, 30, "🐻");
-                    createText(92, 70, 40, "🌲");
+                    // Forest Friends
+                    createEmoji(85, 45, 35, "🦌");
+                    createEmoji(75, 35, 30, "🐻");
+                    createEmoji(80, 20, 20, "🦉");
+                    createEmoji(92, 40, 40, "🌲");
                 } else if (catId === 'vehicles') {
-                    createText(80, 20, 40, "✈️");
-                    createText(65, 25, 30, "🚁");
+                    // Air Show
+                    createEmoji(80, 60, 40, "✈️");
+                    createEmoji(65, 65, 30, "🚁");
+                    createEmoji(88, 75, 25, "🚀");
                 } else if (catId === 'food') {
-                    createText(85, 70, 40, "🍭");
-                    createText(75, 75, 35, "🍬");
-                    createText(90, 60, 35, "🍩");
+                    // Candy Land
+                    createEmoji(85, 40, 40, "🍭");
+                    createEmoji(75, 45, 35, "🍬");
+                    createEmoji(90, 30, 35, "🍩");
+                    createEmoji(80, 25, 25, "🧁");
                 } else if (catId === 'smileys') {
-                    createText(90, 15, 50, "🌞");
+                    // Celestial
+                    createEmoji(90, 75, 50, "🌞");
+                    createEmoji(75, 70, 30, "☁️");
+                    createEmoji(85, 60, 25, "🌈");
                 }
             }
         }
@@ -476,10 +546,8 @@
             const idx = options.indexOf(current);
             let next = options[(idx + 1) % options.length];
             
-            // Check collision with other side
             const otherSide = side === 'left' ? state.config.rightCat : state.config.leftCat;
             if (next !== 'random' && next === otherSide) {
-                // Skip if same
                 next = options[(idx + 2) % options.length];
             }
             
@@ -487,21 +555,33 @@
             else state.config.rightCat = next;
             
             updateConfigButtons();
-            initCategories(); // Refresh game board
-            renderParentModeItems(); // Refresh preview grid
+            initCategories(); 
+            renderParentModeItems(); 
             playSound('pop');
             saveConfig();
+
+            // Refresh current item if it exists
+            if (state.currentItem) {
+                state.currentItem.remove();
+                spawnItem();
+            }
         }
 
         function toggleBlockItem(emoji) {
             const idx = state.blockedItems.indexOf(emoji);
             if (idx >= 0) {
-                state.blockedItems.splice(idx, 1); // Unblock
+                state.blockedItems.splice(idx, 1); 
             } else {
-                state.blockedItems.push(emoji); // Block
+                state.blockedItems.push(emoji); 
             }
             saveConfig();
-            renderParentModeItems(); // Re-render grid
+            renderParentModeItems();
+            
+            // If current item is now blocked, remove it
+            if (state.currentItem && state.currentItem.querySelector('.emoji-content').innerHTML === emoji) {
+                state.currentItem.remove();
+                spawnItem();
+            }
         }
 
         function renderParentModeItems() {
@@ -511,7 +591,6 @@
             leftCol.innerHTML = '';
             rightCol.innerHTML = '';
 
-            // Left Items
             state.activeLeft.items.forEach(emoji => {
                 const el = document.createElement('div');
                 el.className = 'text-4xl cursor-pointer p-1 rounded hover:bg-gray-200 transition-opacity';
@@ -521,7 +600,6 @@
                 leftCol.appendChild(el);
             });
 
-            // Right Items
             state.activeRight.items.forEach(emoji => {
                 const el = document.createElement('div');
                 el.className = 'text-4xl cursor-pointer p-1 rounded hover:bg-gray-200 transition-opacity';
@@ -713,9 +791,11 @@
             const extraClouds = [];
             for (let i = 0; i < 3; i++) {
                 const c = document.createElement('div');
-                c.className = `absolute text-white opacity-60 pointer-events-none cloud-${i%2===0?'fast':'medium'}`;
+                // Removed pointer-events-none, added onclick and cursor-pointer
+                c.className = `absolute text-white opacity-60 cursor-pointer cloud-${i%2===0?'fast':'medium'}`;
                 c.style.top = Math.random() * 20 + '%';
                 c.style.animationDelay = `-${Math.random()*10}s`;
+                c.onclick = handleCloudTap; // Make interactive
                 c.innerHTML = `<svg width="100" height="60" viewBox="0 0 100 60" fill="currentColor"><path d="M10,40 Q0,40 0,30 Q0,10 20,10 Q25,0 40,0 Q60,0 65,10 Q80,5 90,20 Q100,20 100,40 Z" /></svg>`;
                 layer.appendChild(c);
                 extraClouds.push(c);
@@ -763,6 +843,12 @@
         }
 
         function spawnItem() {
+            // --- SAFETY FLUSH ---
+            zoneLeft.classList.remove('hovered');
+            zoneRight.classList.remove('hovered');
+            if (state.dropTimeout) { clearTimeout(state.dropTimeout); state.dropTimeout = null; }
+            if (state.cancelReGrab) { state.cancelReGrab(); state.cancelReGrab = null; }
+            
             state.isProcessingSuccess = false;
             let data;
             let attempts = 0;
@@ -798,6 +884,8 @@
 
             const landingY = getSafeLandingY();
             const centerX = window.innerWidth / 2;
+            // Note: size is controlled by CSS, JS positioning centers it loosely
+            // We use transform translate to center it properly based on its dynamic width
             el.style.left = '50%'; 
             el.style.transform = 'translate(-50%, 0)';
             el.style.top = landingY + 'px';
@@ -822,6 +910,7 @@
             state.currentAnimation.onfinish = () => {
                 content.classList.add('wiggle-idle');
                 state.currentAnimation = null;
+                // Bake final position into styles to remove dependency on animation fill
                 el.style.transform = 'translate(-50%, 0)';
             };
 
@@ -838,14 +927,28 @@
             
             const onStart = (e) => {
                 if (state.inParentMode) return;
-                if (e.touches && isPalm(e)) return; 
-
-                e.preventDefault(); 
                 
-                if (state.returnTimer) { clearTimeout(state.returnTimer); state.returnTimer = null; }
-                if (state.currentAnimation) { state.currentAnimation.cancel(); state.currentAnimation = null; }
+                // Palm Rejection
+                if (e.touches && isPalm(e)) {
+                    console.log("Palm rejected");
+                    return; 
+                }
+
+                e.preventDefault(); // Prevent default touch actions (scroll/zoom)
+                
+                // CLEAR PREVIOUS FAILED DROP TIMER if re-grabbed
+                if (state.returnTimer) {
+                    clearTimeout(state.returnTimer);
+                    state.returnTimer = null;
+                }
+
+                if (state.currentAnimation) {
+                    state.currentAnimation.cancel();
+                    state.currentAnimation = null;
+                }
                 
                 state.isDragging = true;
+                
                 playSound('pop'); 
                 startWoodenPurr(); 
                 
@@ -856,13 +959,18 @@
                 startX = point.clientX;
                 startY = point.clientY;
                 
+                // Get current position (might be mid-air if caught early, or landed)
                 const rect = el.getBoundingClientRect();
+                
+                // Switch from % positioning to absolute pixel positioning for drag
                 el.style.transform = 'none'; 
                 el.style.left = rect.left + 'px';
                 el.style.top = rect.top + 'px';
                 
                 initialLeft = rect.left;
                 initialTop = rect.top;
+                
+                // Store dimensions for center calculation later
                 itemWidth = rect.width;
                 itemHeight = rect.height;
 
@@ -887,14 +995,20 @@
                 let newLeft = initialLeft + dx;
                 let newTop = initialTop + dy;
 
+                // --- INVISIBLE BORDER (Keep item on screen) ---
+                // Get window dimensions
                 const maxLeft = window.innerWidth - itemWidth;
                 const maxTop = window.innerHeight - itemHeight;
+
+                // Clamp the values so it can't go < 0 or > max
+                // We allow a tiny 10px buffer so it doesn't feel stuck on the very pixel
                 newLeft = Math.max(0, Math.min(newLeft, maxLeft));
                 newTop = Math.max(0, Math.min(newTop, maxTop));
 
                 el.style.left = `${newLeft}px`;
                 el.style.top = `${newTop}px`;
 
+                // Calculate center of ITEM based on clamped position
                 const centerX = newLeft + itemWidth / 2;
                 const centerY = newTop + itemHeight / 2;
 
@@ -904,14 +1018,26 @@
             const onEnd = (e) => {
                 if (!state.isDragging) return;
                 
+                // --- FORGIVING DRAG LOGIC ---
+                // If it's a touch end, we wait briefly to see if it's just a slip
                 if (e.type === 'touchend') {
+                    // Temporarily pause visuals but don't commit drop
                     stopWoodenPurr();
-                    state.dropTimeout = setTimeout(() => { commitDrop(el, content); }, 400); 
+                    
+                    state.dropTimeout = setTimeout(() => {
+                        commitDrop(el, content);
+                    }, 400); // 400ms grace period
+
+                    // Add global listener to catch re-grab anywhere
                     const reGrab = (ev) => {
                         if (ev.type === 'touchstart') {
                             clearTimeout(state.dropTimeout);
                             state.dropTimeout = null;
-                            document.removeEventListener('touchstart', reGrab);
+                            // Cleanup self
+                            state.cancelReGrab = null; 
+                            
+                            // Resume drag from new position
+                            // We essentially restart the logic
                             stopWoodenPurr(); startWoodenPurr();
                             const point = ev.touches[0];
                             startX = point.clientX;
@@ -921,11 +1047,17 @@
                             initialTop = rect.top;
                             itemWidth = rect.width;
                             itemHeight = rect.height;
+                            // Continues using existing move listeners
                         }
                     };
                     document.addEventListener('touchstart', reGrab, {once: true});
-                    return; 
+                    // Store cleanup function
+                    state.cancelReGrab = () => document.removeEventListener('touchstart', reGrab);
+                    
+                    return; // Exit here, wait for timeout or regrab
                 }
+
+                // Mouse up commits immediately
                 commitDrop(el, content);
             };
             
@@ -933,6 +1065,12 @@
                 state.isDragging = false;
                 stopWoodenPurr();
                 content.classList.remove('wiggle-drag');
+                
+                // Cleanup potentially pending reGrab listener
+                if (state.cancelReGrab) {
+                    state.cancelReGrab();
+                    state.cancelReGrab = null;
+                }
 
                 document.removeEventListener('mousemove', onMove);
                 document.removeEventListener('touchmove', onMove);
@@ -943,27 +1081,32 @@
                 const centerX = rect.left + rect.width / 2;
                 const centerY = rect.top + rect.height / 2;
                 
+                // 1. Check for Box Return (Skip)
                 const distBox = getDistance(centerX, centerY, toyBox);
-                if (distBox < 200) { 
+                if (distBox < 200) { // Box proximity
                     if (canSkip()) {
                         handleSkip(el);
                         return;
                     } else {
+                        // Box reject animation (visual feedback why it failed)
                         toyBox.classList.add('toy-box-reject');
                         setTimeout(() => toyBox.classList.remove('toy-box-reject'), 300);
-                        playSound('fail'); 
+                        playSound('fail'); // Soft fail sound
                     }
                 }
 
+                // 2. Check Zones
                 const targetZone = checkCollision(centerX, centerY);
                 let isSuccess = false;
                 
                 if (targetZone) {
+                    // Logic check
                     if (el.dataset.type === targetZone) isSuccess = true;
                 } else {
+                    // Gravity / Magnetic check for near misses
                     const distLeft = getDistance(centerX, centerY, zoneLeft);
                     const distRight = getDistance(centerX, centerY, zoneRight);
-                    const threshold = 250; 
+                    const threshold = 250; // Increased magnetic threshold
 
                     let snapTarget = null;
                     if (distLeft < threshold) snapTarget = 'left';
@@ -971,7 +1114,7 @@
 
                     if (snapTarget && el.dataset.type === snapTarget) {
                         isSuccess = true;
-                        handleSuccess(el, snapTarget); 
+                        handleSuccess(el, snapTarget); // Snap to it
                         return; 
                     }
                 }
@@ -998,6 +1141,8 @@
         }
 
         function checkHover(x, y) {
+            // Use distance for broader highlight (220px radius)
+            // This gives visual feedback before the snap triggers
             const distLeft = getDistance(x, y, zoneLeft);
             const distRight = getDistance(x, y, zoneRight);
             const threshold = 220; 
@@ -1023,6 +1168,12 @@
             if (state.isProcessingSuccess) return; 
             state.isProcessingSuccess = true;
             if (state.returnTimer) { clearTimeout(state.returnTimer); state.returnTimer = null; }
+            if (state.dropTimeout) { clearTimeout(state.dropTimeout); state.dropTimeout = null; }
+            if (state.cancelReGrab) { state.cancelReGrab(); state.cancelReGrab = null; }
+
+            // Flush hover state immediately
+            zoneLeft.classList.remove('hovered');
+            zoneRight.classList.remove('hovered');
 
             state.score++;
             document.getElementById('score-display').innerText = state.score;
@@ -1036,6 +1187,7 @@
             const rect = el.getBoundingClientRect();
             createConfetti(rect.left, rect.top);
             
+            // Black hole animation
             const targetRect = targetEl.getBoundingClientRect();
             const tx = targetRect.left + targetRect.width/2 - rect.width/2;
             const ty = targetRect.top + targetRect.height/2 - rect.height/2;
@@ -1060,6 +1212,7 @@
             state.skipsInMinute.push(Date.now());
             playSound('whoosh');
             
+            // Shrink back into box
             const boxRect = toyBox.getBoundingClientRect();
             const elRect = el.getBoundingClientRect();
             const tx = boxRect.left + boxRect.width/2 - elRect.width/2;
@@ -1081,17 +1234,26 @@
             playSound('fail');
             updateBeau('idle');
             
+            // NEW: Stay put logic (3 seconds grace)
             if (state.returnTimer) clearTimeout(state.returnTimer);
+            
             state.returnTimer = setTimeout(() => {
                 el.style.transition = 'all 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55)';
+                // Reset to safe landing spot
                 const landingY = getSafeLandingY();
+                
                 el.style.left = '50%'; 
                 el.style.transform = 'translate(-50%, 0) scale(1)';
                 el.style.top = landingY + 'px';
                 el.style.zIndex = 50;
-                setTimeout(() => { content.classList.add('wiggle-idle'); }, 600);
+                
+                // Re-enable Idle wiggle after returning
+                setTimeout(() => {
+                    content.classList.add('wiggle-idle');
+                }, 600);
+                
                 state.returnTimer = null;
-            }, 3000); 
+            }, 3000); // 3 Seconds
         }
 
         function updateBeau(mood) {
