@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Belle's Winter Adventure 2.0</title>
+    <title>Belle's Winter Adventure 2.1</title>
     <link rel="manifest" href="manifest.json">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Mouse+Memoirs&display=swap" rel="stylesheet">
 
     <style>
-        /* --- CORE DISABLES --- */
+        /* --- CORE --- */
         body {
             overscroll-behavior: none;
             touch-action: none;
@@ -20,31 +20,61 @@
             -webkit-user-select: none;
             -webkit-touch-callout: none;
             font-family: 'Mouse Memoirs', sans-serif;
-            background-color: #dbeafe;
+            background-color: #dbeafe; /* Sky Blue */
             overflow: hidden;
             position: fixed;
             width: 100%;
             height: 100%;
         }
 
-        /* --- VISUALS --- */
-        .minnie-border {
-            border: 8px solid #E60026;
-            background-image: radial-gradient(white 20%, transparent 20%);
-            background-color: #E60026;
-            background-size: 20px 20px;
-            border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        /* --- PAPERCRAFT AESTHETIC --- */
+        
+        /* White Outline + Shadow for Emojis */
+        .paper-emoji {
+            text-shadow: 
+                2px 2px 0px white, -2px -2px 0px white, 
+                2px -2px 0px white, -2px 2px 0px white,
+                2px 0px 0px white, -2px 0px 0px white, 
+                0px 2px 0px white, 0px -2px 0px white;
+            filter: drop-shadow(3px 5px 2px rgba(0,0,0,0.2));
         }
 
+        /* Layered look for Backgrounds */
+        .paper-layer {
+            filter: drop-shadow(0px -4px 6px rgba(0,0,0,0.1));
+        }
+
+        /* --- ZONES --- */
         .drop-zone {
             transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         .drop-zone.hovered {
             transform: scale(1.15);
-            filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.9));
+            filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.6));
+        }
+        
+        .zone-bg {
+            background-color: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(4px);
+            border-radius: 50%;
+            padding: 0;
+            border: 6px solid white;
+            box-shadow: 0 10px 15px rgba(0,0,0,0.1);
+            width: clamp(8rem, 18vw, 16rem); /* Consistent circle size */
+            height: clamp(8rem, 18vw, 16rem);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Ensure emoji is dead center in the circle */
+        .zone-icon {
+            font-size: clamp(5rem, 10vw, 10rem);
+            line-height: 1;
+            margin-top: 0.1em; /* Optical center adjustment */
         }
 
+        /* --- ANIMATIONS --- */
         @keyframes happyBounce {
             0% { transform: scale(1); }
             40% { transform: scale(1.25); }
@@ -52,33 +82,26 @@
             80% { transform: scale(1.05); }
             100% { transform: scale(1); }
         }
-        .happy-bounce {
-            animation: happyBounce 0.5s ease-in-out;
-        }
+        .happy-bounce { animation: happyBounce 0.5s ease-in-out; }
 
         @keyframes dragWiggle {
             0% { transform: rotate(0deg); }
-            25% { transform: rotate(-10deg) scale(1.1); }
-            75% { transform: rotate(10deg) scale(1.1); }
+            25% { transform: rotate(-8deg) scale(1.1); }
+            75% { transform: rotate(8deg) scale(1.1); }
             100% { transform: rotate(0deg); }
         }
-        .wiggle-drag {
-            animation: dragWiggle 0.4s ease-in-out infinite;
-        }
+        .wiggle-drag { animation: dragWiggle 0.4s ease-in-out infinite; }
 
         @keyframes idleShimmy {
-            0%, 90% { transform: rotate(0deg) scale(1); }
-            92% { transform: rotate(-10deg) scale(1.05); }
-            94% { transform: rotate(10deg) scale(1.05); }
-            96% { transform: rotate(-10deg) scale(1.05); }
-            98% { transform: rotate(10deg) scale(1.05); }
-            100% { transform: rotate(0deg) scale(1); }
+            0%, 90% { transform: rotate(0deg); }
+            92% { transform: rotate(-10deg); }
+            94% { transform: rotate(10deg); }
+            96% { transform: rotate(-10deg); }
+            98% { transform: rotate(10deg); }
+            100% { transform: rotate(0deg); }
         }
-        .wiggle-idle {
-            animation: idleShimmy 4s ease-in-out infinite;
-        }
+        .wiggle-idle { animation: idleShimmy 4s ease-in-out infinite; }
 
-        /* --- CLOUD ANIMATION --- */
         @keyframes drift {
             from { transform: translateX(-150px); }
             to { transform: translateX(100vw); }
@@ -89,50 +112,46 @@
 
         @keyframes snowfall {
             0% { transform: translateY(0) translateX(0); opacity: 1; }
-            100% { transform: translateY(60vh) translateX(20px); opacity: 0; }
+            100% { transform: translateY(80vh) translateX(20px); opacity: 0; }
         }
         .snowflake {
             position: absolute;
             color: white;
             pointer-events: none;
-            animation: snowfall 3s linear forwards;
+            animation: snowfall 4s linear forwards;
             font-size: 24px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
         }
 
-        /* --- UTILS --- */
+        /* --- ITEM STYLES --- */
         .draggable-item {
             touch-action: none;
-            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.3));
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: clamp(4rem, 15vw, 8rem); 
+            font-size: clamp(5rem, 18vw, 9rem); 
             z-index: 1000; 
         }
         
+        /* Oversized Hitbox */
         .draggable-item::after {
             content: '';
             position: absolute;
-            top: -30px; bottom: -30px; left: -30px; right: -30px;
+            top: -40px; bottom: -40px; left: -40px; right: -40px;
             border-radius: 50%;
         }
         
         .emoji-content {
             display: block;
             pointer-events: none; 
+            /* Paper effect on the item itself */
+            text-shadow: 
+                3px 3px 0px white, -3px -3px 0px white, 
+                3px -3px 0px white, -3px 3px 0px white;
+            filter: drop-shadow(4px 8px 4px rgba(0,0,0,0.25));
         }
         
-        .toy-box-lid {
-            transform-origin: top center;
-            transition: transform 0.3s ease-out;
-        }
-        .toy-box:active .toy-box-lid {
-            transform: rotateX(20deg);
-        }
-        
-        .toy-box-reject {
-            animation: happyBounce 0.3s ease-in-out;
-        }
+        .toy-box-reject { animation: happyBounce 0.3s ease-in-out; }
         
         .unlock-ring {
             stroke-dasharray: 283;
@@ -145,32 +164,21 @@
         .scroller::-webkit-scrollbar-thumb { background: #E60026; border-radius: 4px; }
 
         .title-text {
-            text-shadow: 0 4px 8px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.5), 0 0 20px rgba(255,255,255,0.5);
+            /* Paper cutout text style */
+            color: #fff;
+            text-shadow: 2px 2px 0px #88c0eb, 4px 4px 0px rgba(0,0,0,0.1);
         }
         
-        .zone-bg {
-            background-color: rgba(255, 255, 255, 0.4);
-            backdrop-filter: blur(8px);
-            border-radius: 9999px;
-            padding: 1rem;
-            border: 4px solid rgba(255,255,255,0.6);
-        }
-
-        .blocked-item {
-            opacity: 0.3;
-            filter: grayscale(100%);
-            transform: scale(0.9);
-        }
-        
-        /* Decoration Container - No distortions */
         .deco-container {
             position: absolute;
             bottom: 0;
             width: 100%;
-            height: 40%;
+            height: 45%; /* Raised slightly */
             pointer-events: none;
             overflow: hidden;
         }
+
+        .blocked-item { opacity: 0.2; filter: grayscale(100%); }
     </style>
 </head>
 <body>
@@ -181,7 +189,7 @@
         <!-- 1. BACKGROUND LAYER -->
         <div class="absolute inset-0 z-0">
             <!-- Organic Horizon (SVG) -->
-            <div class="absolute bottom-0 w-full h-[40%] pointer-events-none">
+            <div class="absolute bottom-0 w-full h-[45%] pointer-events-none paper-layer">
                 <svg viewBox="0 0 1440 320" class="w-full h-full" preserveAspectRatio="none">
                     <defs>
                         <linearGradient id="snowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -189,69 +197,47 @@
                             <stop offset="100%" style="stop-color:#E3F2FD;stop-opacity:1" />
                         </linearGradient>
                     </defs>
-                    <path fill="url(#snowGrad)" fill-opacity="1" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,149.3C960,160,1056,160,1152,138.7C1248,117,1344,75,1392,53.3L1440,32L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
-                    
+                    <path fill="url(#snowGrad)" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,149.3C960,160,1056,160,1152,138.7C1248,117,1344,75,1392,53.3L1440,32L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
                     <!-- Road -->
-                    <path d="M-100,320 Q300,100 800,280 T1500,180" fill="none" stroke="#cfd8dc" stroke-width="25" opacity="0.8" stroke-linecap="round" stroke-dasharray="20,10" />
-
-                    <!-- Trees Cluster Left -->
-                    <text x="2%" y="85%" font-size="20">🌲</text>
-                    <text x="5%" y="80%" font-size="25">🌲</text>
-                    <text x="8%" y="90%" font-size="22">🌲</text>
-                    <text x="12%" y="82%" font-size="28">🌲</text>
-                    <text x="15%" y="88%" font-size="20">🌲</text>
-
-                    <!-- Trees Cluster Right -->
-                    <text x="85%" y="75%" font-size="22">🌲</text>
-                    <text x="88%" y="65%" font-size="18">🌲</text>
-                    <text x="90%" y="80%" font-size="30">🌲</text>
-                    <text x="95%" y="70%" font-size="25">🌲</text>
-                    
-                    <!-- Mid Ground Trees -->
-                    <text x="35%" y="60%" font-size="18">🌲</text>
-                    <text x="40%" y="65%" font-size="22">🌲</text>
-                    <text x="65%" y="60%" font-size="20">🌲</text>
-
-                    <!-- Tiny Houses & Cars -->
-                    <text x="25%" y="55%" font-size="30">🏠</text>
-                    <text x="30%" y="58%" font-size="20">🚗</text>
-                    
-                    <text x="75%" y="50%" font-size="25">🏠</text>
-                    <text x="70%" y="52%" font-size="20" transform="scale(-1, 1) translate(-100,0)">🚗</text> <!-- Flipped Car -->
-
+                    <path d="M-100,320 Q300,100 800,280 T1500,180" fill="none" stroke="#cfd8dc" stroke-width="25" opacity="0.6" stroke-linecap="round" stroke-dasharray="20,10" />
                     <!-- Tiny Lake -->
                     <ellipse cx="20%" cy="85%" rx="60" ry="15" fill="#BBDEFB" stroke="#90CAF9" stroke-width="2" />
                 </svg>
             </div>
             
-            <!-- Decoration Layer (HTML for Aspect Ratio Correctness) -->
+            <!-- Decoration Layer (HTML DOM) -->
             <div id="bg-decorations" class="deco-container">
-                <!-- Static elements -->
-                <div style="position:absolute; left:2%; bottom:15%; font-size:20px;">🌲</div>
-                <div style="position:absolute; left:5%; bottom:20%; font-size:25px;">🌲</div>
-                <div style="position:absolute; left:8%; bottom:10%; font-size:22px;">🌲</div>
-                <div style="position:absolute; left:12%; bottom:18%; font-size:28px;">🌲</div>
+                <!-- Static elements moved here to prevent squishing -->
+                <div class="paper-emoji absolute" style="left:2%; bottom:15%; font-size:20px;">🌲</div>
+                <div class="paper-emoji absolute" style="left:5%; bottom:20%; font-size:25px;">🌲</div>
+                <div class="paper-emoji absolute" style="left:8%; bottom:10%; font-size:22px;">🌲</div>
+                <div class="paper-emoji absolute" style="left:12%; bottom:18%; font-size:28px;">🌲</div>
                 
-                <div style="position:absolute; left:85%; bottom:25%; font-size:22px;">🌲</div>
-                <div style="position:absolute; left:88%; bottom:35%; font-size:18px;">🌲</div>
-                <div style="position:absolute; left:90%; bottom:20%; font-size:30px;">🌲</div>
-                <div style="position:absolute; left:95%; bottom:30%; font-size:25px;">🌲</div>
+                <div class="paper-emoji absolute" style="left:85%; bottom:25%; font-size:22px;">🌲</div>
+                <div class="paper-emoji absolute" style="left:88%; bottom:35%; font-size:18px;">🌲</div>
+                <div class="paper-emoji absolute" style="left:90%; bottom:20%; font-size:30px;">🌲</div>
+                <div class="paper-emoji absolute" style="left:95%; bottom:30%; font-size:25px;">🌲</div>
                 
+                <!-- Tiny Houses & Cars -->
+                <div class="paper-emoji absolute" style="left:25%; bottom:55%; font-size:30px;">🏠</div>
+                <div class="paper-emoji absolute" style="left:30%; bottom:58%; font-size:20px;">🚗</div>
+                <div class="paper-emoji absolute" style="left:75%; bottom:50%; font-size:25px;">🏠</div>
+                <div class="paper-emoji absolute" style="left:70%; bottom:52%; font-size:20px; transform: scaleX(-1);">🚗</div>
+
                 <!-- Dynamic Groups -->
                 <div id="deco-left"></div>
                 <div id="deco-right"></div>
             </div>
 
-            <!-- Cloud Layer -->
+            <!-- Clouds -->
             <div id="cloud-layer">
-                <!-- Base Clouds -->
-                <div onclick="handleCloudTap(event)" class="absolute top-10 left-[-150px] cloud-slow text-white opacity-80 cursor-pointer active:scale-95 z-10 w-48 h-24 flex items-center justify-center">
+                <div onclick="handleCloudTap(event)" class="absolute top-10 left-[-150px] cloud-slow text-white opacity-90 cursor-pointer active:scale-95 z-10 w-48 h-24 flex items-center justify-center drop-shadow-md">
                     <svg width="100%" height="100%" viewBox="0 0 100 60" fill="currentColor"><path d="M10,40 Q0,40 0,30 Q0,10 20,10 Q25,0 40,0 Q60,0 65,10 Q80,5 90,20 Q100,20 100,40 Z" /></svg>
                 </div>
-                <div onclick="handleCloudTap(event)" class="absolute top-24 left-[-100px] cloud-medium text-white opacity-90 cursor-pointer active:scale-95 z-10 w-36 h-20 flex items-center justify-center" style="animation-delay: -15s">
+                <div onclick="handleCloudTap(event)" class="absolute top-24 left-[-100px] cloud-medium text-white opacity-90 cursor-pointer active:scale-95 z-10 w-36 h-20 flex items-center justify-center drop-shadow-md" style="animation-delay: -15s">
                     <svg width="100%" height="100%" viewBox="0 0 100 60" fill="currentColor"><path d="M10,40 Q0,40 0,30 Q0,10 20,10 Q25,0 40,0 Q60,0 65,10 Q80,5 90,20 Q100,20 100,40 Z" /></svg>
                 </div>
-                <div onclick="handleCloudTap(event)" class="absolute top-5 left-[-120px] cloud-fast text-white opacity-70 cursor-pointer active:scale-95 z-10 w-32 h-16 flex items-center justify-center" style="animation-delay: -5s">
+                <div onclick="handleCloudTap(event)" class="absolute top-5 left-[-120px] cloud-fast text-white opacity-80 cursor-pointer active:scale-95 z-10 w-32 h-16 flex items-center justify-center drop-shadow-md" style="animation-delay: -5s">
                     <svg width="100%" height="100%" viewBox="0 0 100 60" fill="currentColor"><path d="M10,40 Q0,40 0,30 Q0,10 20,10 Q25,0 40,0 Q60,0 65,10 Q80,5 90,20 Q100,20 100,40 Z" /></svg>
                 </div>
             </div>
@@ -259,37 +245,38 @@
 
         <!-- TITLE -->
         <div class="absolute top-4 left-0 right-0 flex justify-center z-10 pointer-events-none">
-            <h1 class="text-white/90 text-4xl lg:text-6xl font-bold title-text tracking-wide text-center px-24">Belle's Winter Adventure</h1>
+            <h1 class="text-4xl lg:text-6xl font-bold title-text tracking-wide text-center px-4 leading-tight">Belle's Winter Adventure</h1>
         </div>
 
-        <!-- 2. DROP ZONES LAYER -->
+        <!-- 2. DROP ZONES -->
         <div class="absolute inset-0 z-10 flex justify-between items-center px-4 lg:px-20 pointer-events-none" style="padding-bottom: 25vh;">
             
             <!-- LEFT ZONE -->
-            <div id="zone-left" class="drop-zone relative pointer-events-auto origin-bottom-left active:scale-95 flex flex-col items-center">
-                <div class="zone-bg flex flex-col items-center justify-center p-2 min-w-[140px]">
-                    <div id="left-icon" class="text-[clamp(6rem,12vw,12rem)] leading-none filter drop-shadow-xl select-none"></div>
+            <div id="zone-left" class="drop-zone relative pointer-events-auto origin-bottom-left active:scale-95 flex flex-col items-center w-1/3">
+                <div class="zone-bg">
+                    <div id="left-icon" class="zone-icon paper-emoji select-none"></div>
                 </div>
-                <div id="left-label" class="absolute -bottom-20 w-full text-center text-3xl lg:text-4xl font-bold tracking-wider uppercase text-blue-800 drop-shadow-md"></div>
+                <div id="left-label" class="absolute -bottom-16 w-full text-center text-3xl lg:text-4xl font-bold tracking-wider uppercase text-blue-800 drop-shadow-md paper-emoji" style="text-shadow: 2px 2px 0 white;"></div>
             </div>
 
             <!-- RIGHT ZONE -->
-            <div id="zone-right" class="drop-zone relative pointer-events-auto origin-bottom-right active:scale-95 flex flex-col items-center">
-                <div class="zone-bg relative flex flex-col items-center justify-center p-2 min-w-[140px]">
-                    <div id="right-icon" class="text-[clamp(6rem,12vw,12rem)] leading-none filter drop-shadow-xl select-none"></div>
-                    <!-- Hidden Pickle -->
-                    <div id="hidden-pickle" class="absolute top-1/2 left-1/2 cursor-pointer opacity-80 pointer-events-auto hidden" onclick="foundPickle(event)">
+            <div id="zone-right" class="drop-zone relative pointer-events-auto origin-bottom-right active:scale-95 flex flex-col items-center w-1/3">
+                <div class="zone-bg">
+                    <div id="right-icon" class="zone-icon paper-emoji select-none"></div>
+                    <!-- Pickle -->
+                    <div id="hidden-pickle" class="absolute top-1/2 left-1/2 cursor-pointer opacity-80 pointer-events-auto hidden paper-emoji" onclick="foundPickle(event)">
                         <text class="text-xl" style="transform: rotate(15deg);">🥒</text>
                     </div>
                 </div>
-                <div id="right-label" class="absolute -bottom-20 w-full text-center text-3xl lg:text-4xl font-bold tracking-wider uppercase text-blue-800 drop-shadow-md"></div>
+                <div id="right-label" class="absolute -bottom-16 w-full text-center text-3xl lg:text-4xl font-bold tracking-wider uppercase text-blue-800 drop-shadow-md paper-emoji" style="text-shadow: 2px 2px 0 white;"></div>
             </div>
         </div>
 
         <!-- 3. TOY BOX (HOUSE) -->
-        <div id="toy-box-container" onclick="playSound('doorbell')" class="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-20 pointer-events-auto cursor-pointer toy-box active:scale-95 transition-transform flex flex-col items-center">
+        <div id="toy-box-container" onclick="playSound('doorbell')" class="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-20 pointer-events-auto cursor-pointer toy-box active:scale-95 transition-transform flex flex-col items-center">
+             <!-- Using standard div layout instead of SVG for better emoji handling -->
              <div class="relative flex items-center justify-center">
-                <div class="text-[7rem] lg:text-[9rem] leading-none filter drop-shadow-2xl select-none">🏠</div>
+                <div class="text-[8rem] lg:text-[10rem] leading-none paper-emoji select-none drop-shadow-2xl">🏠</div>
              </div>
         </div>
 
@@ -297,17 +284,17 @@
         <div id="spawn-anchor" class="absolute bottom-20 left-1/2 transform -translate-x-1/2 w-1 h-1"></div>
 
         <!-- SCORE -->
-        <div id="score-btn" onclick="playSound('chime')" class="absolute top-6 left-4 z-30 flex items-center bg-white/80 rounded-full px-4 py-2 border-2 border-blue-300 cursor-pointer active:scale-95 transition-transform backdrop-blur-sm shadow-md h-16 pointer-events-auto">
-            <span class="text-3xl mr-2">⭐</span>
+        <div id="score-btn" class="absolute top-6 left-4 z-30 flex items-center bg-white/90 rounded-full px-4 py-2 border-4 border-blue-300 cursor-pointer active:scale-95 transition-transform shadow-lg h-16 pointer-events-auto">
+            <span class="text-3xl mr-2 paper-emoji">⭐</span>
             <span id="score-display" class="text-3xl text-blue-800 font-bold">0</span>
         </div>
 
         <!-- 5. ANGEL -->
-        <div id="angel-btn" onclick="playSound('giggle'); updateBeau('success')" class="absolute top-6 right-4 z-30 flex flex-col items-center cursor-pointer active:scale-95 transition-transform pointer-events-auto">
-            <div id="beau-container" class="w-16 h-16 bg-white/80 backdrop-blur-sm rounded-full border-2 border-yellow-400 shadow-lg flex items-center justify-center overflow-hidden">
-                <!-- Tries to load beau.png, falls back to Emoji if missing -->
+        <div id="angel-btn" class="absolute top-6 right-4 z-30 flex flex-col items-center cursor-pointer active:scale-95 transition-transform pointer-events-auto">
+            <div id="beau-container" class="w-16 h-16 bg-white/90 rounded-full border-4 border-yellow-400 shadow-lg flex items-center justify-center overflow-hidden">
+                <!-- Tries to load beau.png, falls back to Emoji -->
                 <img src="beau.png" alt="Beau" class="w-full h-full object-cover" onerror="this.style.display='none'; document.getElementById('fallback-angel').style.display='block';">
-                <span id="fallback-angel" class="text-4xl select-none" style="display:none;">👼</span>
+                <span id="fallback-angel" class="text-4xl select-none paper-emoji" style="display:none;">👼</span>
             </div>
             <div id="beau-speech" class="absolute top-16 mt-2 bg-white px-3 py-1 rounded-xl shadow-md text-gray-800 text-lg opacity-0 transition-opacity duration-300 w-32 text-center pointer-events-none left-1/2 -translate-x-1/2">
                 Yay!
@@ -315,59 +302,61 @@
         </div>
 
         <!-- 6. PARENT MODE -->
-        <div id="parent-overlay" class="absolute inset-0 z-50 bg-black/80 flex items-center justify-center hidden">
-            <div class="bg-white rounded-2xl p-4 lg:p-8 w-[90%] max-h-[90%] text-center minnie-border flex flex-col">
+        <div id="parent-overlay" class="absolute inset-0 z-[3000] bg-black/80 flex items-center justify-center hidden">
+            <div class="bg-white rounded-2xl p-4 lg:p-8 w-[95%] max-w-4xl max-h-[90%] text-center minnie-border flex flex-col border-4 border-white shadow-2xl">
                 <div class="flex justify-between items-center mb-4 border-b-2 border-red-200 pb-2">
-                    <h2 class="text-3xl text-gray-800">Parent Mode</h2>
+                    <h2 class="text-3xl text-gray-800 font-bold paper-emoji">Parent Mode</h2>
                     <div class="flex gap-2">
-                        <button id="btn-sound-toggle" onclick="toggleSound()" class="px-4 py-2 bg-blue-500 text-white rounded-full text-lg shadow-lg active:scale-95 transition-colors w-32">
+                        <button id="btn-sound-toggle" onclick="toggleSound()" class="px-4 py-2 bg-blue-500 text-white rounded-full text-lg shadow-lg active:scale-95 w-32 font-bold border-2 border-white">
                             Sound: 100%
                         </button>
-                        <button onclick="resumeGame()" class="px-4 py-2 bg-green-500 text-white rounded-full text-lg shadow-lg active:scale-95">
+                        <button onclick="resumeGame()" class="px-4 py-2 bg-green-500 text-white rounded-full text-lg shadow-lg active:scale-95 font-bold border-2 border-white">
                             Resume
                         </button>
                     </div>
                 </div>
 
-                <!-- Settings Controls -->
                 <div class="flex gap-4 mb-4">
-                    <div class="flex-1 flex flex-col gap-2 bg-gray-100 p-3 rounded-xl">
-                        <span class="text-xl font-bold text-gray-700 text-center">Left Zone</span>
-                        <button id="btn-cat-left" onclick="cycleCategoryConfig('left')" class="w-full px-4 py-2 bg-indigo-500 text-white rounded-full active:scale-95">
+                    <div class="flex-1 flex flex-col gap-2 bg-red-50 p-3 rounded-xl border-2 border-red-200">
+                        <span class="text-xl font-bold text-red-800 text-center">LEFT SIDE</span>
+                        <button id="btn-cat-left" onclick="cycleCategoryConfig('left')" class="w-full px-4 py-2 bg-red-500 text-white rounded-full active:scale-95 font-bold shadow-md">
                             Faces
                         </button>
                     </div>
 
-                    <div class="flex-1 flex flex-col gap-2 bg-gray-100 p-3 rounded-xl">
-                        <span class="text-xl font-bold text-gray-700 text-center">Right Zone</span>
-                        <button id="btn-cat-right" onclick="cycleCategoryConfig('right')" class="w-full px-4 py-2 bg-indigo-500 text-white rounded-full active:scale-95">
+                    <div class="flex-1 flex flex-col gap-2 bg-blue-50 p-3 rounded-xl border-2 border-blue-200">
+                        <span class="text-xl font-bold text-blue-800 text-center">RIGHT SIDE</span>
+                        <button id="btn-cat-right" onclick="cycleCategoryConfig('right')" class="w-full px-4 py-2 bg-blue-500 text-white rounded-full active:scale-95 font-bold shadow-md">
                             Animals
                         </button>
                     </div>
                 </div>
                 
-                <p class="text-gray-500 text-sm mb-2 text-center">Tap emoji to block/unblock items from appearing.</p>
+                <p class="text-gray-500 text-sm mb-2 text-center">Tap any emoji below to hide it from the game.</p>
 
-                <!-- Category Manager Grid -->
-                <div class="flex-1 overflow-y-auto scroller">
-                    <div class="grid grid-cols-2 gap-4 text-center select-none">
-                        <div class="font-bold text-red-700 bg-red-100 rounded py-1 sticky top-0 z-10 shadow-sm">LEFT</div>
-                        <div class="font-bold text-blue-700 bg-blue-100 rounded py-1 sticky top-0 z-10 shadow-sm">RIGHT</div>
-                        <!-- Content injected via JS -->
-                        <div id="col-left-preview" class="flex flex-wrap content-start gap-2 p-2 bg-white/50 rounded min-h-[100px]"></div>
-                        <div id="col-right-preview" class="flex flex-wrap content-start gap-2 p-2 bg-white/50 rounded min-h-[100px]"></div>
+                <div class="flex-1 overflow-y-auto scroller border-2 border-gray-200 rounded-xl bg-gray-50 p-2">
+                    <div class="grid grid-cols-2 gap-4 text-center select-none h-full">
+                        <!-- Left Col -->
+                        <div class="flex flex-col">
+                            <div id="col-left-preview" class="flex flex-wrap content-start justify-center gap-2 p-2"></div>
+                        </div>
+                        <!-- Right Col -->
+                        <div class="flex flex-col border-l-2 border-gray-200 pl-2">
+                            <div id="col-right-preview" class="flex flex-wrap content-start justify-center gap-2 p-2"></div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- 7. UNLOCK INDICATOR (Z-2000 to be on top) -->
-        <div id="unlock-indicator" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-0 transition-opacity z-[2000]">
-            <svg width="100" height="100" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="45" stroke="#ffffff" stroke-width="5" fill="none" opacity="0.3"/>
-                <circle id="unlock-progress" cx="50" cy="50" r="45" stroke="#ffffff" stroke-width="5" fill="none" class="unlock-ring" stroke-linecap="round" transform="rotate(-90 50 50)"/>
+        <!-- 7. UNLOCK INDICATOR -->
+        <div id="unlock-indicator" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-0 transition-opacity z-[4000]">
+            <svg width="120" height="120" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="40" stroke="white" stroke-width="8" fill="rgba(0,0,0,0.5)"/>
+                <circle id="unlock-progress" cx="50" cy="50" r="40" stroke="#4ade80" stroke-width="8" fill="none" class="unlock-ring" stroke-linecap="round" transform="rotate(-90 50 50)"/>
+                <path d="M50 35 V45 M50 55 V65" stroke="white" stroke-width="4" stroke-linecap="round" /> <!-- Lock icon hint -->
+                <rect x="35" y="45" width="30" height="25" rx="3" fill="white" />
             </svg>
-            <div class="text-white text-center font-bold mt-2 text-xl drop-shadow-md">Hold...</div>
         </div>
 
     </div>
@@ -376,7 +365,7 @@
     <script>
         /* --- DATASETS --- */
         const CATEGORIES = {
-            smileys: { id: 'smileys', label: "FACES", icon: "😃", items: ["😀","😃","😄","😁","😆","😅","🤣","😂","🙂","🙃","😉","😊","😇","🥰","😍","🤩","😘","😗","😚","😙","😋","😛","😜","🤪","😝","🤑","🤗","🤭","🤫","🤔","🤐","🤨","😐","😑","😶","😏","😒","🙄","😬","🤥","😌","😔","😪","🤤","😴","😷","🤒","🤕","🤢","🤮","🤧","🥵","🥶","🥴","😵","🤯","🤠","🥳","😎","🤓","🧐","😕","😟","🙁","☹️","😮","😯","😲","😳","🥺","😦","😧","😨","😰","😥","😢","😭","😱","😖","😣","😞","😓","😩","😫","🥱","😤","😡","😠","🤬","😈","👿"] },
+            smileys: { id: 'smileys', label: "FACES", icon: "😃", items: ["😀","😃","😄","😁","😆","😅","🤣","😂","🙂","🙃","😉","😊","😇","🥰","😍","🤩","😘","😗","😚","😙","😋","😛","😜","🤪","😝","🤑","🤗","🤭","🤫","🤔","🤐","🤨","😐","😑","😏","😒","🙄","😬","🤥","😌","😔","😪","🤤","😴","😷","🤒","🤕","🤢","🤮","🤧","🥵","🥶","🥴","😵","🤯","🤠","🥳","😎","🤓","🧐","😕","😟","🙁","☹️","😮","😯","😲","😳","🥺","😦","😧","😨","😰","😥","😢","😭","😱","😖","😣","😞","😓","😩","😫","🥱","😤","😡","😠","🤬","😈","👿"] },
             animals: { id: 'animals', label: "ANIMALS", icon: "🦎", items: ["🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼","🐨","🐯","🦁","🐮","🐷","🐽","🐸","🐵","🙈","🙉","🙊","🐒","🐔","🐧","🐦","🐤","🐣","🐥","🦆","🦅","🦉","🦇","🐺","🐗","🐴","🦄","🐝","🐛","🦋","🐌","🐞","🐜","🦟","🦗","🕷️","🕸️","🦂","🐢","🐍","🦎","🦖","🦕","🐙","🦑","🦐","🦞","🦀","🐡","🐠","🐟","🐬","🐳","🐋","🦈","🐊","🐅","🐆","🦓","🦍","🦧","🐘","🦛","🦏","🐪","🐫","🦒","🦘","🐃","🐂","🐄","🐎","🐖","🐏","🐑","🦙","🐐","🦌","🐕","🐩","🦮","🐕‍🦺","🐈","🐓","🦃","🦚","🦜","🦢","🦩","🕊️","🐇","🦝","🦨","🦡","🦦","🦥","🐁","🐀","🐿️","🦔"] },
             food: { id: 'food', label: "FOOD", icon: "🍎", items: ["🍏","🍎","🍐","🍊","🍋","🍌","🍉","🍇","🍓","🍈","🍒","🍑","🥭","🍍","🥥","🥝","🍅","🍆","🥑","🥦","🥬","🥒","🌶️","🌽","🥕","🧄","🧅","🥔","🍠","🥐","🥯","🍞","🥖","🥨","🧀","🥚","🍳","🥞","🧇","🥓","🥩","🍗","🍖","🦴","🌭","🍔","🍟","🍕","🥪","🥙","🧆","🌮","🌯","🥗","🥘","🥫","🍝","🍜","🍲","🍛","🍣","🍱","🥟","🦪","🍤","🍙","🍚","🍘","🍥","🥠","🍢","🍡","🍧","🍨","🍦","🥧","🧁","🍰","🎂","🍮","🍭","🍬","🍫","🍿","🍩","🍪"] },
             vehicles: { id: 'vehicles', label: "VEHICLES", icon: "🚗", items: ["🚗","🚕","🚙","🚌","🚎","🏎️","🚓","🚑","🚒","🚐","🚚","🚛","🚜","🛴","🚲","🛵","🏍️","🚨","🚔","🚍","🚘","🚖","🚡","🚠","🚟","🚃","🚋","🚞","🚝","🚄","🚅","🚈","🚂","🚆","🚇","🚊","🚉","✈️","🛫","🛬","🛩️","💺","🛰️","🚀","🛸","🚁","🛶","⛵","🚤","🛥️","🛳️","⛴️","🚢"] },
@@ -384,39 +373,19 @@
                 id: 'nature', 
                 label: "OUTSIDE", 
                 icon: "🌳", 
-                items: [
-                    // Weather & Elements
-                    "☀️","🌙","⭐","🌟","☁️","⛅","⛈️","❄️","⚡","🌈","☂️","☔","☃️","🔥","💧","🌊","🌍","🌋","🏔️",
-                    // Plants & Flowers
-                    "🌵","🎄","🌲","🌳","🌴","🌱","🌿","☘️","🍀","🎍","🎋","🍃","🍂","🍁","🌾","🌺","🌻","🌹","🥀","🌷","🌼","🌸","💐","🍄","🌰","🎃"
-                ] 
+                items: ["☀️","🌙","⭐","🌟","☁️","⛅","⛈️","❄️","⚡","🌈","☂️","☔","☃️","🔥","💧","🌊","🌍","🌋","🏔️","🌵","🎄","🌲","🌳","🌴","🌱","🌿","☘️","🍀","🎍","🎋","🍃","🍂","🍁","🌾","🌺","🌻","🌹","🥀","🌷","🌼","🌸","💐","🍄","🌰","🎃"] 
             },
             shapes: {
                 id: 'shapes',
                 label: "SHAPES",
                 icon: "🔶",
-                items: [
-                    // Colored Hearts (9)
-                    "❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎",
-                    // Colored Circles (9)
-                    "🔴","🟠","🟡","🟢","🔵","🟣","⚫","⚪","🟤",
-                    // Colored Squares (9)
-                    "🟥","🟧","🟨","🟩","🟦","🟪","⬛","⬜","🟫",
-                    // Triangles & Diamonds (9)
-                    "🔺","🔻","🔼","🔽","🔹","🔸","🔷","🔶","💠",
-                    // Signs & Math (10)
-                    "🛑","🚫","⭕","❌","✔️","❓","❗","⚠️","➕","♾️",
-                    // Suits, Music & Misc (7)
-                    "♠️","♣️","♦️","🎵","🎶","☯️","☮️",
-                    // Arrows (4)
-                    "⬅️","➡️","⬆️","⬇️"
-                ]
+                items: ["❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","🔴","🟠","🟡","🟢","🔵","🟣","⚫","⚪","🟤","🟥","🟧","🟨","🟩","🟦","🟪","⬛","⬜","🟫","🔺","🔻","🔼","🔽","🔹","🔸","🔷","🔶","💠","🛑","🚫","⭕","❌","✔️","❓","❗","⚠️","➕","♾️","♠️","♣️","♦️","🎵","🎶","☯️","☮️","⬅️","➡️","⬆️","⬇️"]
             }
         };
 
         const CAT_KEYS = Object.keys(CATEGORIES);
 
-        /* --- 1. STATE --- */
+        /* --- STATE --- */
         const state = {
             currentItem: null,
             currentAnimation: null,
@@ -427,25 +396,12 @@
             inParentMode: false,
             humOscillators: [],
             humGain: null,
-            
-            // Config
-            config: {
-                leftCat: 'random',
-                rightCat: 'random'
-            },
-            
-            // Blocklist
+            config: { leftCat: 'random', rightCat: 'random' },
             blockedItems: [],
-            
-            // Active Categories
             activeLeft: null,
             activeRight: null,
-            
-            // Skip Logic
             spawnTime: 0,
             skipsInMinute: [], 
-            
-            // Physics & Storm
             returnTimer: null, 
             isProcessingSuccess: false, 
             dropTimeout: null,
@@ -453,23 +409,17 @@
             isStorming: false,
             stormTimer: null,
             snowInterval: null,
-            totalTouches: 0, 
-            
-            cancelReGrab: null, // Cleanup reference
-            
-            // Parent Mode
-            unlockState: { star: false, angel: false, timer: null }
+            // Parent Mode Trigger
+            unlockState: { star: false, angel: false, timer: null, tapStartTime: 0 }
         };
 
-        /* --- 2. SETUP & DECORATIONS --- */
+        /* --- SETUP --- */
         function initCategories() {
-            // Determine Left Category
             let leftKey = state.config.leftCat;
             if (leftKey === 'random') {
                 leftKey = CAT_KEYS[Math.floor(Math.random() * CAT_KEYS.length)];
             }
             
-            // Determine Right Category (Ensuring diff if random)
             let rightKey = state.config.rightCat;
             if (rightKey === 'random') {
                 const remaining = CAT_KEYS.filter(k => k !== leftKey);
@@ -482,28 +432,23 @@
             state.activeLeft = CATEGORIES[leftKey];
             state.activeRight = CATEGORIES[rightKey];
             
-            // Update UI
             document.getElementById('left-icon').innerText = state.activeLeft.icon;
             document.getElementById('left-label').innerText = state.activeLeft.label;
             document.getElementById('right-icon').innerText = state.activeRight.icon;
             document.getElementById('right-label').innerText = state.activeRight.label;
             
-            // Update Backgrounds
             renderBackgroundDecorations(leftKey, 'left');
             renderBackgroundDecorations(rightKey, 'right');
-            
-            // Update Parent Buttons Text
             updateConfigButtons();
         }
 
         function renderBackgroundDecorations(catId, side) {
             const container = document.getElementById(side === 'left' ? 'deco-left' : 'deco-right');
-            container.innerHTML = ''; // Clear
+            container.innerHTML = ''; 
             
-            // Helper to place emoji divs
             const createEmoji = (x, y, size, emoji, scaleX = 1) => {
                 const d = document.createElement('div');
-                d.style.position = 'absolute';
+                d.className = 'paper-emoji absolute';
                 d.style.left = x + '%';
                 d.style.bottom = y + '%';
                 d.style.fontSize = size + 'px';
@@ -512,85 +457,41 @@
                 container.appendChild(d);
             };
 
-            // LEFT SIDE DECO (0-50% width)
             if (side === 'left') {
                 if (catId === 'animals') {
-                    // Lake Party
-                    createEmoji(15, 12, 30, "🦆");
-                    createEmoji(22, 15, 25, "🐢");
-                    createEmoji(18, 20, 20, "🐸");
-                    createEmoji(5, 45, 40, "🌲");
+                    createEmoji(15, 12, 30, "🦆"); createEmoji(22, 15, 25, "🐢"); createEmoji(5, 45, 40, "🌲");
                 } else if (catId === 'vehicles') {
-                    // Road Work
-                    createEmoji(10, 30, 35, "🚜");
-                    createEmoji(25, 32, 30, "🚛");
-                    createEmoji(5, 28, 20, "🚧");
+                    createEmoji(10, 30, 35, "🚜"); createEmoji(25, 32, 30, "🚛");
                 } else if (catId === 'food') {
-                    // Picnic
-                    createEmoji(15, 45, 40, "🧺"); 
-                    createEmoji(20, 40, 20, "🍎");
-                    createEmoji(10, 40, 20, "🍇");
-                    createEmoji(18, 50, 15, "🐜");
+                    createEmoji(15, 45, 40, "🧺"); createEmoji(20, 40, 20, "🍎"); createEmoji(18, 50, 15, "🐜");
                 } else if (catId === 'smileys') {
-                    // Snow Family
-                    createEmoji(15, 35, 40, "⛄");
-                    createEmoji(25, 35, 30, "⛄");
-                    createEmoji(20, 32, 20, "❄️");
+                    createEmoji(15, 35, 40, "⛄"); createEmoji(25, 35, 30, "⛄");
                 } else if (catId === 'nature') {
-                    // Garden - Connected Rainbows
                     createEmoji(10, 80, 50, "☀️");
-                    // Two rainbows placed low to touch the ground - Moved closer together
-                    createEmoji(6, 35, 70, "🌈");
-                    // Flipped horizontally to complete the arch
-                    createEmoji(12, 35, 70, "🌈", -1);
-                    
-                    createEmoji(5, 30, 25, "🌻");
-                    createEmoji(15, 25, 25, "🌷");
-                    createEmoji(25, 30, 25, "🌹");
+                    // Connected Rainbows container
+                    const rainbow = document.createElement('div');
+                    rainbow.className = 'absolute paper-emoji';
+                    rainbow.style.left = '5%'; rainbow.style.bottom = '35%';
+                    // Using fixed pixel gap inside container to ensure connection
+                    rainbow.innerHTML = `<span style="font-size:70px; position:absolute; left:0;">🌈</span><span style="font-size:70px; position:absolute; left:55px; transform:scaleX(-1);">🌈</span>`;
+                    container.appendChild(rainbow);
+                    createEmoji(5, 30, 25, "🌻"); createEmoji(25, 30, 25, "🌹");
                 } else if (catId === 'shapes') {
-                    // Abstract Art
-                    createEmoji(10, 80, 30, "❤️");
-                    createEmoji(20, 70, 25, "🔵");
-                    createEmoji(5, 50, 35, "🔺");
-                    createEmoji(30, 40, 20, "⭐");
+                    createEmoji(10, 80, 30, "❤️"); createEmoji(5, 50, 35, "🔺");
                 }
-            } 
-            // RIGHT SIDE DECO (50-100% width, x coordinates are relative to whole screen)
-            else {
+            } else {
                 if (catId === 'animals') {
-                    // Forest Friends
-                    createEmoji(85, 45, 35, "🦌");
-                    createEmoji(75, 35, 30, "🐻");
-                    createEmoji(80, 20, 20, "🦉");
-                    createEmoji(92, 40, 40, "🌲");
+                    createEmoji(85, 45, 35, "🦌"); createEmoji(75, 35, 30, "🐻"); createEmoji(92, 40, 40, "🌲");
                 } else if (catId === 'vehicles') {
-                    // Air Show
-                    createEmoji(80, 60, 40, "✈️");
-                    createEmoji(65, 65, 30, "🚁");
-                    createEmoji(88, 75, 25, "🚀");
+                    createEmoji(80, 60, 40, "✈️"); createEmoji(65, 65, 30, "🚁");
                 } else if (catId === 'food') {
-                    // Candy Land
-                    createEmoji(85, 40, 40, "🍭");
-                    createEmoji(75, 45, 35, "🍬");
-                    createEmoji(90, 30, 35, "🍩");
-                    createEmoji(80, 25, 25, "🧁");
+                    createEmoji(85, 40, 40, "🍭"); createEmoji(90, 30, 35, "🍩");
                 } else if (catId === 'smileys') {
-                    // Celestial
-                    createEmoji(90, 75, 50, "🌞");
-                    createEmoji(75, 70, 30, "☁️");
-                    createEmoji(85, 60, 25, "🌈");
+                    createEmoji(90, 75, 50, "🌞"); createEmoji(75, 70, 30, "☁️");
                 } else if (catId === 'nature') {
-                    // Wilderness
-                    createEmoji(85, 50, 60, "🏔️");
-                    createEmoji(70, 50, 40, "🌋");
-                    createEmoji(90, 80, 30, "🌙");
-                    createEmoji(80, 85, 20, "⭐");
+                    createEmoji(85, 50, 60, "🏔️"); createEmoji(70, 50, 40, "🌋"); createEmoji(90, 80, 30, "🌙");
                 } else if (catId === 'shapes') {
-                    // Geometry
-                    createEmoji(90, 80, 35, "🟦");
-                    createEmoji(75, 60, 30, "🔶");
-                    createEmoji(85, 40, 25, "⚫");
-                    createEmoji(65, 30, 40, "♾️");
+                    createEmoji(90, 80, 35, "🟦"); createEmoji(75, 60, 30, "🔶"); createEmoji(65, 30, 40, "♾️");
                 }
             }
         }
@@ -598,7 +499,6 @@
         function updateConfigButtons() {
             const lBtn = document.getElementById('btn-cat-left');
             const rBtn = document.getElementById('btn-cat-right');
-            
             lBtn.innerText = state.config.leftCat === 'random' ? "Random" : CATEGORIES[state.config.leftCat].label;
             rBtn.innerText = state.config.rightCat === 'random' ? "Random" : CATEGORIES[state.config.rightCat].label;
         }
@@ -622,26 +522,20 @@
             renderParentModeItems(); 
             playSound('pop');
             saveConfig();
-
-            // Refresh current item if it exists
-            if (state.currentItem) {
-                state.currentItem.remove();
-                spawnItem();
-            }
+            
+            // Refresh Item
+            if (state.currentItem) { state.currentItem.remove(); spawnItem(); }
         }
 
         function toggleBlockItem(emoji) {
             const idx = state.blockedItems.indexOf(emoji);
-            if (idx >= 0) {
-                state.blockedItems.splice(idx, 1); 
-            } else {
-                state.blockedItems.push(emoji); 
-            }
+            if (idx >= 0) state.blockedItems.splice(idx, 1); 
+            else state.blockedItems.push(emoji); 
+            
             saveConfig();
             renderParentModeItems();
             
-            // If current item is now blocked, remove it
-            if (state.currentItem && state.currentItem.querySelector('.emoji-content').innerHTML === emoji) {
+            if (state.currentItem && state.currentItem.innerText === emoji) {
                 state.currentItem.remove();
                 spawnItem();
             }
@@ -650,13 +544,11 @@
         function renderParentModeItems() {
             const leftCol = document.getElementById('col-left-preview');
             const rightCol = document.getElementById('col-right-preview');
-            
-            leftCol.innerHTML = '';
-            rightCol.innerHTML = '';
+            leftCol.innerHTML = ''; rightCol.innerHTML = '';
 
             state.activeLeft.items.forEach(emoji => {
                 const el = document.createElement('div');
-                el.className = 'text-4xl cursor-pointer p-1 rounded hover:bg-gray-200 transition-opacity';
+                el.className = 'text-4xl cursor-pointer p-1 rounded hover:bg-gray-200 transition-opacity paper-emoji';
                 el.innerText = emoji;
                 if (state.blockedItems.includes(emoji)) el.classList.add('blocked-item');
                 el.onclick = () => toggleBlockItem(emoji);
@@ -665,7 +557,7 @@
 
             state.activeRight.items.forEach(emoji => {
                 const el = document.createElement('div');
-                el.className = 'text-4xl cursor-pointer p-1 rounded hover:bg-gray-200 transition-opacity';
+                el.className = 'text-4xl cursor-pointer p-1 rounded hover:bg-gray-200 transition-opacity paper-emoji';
                 el.innerText = emoji;
                 if (state.blockedItems.includes(emoji)) el.classList.add('blocked-item');
                 el.onclick = () => toggleBlockItem(emoji);
@@ -676,11 +568,8 @@
         /* --- 3. AUDIO --- */
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         
-        // GLOBAL AUDIO UNLOCK
         function unlockAudio() {
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume().then(() => console.log('Audio unlocked'));
-            }
+            if (audioCtx.state === 'suspended') audioCtx.resume();
         }
         document.addEventListener('touchstart', unlockAudio, {passive: true});
         document.addEventListener('touchend', unlockAudio, {passive: true});
@@ -720,48 +609,30 @@
                     osc.frequency.linearRampToValueAtTime(100, now + 0.2);
                     gain.gain.setValueAtTime(0.1 * vol, now);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-                    osc.start(now);
-                    osc.stop(now + 0.2);
+                    osc.start(now); osc.stop(now + 0.2);
                 } else if (type === 'pop') {
                     osc.type = 'sine';
                     osc.frequency.setValueAtTime(800, now);
                     osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
                     gain.gain.setValueAtTime(0.05 * vol, now);
                     gain.gain.linearRampToValueAtTime(0.001, now + 0.1);
-                    osc.start(now);
-                    osc.stop(now + 0.1);
+                    osc.start(now); osc.stop(now + 0.1);
                 } else if (type === 'wood') {
                     osc.type = 'square';
                     osc.frequency.setValueAtTime(200, now);
                     osc.frequency.exponentialRampToValueAtTime(50, now + 0.1);
                     gain.gain.setValueAtTime(0.05 * vol, now);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
-                    osc.start(now);
-                    osc.stop(now + 0.1);
-                } else if (type === 'home' || type === 'doorbell') {
+                    osc.start(now); osc.stop(now + 0.1);
+                } else if (type === 'doorbell') {
                     const osc2 = audioCtx.createOscillator();
                     const gain2 = audioCtx.createGain();
-                    osc2.connect(gain2);
-                    gain2.connect(audioCtx.destination);
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(329.63, now); 
-                    gain.gain.setValueAtTime(0.1 * vol, now);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
-                    osc2.type = 'sine';
-                    osc2.frequency.setValueAtTime(261.63, now + 0.3);
-                    gain2.gain.setValueAtTime(0, now);
-                    gain2.gain.setValueAtTime(0.1 * vol, now + 0.3);
-                    gain2.gain.exponentialRampToValueAtTime(0.001, now + 1.0);
-                    osc.start(now); osc.stop(now + 0.5);
-                    osc2.start(now); osc2.stop(now + 1.0);
-                } else if (type === 'leaves') {
-                    osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(400, now);
-                    osc.frequency.linearRampToValueAtTime(500, now + 0.1);
-                    gain.gain.setValueAtTime(0.03 * vol, now);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-                    osc.start(now);
-                    osc.stop(now + 0.2);
+                    osc2.connect(gain2); gain2.connect(audioCtx.destination);
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(329.63, now); 
+                    gain.gain.setValueAtTime(0.1 * vol, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+                    osc2.type = 'sine'; osc2.frequency.setValueAtTime(261.63, now + 0.3);
+                    gain2.gain.setValueAtTime(0, now); gain2.gain.setValueAtTime(0.1 * vol, now + 0.3); gain2.gain.exponentialRampToValueAtTime(0.001, now + 1.0);
+                    osc.start(now); osc.stop(now + 0.5); osc2.start(now); osc2.stop(now + 1.0);
                 } else if (type === 'giggle') {
                     osc.type = 'sine';
                     osc.frequency.setValueAtTime(600, now);
@@ -769,23 +640,20 @@
                     osc.frequency.linearRampToValueAtTime(600, now + 0.2);
                     gain.gain.setValueAtTime(0.05 * vol, now);
                     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
-                    osc.start(now);
-                    osc.stop(now + 0.3);
+                    osc.start(now); osc.stop(now + 0.3);
                 } else if (type === 'chime') {
                     osc.type = 'sine';
                     osc.frequency.setValueAtTime(1000, now);
                     gain.gain.setValueAtTime(0.05 * vol, now);
                     gain.gain.linearRampToValueAtTime(0.001, now + 0.5);
-                    osc.start(now);
-                    osc.stop(now + 0.5);
+                    osc.start(now); osc.stop(now + 0.5);
                 } else if (type === 'whoosh') {
                     osc.type = 'sine';
                     osc.frequency.setValueAtTime(400, now);
                     osc.frequency.exponentialRampToValueAtTime(100, now + 0.3);
                     gain.gain.setValueAtTime(0.1 * vol, now);
                     gain.gain.linearRampToValueAtTime(0.001, now + 0.3);
-                    osc.start(now);
-                    osc.stop(now + 0.3);
+                    osc.start(now); osc.stop(now + 0.3);
                 }
             } catch (e) {}
         }
@@ -796,7 +664,6 @@
                 if (state.humOscillators.length > 0) return; 
                 if (!state.soundEnabled) return;
                 if (audioCtx.state === 'suspended') audioCtx.resume();
-
                 const vol = getVolumeMultiplier();
                 const now = audioCtx.currentTime;
                 
@@ -808,10 +675,8 @@
                 const freqs = [100, 105, 95];
                 freqs.forEach(f => {
                     const osc = audioCtx.createOscillator();
-                    osc.type = 'triangle'; 
-                    osc.frequency.value = f;
-                    osc.connect(state.humGain);
-                    osc.start(now);
+                    osc.type = 'triangle'; osc.frequency.value = f;
+                    osc.connect(state.humGain); osc.start(now);
                     state.humOscillators.push(osc);
                 });
             } catch (e) {}
@@ -824,7 +689,6 @@
                     state.humGain.gain.cancelScheduledValues(now);
                     state.humGain.gain.setValueAtTime(state.humGain.gain.value, now);
                     state.humGain.gain.linearRampToValueAtTime(0, now + 0.15); 
-                    
                     state.humOscillators.forEach(osc => { osc.stop(now + 0.15); });
                     state.humOscillators = [];
                     state.humGain = null;
@@ -832,69 +696,55 @@
             } catch (e) {}
         }
 
-        /* --- 4. GAME LOGIC & SNOWSTORM --- */
+        /* --- 4. GAME LOGIC --- */
         const zoneLeft = document.getElementById('zone-left');
         const zoneRight = document.getElementById('zone-right');
         const toyBox = document.getElementById('toy-box-container');
 
         function startSnowstormCycle() {
-            // Random time between 3-6 mins (180000ms - 360000ms)
-            const nextStorm = 180000 + Math.random() * 180000;
-            // Testing: const nextStorm = 10000;
+            const nextStorm = 180000 + Math.random() * 180000; // 3-6 mins
             setTimeout(triggerSnowstorm, nextStorm);
         }
 
         function triggerSnowstorm() {
             if (state.isStorming) return;
             state.isStorming = true;
-            console.log("Starting Snowstorm!");
             
-            // 1. Add extra clouds
             const layer = document.getElementById('cloud-layer');
             const extraClouds = [];
             for (let i = 0; i < 3; i++) {
                 const c = document.createElement('div');
-                // Removed pointer-events-none, added onclick and cursor-pointer
                 c.className = `absolute text-white opacity-60 cursor-pointer cloud-${i%2===0?'fast':'medium'}`;
                 c.style.top = Math.random() * 20 + '%';
                 c.style.animationDelay = `-${Math.random()*10}s`;
-                c.onclick = handleCloudTap; // Make interactive
+                c.onclick = handleCloudTap; 
                 c.innerHTML = `<svg width="100" height="60" viewBox="0 0 100 60" fill="currentColor"><path d="M10,40 Q0,40 0,30 Q0,10 20,10 Q25,0 40,0 Q60,0 65,10 Q80,5 90,20 Q100,20 100,40 Z" /></svg>`;
                 layer.appendChild(c);
                 extraClouds.push(c);
             }
 
-            // 2. Heavy Snow Loop
             state.snowInterval = setInterval(() => {
-                spawnSnow(Math.random() * 100, -10); // Spawn from top
-            }, 300); // Very frequent
+                spawnSnow(Math.random() * 100, -10); 
+            }, 300); 
 
-            // 3. End after 2 mins
             setTimeout(() => {
                 state.isStorming = false;
                 clearInterval(state.snowInterval);
                 extraClouds.forEach(c => c.remove());
-                startSnowstormCycle(); // Schedule next one
+                startSnowstormCycle(); 
             }, 120000);
         }
 
         function getSafeLandingY() {
             const h = window.innerHeight;
+            const w = window.innerWidth;
             let targetY = h * 0.33;
-            if (h - targetY < 350) targetY = h * 0.20; 
+            // Vertical phone check: Ensure high clearance above house
+            if (h > w) { 
+                targetY = h * 0.60; // Lower on screen (closer to house) as requested
+            }
             if (targetY < h * 0.15) targetY = h * 0.15;
             return targetY;
-        }
-
-        function isPalm(e) {
-            const touch = e.touches ? e.touches[0] : e;
-            const x = touch.clientX;
-            const y = touch.clientY;
-            const w = window.innerWidth;
-            const h = window.innerHeight;
-            const edge = 30; 
-            if (y < 100) return false;
-            return (x < edge || x > w - edge || y > h - edge);
         }
 
         function canSkip() {
@@ -906,7 +756,7 @@
         }
 
         function spawnItem() {
-            // --- SAFETY FLUSH ---
+            // Safety Flush
             zoneLeft.classList.remove('hovered');
             zoneRight.classList.remove('hovered');
             if (state.dropTimeout) { clearTimeout(state.dropTimeout); state.dropTimeout = null; }
@@ -916,17 +766,12 @@
             let data;
             let attempts = 0;
             
-            // Build pool from Active Categories, excluding Blocked items
             const leftItems = state.activeLeft.items.filter(i => !state.blockedItems.includes(i));
             const rightItems = state.activeRight.items.filter(i => !state.blockedItems.includes(i));
-            
             const pool = [...leftItems.map(i => ({emoji: i, cat: 'left'})), 
                           ...rightItems.map(i => ({emoji: i, cat: 'right'}))];
             
-            if (pool.length === 0) {
-                // Fallback if everything is blocked
-                pool.push({emoji: "⭐", cat: 'left'});
-            }
+            if (pool.length === 0) pool.push({emoji: "⭐", cat: 'left'});
 
             do {
                 data = pool[Math.floor(Math.random() * pool.length)];
@@ -939,16 +784,13 @@
             state.spawnTime = Date.now();
 
             const el = document.createElement('div');
-            el.className = 'draggable-item absolute cursor-pointer pointer-events-auto select-none';
+            el.className = 'draggable-item absolute cursor-pointer pointer-events-auto select-none paper-emoji';
             const content = document.createElement('span');
             content.className = 'emoji-content';
             content.innerHTML = data.emoji;
             el.appendChild(content);
 
             const landingY = getSafeLandingY();
-            const centerX = window.innerWidth / 2;
-            // Note: size is controlled by CSS, JS positioning centers it loosely
-            // We use transform translate to center it properly based on its dynamic width
             el.style.left = '50%'; 
             el.style.transform = 'translate(-50%, 0)';
             el.style.top = landingY + 'px';
@@ -973,7 +815,6 @@
             state.currentAnimation.onfinish = () => {
                 content.classList.add('wiggle-idle');
                 state.currentAnimation = null;
-                // Bake final position into styles to remove dependency on animation fill
                 el.style.transform = 'translate(-50%, 0)';
             };
 
@@ -986,32 +827,18 @@
         function makeDraggable(el, content) {
             let startX, startY;
             let initialLeft, initialTop;
-            let itemWidth = 0, itemHeight = 0;
             
             const onStart = (e) => {
                 if (state.inParentMode) return;
                 
-                // Palm Rejection
-                if (e.touches && isPalm(e)) {
-                    console.log("Palm rejected");
-                    return; 
-                }
-
-                e.preventDefault(); // Prevent default touch actions (scroll/zoom)
+                // --- Single Tap Detection for Start ---
+                // We don't block preventDefault here if we want drag, but we handle taps via touchend timing
+                e.preventDefault(); 
                 
-                // CLEAR PREVIOUS FAILED DROP TIMER if re-grabbed
-                if (state.returnTimer) {
-                    clearTimeout(state.returnTimer);
-                    state.returnTimer = null;
-                }
-
-                if (state.currentAnimation) {
-                    state.currentAnimation.cancel();
-                    state.currentAnimation = null;
-                }
+                if (state.returnTimer) { clearTimeout(state.returnTimer); state.returnTimer = null; }
+                if (state.currentAnimation) { state.currentAnimation.cancel(); state.currentAnimation = null; }
                 
                 state.isDragging = true;
-                
                 playSound('pop'); 
                 startWoodenPurr(); 
                 
@@ -1022,20 +849,13 @@
                 startX = point.clientX;
                 startY = point.clientY;
                 
-                // Get current position (might be mid-air if caught early, or landed)
                 const rect = el.getBoundingClientRect();
-                
-                // Switch from % positioning to absolute pixel positioning for drag
                 el.style.transform = 'none'; 
                 el.style.left = rect.left + 'px';
                 el.style.top = rect.top + 'px';
                 
                 initialLeft = rect.left;
                 initialTop = rect.top;
-                
-                // Store dimensions for center calculation later
-                itemWidth = rect.width;
-                itemHeight = rect.height;
 
                 el.style.transition = 'none';
                 el.style.zIndex = 1000; 
@@ -1058,22 +878,16 @@
                 let newLeft = initialLeft + dx;
                 let newTop = initialTop + dy;
 
-                // --- INVISIBLE BORDER (Keep item on screen) ---
-                // Get window dimensions
-                const maxLeft = window.innerWidth - itemWidth;
-                const maxTop = window.innerHeight - itemHeight;
-
-                // Clamp the values so it can't go < 0 or > max
-                // We allow a tiny 10px buffer so it doesn't feel stuck on the very pixel
+                const maxLeft = window.innerWidth - el.offsetWidth;
+                const maxTop = window.innerHeight - el.offsetHeight;
                 newLeft = Math.max(0, Math.min(newLeft, maxLeft));
                 newTop = Math.max(0, Math.min(newTop, maxTop));
 
                 el.style.left = `${newLeft}px`;
                 el.style.top = `${newTop}px`;
 
-                // Calculate center of ITEM based on clamped position
-                const centerX = newLeft + itemWidth / 2;
-                const centerY = newTop + itemHeight / 2;
+                const centerX = newLeft + el.offsetWidth / 2;
+                const centerY = newTop + el.offsetHeight / 2;
 
                 checkHover(centerX, centerY);
             };
@@ -1081,26 +895,44 @@
             const onEnd = (e) => {
                 if (!state.isDragging) return;
                 
-                // --- FORGIVING DRAG LOGIC ---
-                // If it's a touch end, we wait briefly to see if it's just a slip
+                // --- CHECK VALID DROP FIRST (No Delay) ---
+                const rect = el.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                
+                const targetZone = checkCollision(centerX, centerY);
+                let isHit = false;
+                
+                if (targetZone) {
+                    if (el.dataset.type === targetZone) isHit = true;
+                } else {
+                    // Check magnetic snap
+                    const distLeft = getDistance(centerX, centerY, zoneLeft);
+                    const distRight = getDistance(centerX, centerY, zoneRight);
+                    const threshold = 250; 
+                    if (distLeft < threshold && el.dataset.type === 'left') isHit = true;
+                    if (distRight < threshold && el.dataset.type === 'right') isHit = true;
+                }
+                
+                // If it's a valid hit, commit IMMEDIATELY (no delay)
+                if (isHit) {
+                    commitDrop(el, content);
+                    return;
+                }
+                
+                // If not a hit, and it was a touch end, trigger Grace Period
                 if (e.type === 'touchend') {
-                    // Temporarily pause visuals but don't commit drop
                     stopWoodenPurr();
+                    // Just wait 400ms to see if she grabs it again
+                    state.dropTimeout = setTimeout(() => { commitDrop(el, content); }, 400); 
                     
-                    state.dropTimeout = setTimeout(() => {
-                        commitDrop(el, content);
-                    }, 400); // 400ms grace period
-
-                    // Add global listener to catch re-grab anywhere
                     const reGrab = (ev) => {
                         if (ev.type === 'touchstart') {
                             clearTimeout(state.dropTimeout);
                             state.dropTimeout = null;
-                            // Cleanup self
-                            state.cancelReGrab = null; 
+                            document.removeEventListener('touchstart', reGrab);
                             
-                            // Resume drag from new position
-                            // We essentially restart the logic
+                            // Resume Drag
                             stopWoodenPurr(); startWoodenPurr();
                             const point = ev.touches[0];
                             startX = point.clientX;
@@ -1108,16 +940,11 @@
                             const rect = el.getBoundingClientRect();
                             initialLeft = rect.left;
                             initialTop = rect.top;
-                            itemWidth = rect.width;
-                            itemHeight = rect.height;
-                            // Continues using existing move listeners
                         }
                     };
                     document.addEventListener('touchstart', reGrab, {once: true});
-                    // Store cleanup function
                     state.cancelReGrab = () => document.removeEventListener('touchstart', reGrab);
-                    
-                    return; // Exit here, wait for timeout or regrab
+                    return; 
                 }
 
                 // Mouse up commits immediately
@@ -1129,11 +956,7 @@
                 stopWoodenPurr();
                 content.classList.remove('wiggle-drag');
                 
-                // Cleanup potentially pending reGrab listener
-                if (state.cancelReGrab) {
-                    state.cancelReGrab();
-                    state.cancelReGrab = null;
-                }
+                if (state.cancelReGrab) { state.cancelReGrab(); state.cancelReGrab = null; }
 
                 document.removeEventListener('mousemove', onMove);
                 document.removeEventListener('touchmove', onMove);
@@ -1144,49 +967,37 @@
                 const centerX = rect.left + rect.width / 2;
                 const centerY = rect.top + rect.height / 2;
                 
-                // 1. Check for Box Return (Skip)
+                // Check Box Skip
                 const distBox = getDistance(centerX, centerY, toyBox);
-                if (distBox < 200) { // Box proximity
-                    if (canSkip()) {
-                        handleSkip(el);
-                        return;
-                    } else {
-                        // Box reject animation (visual feedback why it failed)
+                if (distBox < 200) { 
+                    if (canSkip()) { handleSkip(el); return; } 
+                    else {
                         toyBox.classList.add('toy-box-reject');
                         setTimeout(() => toyBox.classList.remove('toy-box-reject'), 300);
-                        playSound('fail'); // Soft fail sound
+                        playSound('fail'); 
                     }
                 }
 
-                // 2. Check Zones
                 const targetZone = checkCollision(centerX, centerY);
                 let isSuccess = false;
+                let snapTarget = null;
                 
                 if (targetZone) {
-                    // Logic check
                     if (el.dataset.type === targetZone) isSuccess = true;
                 } else {
-                    // Gravity / Magnetic check for near misses
                     const distLeft = getDistance(centerX, centerY, zoneLeft);
                     const distRight = getDistance(centerX, centerY, zoneRight);
-                    const threshold = 250; // Increased magnetic threshold
-
-                    let snapTarget = null;
+                    const threshold = 250; 
                     if (distLeft < threshold) snapTarget = 'left';
                     else if (distRight < threshold) snapTarget = 'right';
 
                     if (snapTarget && el.dataset.type === snapTarget) {
                         isSuccess = true;
-                        handleSuccess(el, snapTarget); // Snap to it
-                        return; 
                     }
                 }
 
-                if (isSuccess) {
-                    handleSuccess(el, targetZone);
-                } else {
-                    handleFail(el, content);
-                }
+                if (isSuccess) handleSuccess(el, snapTarget || targetZone);
+                else handleFail(el, content);
                 
                 zoneLeft.classList.remove('hovered');
                 zoneRight.classList.remove('hovered');
@@ -1204,8 +1015,6 @@
         }
 
         function checkHover(x, y) {
-            // Use distance for broader highlight (220px radius)
-            // This gives visual feedback before the snap triggers
             const distLeft = getDistance(x, y, zoneLeft);
             const distRight = getDistance(x, y, zoneRight);
             const threshold = 220; 
@@ -1234,10 +1043,6 @@
             if (state.dropTimeout) { clearTimeout(state.dropTimeout); state.dropTimeout = null; }
             if (state.cancelReGrab) { state.cancelReGrab(); state.cancelReGrab = null; }
 
-            // Flush hover state immediately
-            zoneLeft.classList.remove('hovered');
-            zoneRight.classList.remove('hovered');
-
             state.score++;
             document.getElementById('score-display').innerText = state.score;
             playSound('success');
@@ -1250,46 +1055,20 @@
             const rect = el.getBoundingClientRect();
             createConfetti(rect.left, rect.top);
             
-            // --- NEW POP & VACUUM ANIMATION ---
-            // Calculate center of target
             const targetRect = targetEl.getBoundingClientRect();
-            const startLeft = parseFloat(el.style.left);
-            const startTop = parseFloat(el.style.top);
-            
-            // Center alignment math
-            const endLeft = (targetRect.left + targetRect.width / 2) - (rect.width / 2);
-            const endTop = (targetRect.top + targetRect.height / 2) - (rect.height / 2);
+            const tx = targetRect.left + targetRect.width/2 - rect.width/2;
+            const ty = targetRect.top + targetRect.height/2 - rect.height/2;
 
-            const anim = el.animate([
-                { 
-                    left: startLeft + 'px', 
-                    top: startTop + 'px', 
-                    transform: 'scale(1.15) rotate(0deg)', // Match drag state
-                    opacity: 1
-                },
-                {
-                    left: startLeft + 'px', 
-                    top: startTop + 'px', 
-                    transform: 'scale(1.5) rotate(10deg)', // POP UP!
-                    opacity: 1,
-                    offset: 0.2 // First 20% is just popping
-                },
-                { 
-                    left: endLeft + 'px', 
-                    top: endTop + 'px', 
-                    transform: 'scale(0) rotate(720deg)', // SUCK IN!
-                    opacity: 0 
-                }
-            ], {
-                duration: 700,
-                easing: 'cubic-bezier(0.2, 0, 0.2, 1)', // Acceleration curve
-                fill: 'forwards'
-            });
+            el.style.transition = 'all 0.8s cubic-bezier(0.25, 1, 0.5, 1)';
+            el.style.left = tx + 'px';
+            el.style.top = ty + 'px';
+            el.style.transform = 'scale(0.1) rotate(180deg)';
+            el.style.opacity = '0';
 
-            anim.onfinish = () => {
+            setTimeout(() => {
                 el.remove();
                 setTimeout(spawnItem, 300);
-            };
+            }, 800);
         }
 
         function handleSkip(el) {
@@ -1300,7 +1079,6 @@
             state.skipsInMinute.push(Date.now());
             playSound('whoosh');
             
-            // Shrink back into box
             const boxRect = toyBox.getBoundingClientRect();
             const elRect = el.getBoundingClientRect();
             const tx = boxRect.left + boxRect.width/2 - elRect.width/2;
@@ -1322,26 +1100,17 @@
             playSound('fail');
             updateBeau('idle');
             
-            // NEW: Stay put logic (3 seconds grace)
             if (state.returnTimer) clearTimeout(state.returnTimer);
-            
             state.returnTimer = setTimeout(() => {
                 el.style.transition = 'all 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55)';
-                // Reset to safe landing spot
                 const landingY = getSafeLandingY();
-                
                 el.style.left = '50%'; 
                 el.style.transform = 'translate(-50%, 0) scale(1)';
                 el.style.top = landingY + 'px';
                 el.style.zIndex = 50;
-                
-                // Re-enable Idle wiggle after returning
-                setTimeout(() => {
-                    content.classList.add('wiggle-idle');
-                }, 600);
-                
+                setTimeout(() => { content.classList.add('wiggle-idle'); }, 600);
                 state.returnTimer = null;
-            }, 3000); // 3 Seconds
+            }, 3000); 
         }
 
         function updateBeau(mood) {
@@ -1495,32 +1264,38 @@
             }
 
             const bindHold = (el, prop) => {
+                let startHoldTime;
+                
                 el.addEventListener('touchstart', (e) => { 
                     e.preventDefault(); 
+                    startHoldTime = Date.now();
                     state.unlockState[prop] = true; 
                     // touchstart updates state.totalTouches via window listener
-                    // but we need to wait a tick for it to propagate or check length here
                     setTimeout(checkParentUnlock, 10);
                 });
-                el.addEventListener('touchend', () => { 
+                
+                el.addEventListener('touchend', (e) => { 
                     state.unlockState[prop] = false; 
                     checkParentUnlock(); 
+                    
+                    // Single Tap Logic for Buttons
+                    if (Date.now() - startHoldTime < 300) {
+                       if (prop === 'star') playSound('chime');
+                       if (prop === 'angel') { playSound('giggle'); updateBeau('success'); }
+                    }
                 });
+                
                 // Mouse fallback
                 el.addEventListener('mousedown', () => { 
                     state.unlockState[prop] = true; 
                     state.totalTouches=2; 
-                    // Mouse Hack for testing: Set BOTH true
-                    state.unlockState.star = true;
-                    state.unlockState.angel = true;
+                    state.unlockState.star = true; state.unlockState.angel = true;
                     checkParentUnlock(); 
                 });
                 el.addEventListener('mouseup', () => { 
                     state.unlockState[prop] = false; 
                     state.totalTouches=0; 
-                    // Reset Both
-                    state.unlockState.star = false;
-                    state.unlockState.angel = false;
+                    state.unlockState.star = false; state.unlockState.angel = false;
                     checkParentUnlock(); 
                 });
             };
