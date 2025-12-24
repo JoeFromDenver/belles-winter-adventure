@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Belle's Winter Adventure 2.3</title>
+    <title>Belle's Winter Adventure 2.4</title>
     <link rel="manifest" href="manifest.json">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -28,7 +28,6 @@
         }
 
         /* --- PAPERCRAFT AESTHETIC --- */
-        
         .paper-texture-overlay {
             position: absolute;
             inset: 0;
@@ -69,7 +68,7 @@
             transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         .drop-zone.hovered {
-            transform: scale(1.15);
+            transform: scale(1.15) !important; /* Force scale even if shrinking applied */
             filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.6));
         }
         
@@ -370,7 +369,6 @@
     </div>
 
     <script>
-        /* --- DATASETS --- */
         const CATEGORIES = {
             smileys: { id: 'smileys', label: "FACES", icon: "😃", items: ["😀","😃","😄","😁","😆","😅","🤣","😂","🙂","🙃","😉","😊","😇","🥰","😍","🤩","😘","😗","😚","😙","😋","😛","😜","🤪","😝","🤑","🤗","🤭","🤫","🤔","🤐","🤨","😐","😑","😏","😒","🙄","😬","🤥","😌","😔","😪","🤤","😴","😷","🤒","🤕","🤢","🤮","🤧","🥵","🥶","🥴","😵","🤯","🤠","🥳","😎","🤓","🧐","😕","😟","🙁","☹️","😮","😯","😲","😳","🥺","😦","😧","😨","😰","😥","😢","😭","😱","😖","😣","😞","😓","😩","😫","🥱","😤","😡","😠","🤬","😈","👿"] },
             animals: { id: 'animals', label: "ANIMALS", icon: "🦎", items: ["🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼","🐨","🐯","🦁","🐮","🐷","🐽","🐸","🐵","🙉","🙉","🙊","🐒","🐔","🐧","🐦","🐤","🐣","🐥","🦆","🦅","🦉","🦇","🐺","🐗","🐴","🦄","🐝","🐛","🦋","🐌","🐞","🐜","🦟","🦗","🕷️","🕸️","🦂","🐢","🐍","🦎","🦖","🦕","🐙","🦑","🦐","🦞","🦀","🐡","🐠","🐟","🐬","🐳","🐋","🦈","🐊","🐅","🐆","🦓","🦍","🦧","🐘","🦛","🦏","🐪","🐫","🦒","🦘","🐃","🐂","🐄","🐎","🐖","🐏","🐑","🦙","🐐","🦌","🐕","🐩","🦮","🐕‍🦺","🐈","🐓","🦃","🦚","🦜","🦢","🦩","🕊️","🐇","🦝","🦨","🦡","🦦","🦥","🐁","🐀","🐿️","🦔"] },
@@ -392,7 +390,6 @@
 
         const CAT_KEYS = Object.keys(CATEGORIES);
 
-        /* --- STATE --- */
         const state = {
             currentItem: null,
             currentAnimation: null,
@@ -421,12 +418,113 @@
             resizeTimeout: null
         };
 
-        /* --- SETUP & DECORATIONS --- */
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function unlockAudio() { if (audioCtx.state === 'suspended') audioCtx.resume(); }
+        document.addEventListener('touchstart', unlockAudio, {passive: true});
+        document.addEventListener('touchend', unlockAudio, {passive: true});
+        document.addEventListener('click', unlockAudio);
+
+        const zoneLeft = document.getElementById('zone-left');
+        const zoneRight = document.getElementById('zone-right');
+        const toyBox = document.getElementById('toy-box-container');
+
+        // --- CORE LOGIC: LAYOUT RESOLVER ---
+        function resolveLayout(itemW = 100) {
+            // 1. Reset any previous scaling to get true dimensions
+            zoneLeft.style.transform = '';
+            zoneRight.style.transform = '';
+            
+            const lRect = zoneLeft.getBoundingClientRect();
+            const rRect = zoneRight.getBoundingClientRect();
+            
+            // Calculate Gap
+            const gap = rRect.left - lRect.right;
+            const requiredSpace = itemW + 40; // Item width + margin
+            
+            // 2. Shrink Categories if Gap is too small
+            if (gap < requiredSpace) {
+                // If touching or overlapping, shrink aggressively
+                const scaleFactor = Math.max(0.6, gap / requiredSpace * 0.9);
+                // Apply scale but keep bottom aligned
+                zoneLeft.style.transformOrigin = 'bottom left';
+                zoneRight.style.transformOrigin = 'bottom right';
+                zoneLeft.style.transform = `scale(${scaleFactor})`;
+                zoneRight.style.transform = `scale(${scaleFactor})`;
+            }
+        }
+
+        // --- CORE LOGIC: SMART SPAWN POSITIONER ---
+        function getSafeSpawnPoint(itemW, itemH) {
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            
+            // Start at ideal position
+            let centerX = w / 2;
+            let centerY = (h > w) ? h * 0.60 : h * 0.5; // Start a bit lower in portrait
+            
+            const radius = Math.max(itemW, itemH) / 2;
+            const houseRect = toyBox.getBoundingClientRect();
+            const leftRect = zoneLeft.getBoundingClientRect();
+            const rightRect = zoneRight.getBoundingClientRect();
+
+            // Collision Check Function
+            const checkCollision = (y) => {
+                const itemTop = y - itemH/2;
+                const itemBottom = y + itemH/2;
+                const itemLeft = centerX - itemW/2;
+                const itemRight = centerX + itemW/2;
+                
+                // Inflate zones slightly for safety padding (10px)
+                const pad = 10; 
+                
+                const hitsHouse = !(itemLeft > houseRect.right + pad || 
+                                   itemRight < houseRect.left - pad || 
+                                   itemTop > houseRect.bottom + pad || 
+                                   itemBottom < houseRect.top - pad);
+                                   
+                const hitsLeft = !(itemLeft > leftRect.right + pad || 
+                                  itemRight < leftRect.left - pad || 
+                                  itemTop > leftRect.bottom + pad || 
+                                  itemBottom < leftRect.top - pad);
+
+                const hitsRight = !(itemLeft > rightRect.right + pad || 
+                                   itemRight < rightRect.left - pad || 
+                                   itemTop > rightRect.bottom + pad || 
+                                   itemBottom < rightRect.top - pad);
+                                   
+                return hitsHouse || hitsLeft || hitsRight;
+            };
+
+            // SCANNER: Try to find a spot.
+            // If we collide, move UP (y -= 20). 
+            // We scan up to 10 times to find a clear spot.
+            let safeY = centerY;
+            let moves = 0;
+            const maxMoves = 15; // Limit scan to prevent infinite loop
+            
+            while(checkCollision(safeY) && moves < maxMoves) {
+                safeY -= 30; // Nudge up by 30px
+                moves++;
+            }
+            
+            // If we hit the top of screen (fail safe), try scanning DOWN from center
+            if (safeY < 100) {
+                safeY = centerY;
+                moves = 0;
+                while(checkCollision(safeY) && moves < maxMoves) {
+                    safeY += 30;
+                    moves++;
+                }
+            }
+
+            return { x: centerX, y: safeY };
+        }
+
+        /* --- REST OF GAME FUNCTIONS --- */
         function initCategories() {
             let leftKey = state.config.leftCat;
-            if (leftKey === 'random') {
-                leftKey = CAT_KEYS[Math.floor(Math.random() * CAT_KEYS.length)];
-            }
+            if (leftKey === 'random') leftKey = CAT_KEYS[Math.floor(Math.random() * CAT_KEYS.length)];
             
             let rightKey = state.config.rightCat;
             if (rightKey === 'random') {
@@ -454,7 +552,6 @@
         function updateChickenCoop() {
             const coop = document.getElementById('chicken-coop');
             coop.innerHTML = '';
-            
             if (state.activeLeft.id === 'animals' || state.activeRight.id === 'animals') {
                 for(let i=0; i<7; i++) {
                     const c = document.createElement('div');
@@ -470,76 +567,28 @@
         function renderBackgroundDecorations(catId, side) {
             const container = document.getElementById(side === 'left' ? 'deco-left' : 'deco-right');
             container.innerHTML = ''; 
-            
             const createEmoji = (x, y, size, emoji, scaleX = 1) => {
                 const d = document.createElement('div');
                 d.className = 'paper-emoji absolute';
-                d.style.left = x + '%';
-                d.style.bottom = y + '%';
-                d.style.fontSize = size + 'px';
-                d.innerText = emoji;
+                d.style.left = x + '%'; d.style.bottom = y + '%'; d.style.fontSize = size + 'px'; d.innerText = emoji;
                 if (scaleX !== 1) d.style.transform = `scaleX(${scaleX})`;
                 container.appendChild(d);
             };
 
             if (side === 'left') {
-                if (catId === 'animals') {
-                    createEmoji(15, 5, 30, "🦆"); 
-                    createEmoji(22, 8, 25, "🐢"); 
-                    createEmoji(18, 12, 20, "🐸"); 
-                    createEmoji(5, 10, 40, "🌲"); 
-                } else if (catId === 'vehicles') {
-                    createEmoji(10, 15, 35, "🚜"); 
-                    createEmoji(25, 12, 30, "🚛"); 
-                    createEmoji(5, 5, 20, "🚧"); 
-                } else if (catId === 'food') {
-                    createEmoji(15, 10, 40, "🧺"); 
-                    createEmoji(20, 5, 20, "🍎");
-                    createEmoji(10, 5, 20, "🍇");
-                    createEmoji(18, 15, 15, "🐜");
-                } else if (catId === 'smileys') {
-                    createEmoji(15, 10, 40, "⛄"); 
-                    createEmoji(25, 8, 30, "⛄");
-                    createEmoji(20, 2, 20, "❄️");
-                } else if (catId === 'nature') {
-                    createEmoji(10, 80, 50, "☀️"); 
-                    const rainbow = document.createElement('div');
-                    rainbow.className = 'absolute paper-emoji';
-                    rainbow.style.left = '5%'; rainbow.style.bottom = '10%';
-                    rainbow.innerHTML = `<span style="font-size:70px; position:absolute; left:0;">🌈</span><span style="font-size:70px; position:absolute; left:55px; transform:scaleX(-1);">🌈</span>`;
-                    container.appendChild(rainbow);
-                    createEmoji(5, 5, 25, "🌻"); 
-                    createEmoji(25, 5, 25, "🌹"); 
-                } else if (catId === 'shapes') {
-                    createEmoji(10, 80, 30, "❤️"); createEmoji(5, 50, 35, "🔺");
-                }
+                if (catId === 'animals') { createEmoji(15, 5, 30, "🦆"); createEmoji(22, 8, 25, "🐢"); createEmoji(18, 12, 20, "🐸"); createEmoji(5, 10, 40, "🌲"); }
+                else if (catId === 'vehicles') { createEmoji(10, 15, 35, "🚜"); createEmoji(25, 12, 30, "🚛"); createEmoji(5, 5, 20, "🚧"); }
+                else if (catId === 'food') { createEmoji(15, 10, 40, "🧺"); createEmoji(20, 5, 20, "🍎"); createEmoji(10, 5, 20, "🍇"); createEmoji(18, 15, 15, "🐜"); }
+                else if (catId === 'smileys') { createEmoji(15, 10, 40, "⛄"); createEmoji(25, 8, 30, "⛄"); createEmoji(20, 2, 20, "❄️"); }
+                else if (catId === 'nature') { createEmoji(10, 80, 50, "☀️"); container.innerHTML += `<div class="absolute paper-emoji" style="left:5%; bottom:10%"><span style="font-size:70px; position:absolute; left:0;">🌈</span><span style="font-size:70px; position:absolute; left:55px; transform:scaleX(-1);">🌈</span></div>`; createEmoji(5, 5, 25, "🌻"); createEmoji(25, 5, 25, "🌹"); }
+                else if (catId === 'shapes') { createEmoji(10, 80, 30, "❤️"); createEmoji(5, 50, 35, "🔺"); }
             } else {
-                if (catId === 'animals') {
-                    createEmoji(85, 10, 35, "🦌"); 
-                    createEmoji(75, 5, 30, "🐻"); 
-                    createEmoji(80, 70, 20, "🦉"); 
-                    createEmoji(92, 15, 40, "🌲"); 
-                } else if (catId === 'vehicles') {
-                    createEmoji(80, 75, 40, "✈️"); 
-                    createEmoji(65, 80, 30, "🚁"); 
-                    createEmoji(88, 85, 25, "🚀"); 
-                } else if (catId === 'food') {
-                    createEmoji(85, 10, 40, "🍭"); 
-                    createEmoji(75, 15, 35, "🍬"); 
-                    createEmoji(90, 5, 35, "🍩"); 
-                    createEmoji(80, 2, 25, "🧁"); 
-                } else if (catId === 'smileys') {
-                    createEmoji(90, 75, 50, "🌞"); 
-                    createEmoji(75, 70, 30, "☁️"); 
-                    createEmoji(85, 60, 25, "🌈"); 
-                } else if (catId === 'nature') {
-                    createEmoji(85, 12, 60, "🏔️"); 
-                    createEmoji(70, 12, 40, "🌋"); 
-                    createEmoji(90, 80, 30, "🌙"); 
-                    createEmoji(80, 85, 20, "⭐"); 
-                } else if (catId === 'shapes') {
-                    createEmoji(90, 80, 35, "🟦"); createEmoji(75, 60, 30, "🔶"); createEmoji(65, 30, 40, "♾️");
-                }
+                if (catId === 'animals') { createEmoji(85, 10, 35, "🦌"); createEmoji(75, 5, 30, "🐻"); createEmoji(80, 70, 20, "🦉"); createEmoji(92, 15, 40, "🌲"); }
+                else if (catId === 'vehicles') { createEmoji(80, 75, 40, "✈️"); createEmoji(65, 80, 30, "🚁"); createEmoji(88, 85, 25, "🚀"); }
+                else if (catId === 'food') { createEmoji(85, 10, 40, "🍭"); createEmoji(75, 15, 35, "🍬"); createEmoji(90, 5, 35, "🍩"); createEmoji(80, 2, 25, "🧁"); }
+                else if (catId === 'smileys') { createEmoji(90, 75, 50, "🌞"); createEmoji(75, 70, 30, "☁️"); createEmoji(85, 60, 25, "🌈"); }
+                else if (catId === 'nature') { createEmoji(85, 12, 60, "🏔️"); createEmoji(70, 12, 40, "🌋"); createEmoji(90, 80, 30, "🌙"); createEmoji(80, 85, 20, "⭐"); }
+                else if (catId === 'shapes') { createEmoji(90, 80, 35, "🟦"); createEmoji(75, 60, 30, "🔶"); createEmoji(65, 30, 40, "♾️"); }
             }
         }
 
@@ -555,77 +604,42 @@
             const options = ['random', ...CAT_KEYS];
             const idx = options.indexOf(current);
             let next = options[(idx + 1) % options.length];
-            
             const otherSide = side === 'left' ? state.config.rightCat : state.config.leftCat;
-            if (next !== 'random' && next === otherSide) {
-                next = options[(idx + 2) % options.length];
-            }
-            
+            if (next !== 'random' && next === otherSide) next = options[(idx + 2) % options.length];
             if (side === 'left') state.config.leftCat = next;
             else state.config.rightCat = next;
-            
-            updateConfigButtons();
-            initCategories(); 
-            renderParentModeItems(); 
-            playSound('pop');
-            saveConfig();
-            
+            updateConfigButtons(); initCategories(); renderParentModeItems(); playSound('pop'); saveConfig();
             if (state.currentItem) { state.currentItem.remove(); spawnItem(); }
         }
 
         function toggleBlockItem(emoji) {
             const idx = state.blockedItems.indexOf(emoji);
-            if (idx >= 0) state.blockedItems.splice(idx, 1); 
-            else state.blockedItems.push(emoji); 
-            
-            saveConfig();
-            renderParentModeItems();
-            
-            if (state.currentItem && state.currentItem.innerText === emoji) {
-                state.currentItem.remove();
-                spawnItem();
-            }
+            if (idx >= 0) state.blockedItems.splice(idx, 1); else state.blockedItems.push(emoji);
+            saveConfig(); renderParentModeItems();
+            if (state.currentItem && state.currentItem.innerText === emoji) { state.currentItem.remove(); spawnItem(); }
         }
 
         function renderParentModeItems() {
-            const leftCol = document.getElementById('col-left-preview');
-            const rightCol = document.getElementById('col-right-preview');
+            const leftCol = document.getElementById('col-left-preview'); const rightCol = document.getElementById('col-right-preview');
             leftCol.innerHTML = ''; rightCol.innerHTML = '';
-
             state.activeLeft.items.forEach(emoji => {
                 const el = document.createElement('div');
                 el.className = 'text-4xl cursor-pointer p-1 rounded hover:bg-gray-200 transition-opacity paper-emoji';
                 el.innerText = emoji;
                 if (state.blockedItems.includes(emoji)) el.classList.add('blocked-item');
-                el.onclick = () => toggleBlockItem(emoji);
-                leftCol.appendChild(el);
+                el.onclick = () => toggleBlockItem(emoji); leftCol.appendChild(el);
             });
-
             state.activeRight.items.forEach(emoji => {
                 const el = document.createElement('div');
                 el.className = 'text-4xl cursor-pointer p-1 rounded hover:bg-gray-200 transition-opacity paper-emoji';
                 el.innerText = emoji;
                 if (state.blockedItems.includes(emoji)) el.classList.add('blocked-item');
-                el.onclick = () => toggleBlockItem(emoji);
-                rightCol.appendChild(el);
+                el.onclick = () => toggleBlockItem(emoji); rightCol.appendChild(el);
             });
         }
 
-        /* --- 3. AUDIO --- */
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        
-        function unlockAudio() {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-        }
-        document.addEventListener('touchstart', unlockAudio, {passive: true});
-        document.addEventListener('touchend', unlockAudio, {passive: true});
-        document.addEventListener('click', unlockAudio);
-
         function getVolumeMultiplier() {
-            if (state.soundMode === 0) return 1.0;   
-            if (state.soundMode === 1) return 0.5;   
-            if (state.soundMode === 2) return 0.1;   
-            return 1.0;
+            if (state.soundMode === 0) return 1.0; if (state.soundMode === 1) return 0.5; if (state.soundMode === 2) return 0.1; return 1.0;
         }
 
         function playSound(type) {
@@ -634,217 +648,91 @@
                 const vol = getVolumeMultiplier();
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
+                osc.connect(gain); gain.connect(audioCtx.destination);
                 const now = audioCtx.currentTime;
-
                 if (type === 'success') {
-                    const freqs = [523.25, 659.25, 783.99, 1046.50];
-                    freqs.forEach((f, i) => {
-                        const o = audioCtx.createOscillator();
-                        o.type = i===3 ? 'sine' : 'triangle';
-                        o.frequency.setValueAtTime(f, now + (i*0.1));
-                        o.connect(gain);
-                        o.start(now + (i*0.1)); o.stop(now + 0.8 + (i*0.1));
+                    [523.25, 659.25, 783.99, 1046.50].forEach((f, i) => {
+                        const o = audioCtx.createOscillator(); o.type = i===3?'sine':'triangle'; o.frequency.setValueAtTime(f, now + (i*0.1)); o.connect(gain); o.start(now + (i*0.1)); o.stop(now + 0.8 + (i*0.1));
                     });
-                    gain.gain.setValueAtTime(0.15 * vol, now);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+                    gain.gain.setValueAtTime(0.15 * vol, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
                 } else if (type === 'fail') {
-                    osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(150, now);
-                    osc.frequency.linearRampToValueAtTime(100, now + 0.2);
-                    gain.gain.setValueAtTime(0.1 * vol, now);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-                    osc.start(now); osc.stop(now + 0.2);
+                    osc.type = 'triangle'; osc.frequency.setValueAtTime(150, now); osc.frequency.linearRampToValueAtTime(100, now + 0.2); gain.gain.setValueAtTime(0.1 * vol, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2); osc.start(now); osc.stop(now + 0.2);
                 } else if (type === 'pop') {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(800, now);
-                    osc.frequency.exponentialRampToValueAtTime(100, now + 0.1);
-                    gain.gain.setValueAtTime(0.05 * vol, now);
-                    gain.gain.linearRampToValueAtTime(0.001, now + 0.1);
-                    osc.start(now); osc.stop(now + 0.1);
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(800, now); osc.frequency.exponentialRampToValueAtTime(100, now + 0.1); gain.gain.setValueAtTime(0.05 * vol, now); gain.gain.linearRampToValueAtTime(0.001, now + 0.1); osc.start(now); osc.stop(now + 0.1);
                 } else if (type === 'wood') {
-                    osc.type = 'square';
-                    osc.frequency.setValueAtTime(200, now);
-                    osc.frequency.exponentialRampToValueAtTime(50, now + 0.1);
-                    gain.gain.setValueAtTime(0.05 * vol, now);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
-                    osc.start(now); osc.stop(now + 0.1);
+                    osc.type = 'square'; osc.frequency.setValueAtTime(200, now); osc.frequency.exponentialRampToValueAtTime(50, now + 0.1); gain.gain.setValueAtTime(0.05 * vol, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1); osc.start(now); osc.stop(now + 0.1);
                 } else if (type === 'doorbell') {
-                    const osc2 = audioCtx.createOscillator();
-                    const gain2 = audioCtx.createGain();
-                    osc2.connect(gain2); gain2.connect(audioCtx.destination);
-                    osc.type = 'sine'; osc.frequency.setValueAtTime(329.63, now); 
-                    gain.gain.setValueAtTime(0.1 * vol, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
-                    osc2.type = 'sine'; osc2.frequency.setValueAtTime(261.63, now + 0.3);
-                    gain2.gain.setValueAtTime(0, now); gain2.gain.setValueAtTime(0.1 * vol, now + 0.3); gain2.gain.exponentialRampToValueAtTime(0.001, now + 1.0);
+                    const osc2 = audioCtx.createOscillator(); const gain2 = audioCtx.createGain(); osc2.connect(gain2); gain2.connect(audioCtx.destination);
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(329.63, now); gain.gain.setValueAtTime(0.1 * vol, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+                    osc2.type = 'sine'; osc2.frequency.setValueAtTime(261.63, now + 0.3); gain2.gain.setValueAtTime(0, now); gain2.gain.setValueAtTime(0.1 * vol, now + 0.3); gain2.gain.exponentialRampToValueAtTime(0.001, now + 1.0);
                     osc.start(now); osc.stop(now + 0.5); osc2.start(now); osc2.stop(now + 1.0);
                 } else if (type === 'giggle') {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(600, now);
-                    osc.frequency.linearRampToValueAtTime(800, now + 0.1);
-                    osc.frequency.linearRampToValueAtTime(600, now + 0.2);
-                    gain.gain.setValueAtTime(0.05 * vol, now);
-                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
-                    osc.start(now); osc.stop(now + 0.3);
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(600, now); osc.frequency.linearRampToValueAtTime(800, now + 0.1); osc.frequency.linearRampToValueAtTime(600, now + 0.2); gain.gain.setValueAtTime(0.05 * vol, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3); osc.start(now); osc.stop(now + 0.3);
                 } else if (type === 'chime') {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(1000, now);
-                    gain.gain.setValueAtTime(0.05 * vol, now);
-                    gain.gain.linearRampToValueAtTime(0.001, now + 0.5);
-                    osc.start(now); osc.stop(now + 0.5);
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(1000, now); gain.gain.setValueAtTime(0.05 * vol, now); gain.gain.linearRampToValueAtTime(0.001, now + 0.5); osc.start(now); osc.stop(now + 0.5);
                 } else if (type === 'whoosh') {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(400, now);
-                    osc.frequency.exponentialRampToValueAtTime(100, now + 0.3);
-                    gain.gain.setValueAtTime(0.1 * vol, now);
-                    gain.gain.linearRampToValueAtTime(0.001, now + 0.3);
-                    osc.start(now); osc.stop(now + 0.3);
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(400, now); osc.frequency.exponentialRampToValueAtTime(100, now + 0.3); gain.gain.setValueAtTime(0.1 * vol, now); gain.gain.linearRampToValueAtTime(0.001, now + 0.3); osc.start(now); osc.stop(now + 0.3);
                 }
             } catch (e) {}
         }
 
         function startWoodenPurr() {
             try {
-                if (state.humOscillators.length > 0) return; 
-                if (!state.soundEnabled) return;
-                if (audioCtx.state === 'suspended') audioCtx.resume();
-
-                const vol = getVolumeMultiplier();
-                const now = audioCtx.currentTime;
-                
-                state.humGain = audioCtx.createGain();
-                state.humGain.connect(audioCtx.destination);
-                state.humGain.gain.setValueAtTime(0, now);
-                state.humGain.gain.linearRampToValueAtTime(0.3 * vol, now + 0.1); 
-
-                const freqs = [100, 105, 95];
-                freqs.forEach(f => {
-                    const osc = audioCtx.createOscillator();
-                    osc.type = 'triangle'; 
-                    osc.frequency.value = f;
-                    osc.connect(state.humGain);
-                    osc.start(now);
-                    state.humOscillators.push(osc);
+                if (state.humOscillators.length > 0) return; if (!state.soundEnabled) return; if (audioCtx.state === 'suspended') audioCtx.resume();
+                const vol = getVolumeMultiplier(); const now = audioCtx.currentTime;
+                state.humGain = audioCtx.createGain(); state.humGain.connect(audioCtx.destination); state.humGain.gain.setValueAtTime(0, now); state.humGain.gain.linearRampToValueAtTime(0.3 * vol, now + 0.1); 
+                [100, 105, 95].forEach(f => {
+                    const osc = audioCtx.createOscillator(); osc.type = 'triangle'; osc.frequency.value = f; osc.connect(state.humGain); osc.start(now); state.humOscillators.push(osc);
                 });
             } catch (e) {}
         }
-
         function stopWoodenPurr() {
             try {
                 if (state.humGain) {
-                    const now = audioCtx.currentTime;
-                    state.humGain.gain.cancelScheduledValues(now);
-                    state.humGain.gain.setValueAtTime(state.humGain.gain.value, now);
-                    state.humGain.gain.linearRampToValueAtTime(0, now + 0.15); 
-                    state.humOscillators.forEach(osc => { osc.stop(now + 0.15); });
-                    state.humOscillators = [];
-                    state.humGain = null;
+                    const now = audioCtx.currentTime; state.humGain.gain.cancelScheduledValues(now); state.humGain.gain.setValueAtTime(state.humGain.gain.value, now); state.humGain.gain.linearRampToValueAtTime(0, now + 0.15); 
+                    state.humOscillators.forEach(osc => { osc.stop(now + 0.15); }); state.humOscillators = []; state.humGain = null;
                 }
             } catch (e) {}
         }
 
-        /* --- 4. GAME LOGIC & SNOWSTORM --- */
-        const zoneLeft = document.getElementById('zone-left');
-        const zoneRight = document.getElementById('zone-right');
-        const toyBox = document.getElementById('toy-box-container');
-
-        function startSnowstormCycle() {
-            const nextStorm = 180000 + Math.random() * 180000; 
-            setTimeout(triggerSnowstorm, nextStorm);
-        }
-
+        function startSnowstormCycle() { setTimeout(triggerSnowstorm, 180000 + Math.random() * 180000); }
         function triggerSnowstorm() {
-            if (state.isStorming) return;
-            state.isStorming = true;
-            
-            const layer = document.getElementById('cloud-layer');
-            const extraClouds = [];
+            if (state.isStorming) return; state.isStorming = true;
+            const layer = document.getElementById('cloud-layer'); const extraClouds = [];
             for (let i = 3; i < 6; i++) {
-                const c = document.createElement('div');
-                c.className = `absolute text-white opacity-60 cursor-pointer cloud-${i%2===0?'fast':'medium'}`;
-                c.style.top = Math.random() * 20 + '%';
-                c.style.animationDelay = `-${Math.random()*10}s`;
-                c.onclick = handleCloudTap; 
+                const c = document.createElement('div'); c.className = `absolute text-white opacity-60 cursor-pointer cloud-${i%2===0?'fast':'medium'}`;
+                c.style.top = Math.random() * 20 + '%'; c.style.animationDelay = `-${Math.random()*10}s`; c.onclick = handleCloudTap; 
                 c.innerHTML = `<svg width="100" height="60" viewBox="0 0 100 60" fill="currentColor"><path d="M10,40 Q0,40 0,30 Q0,10 20,10 Q25,0 40,0 Q60,0 65,10 Q80,5 90,20 Q100,20 100,40 Z" /></svg>`;
-                layer.appendChild(c);
-                extraClouds.push(c);
+                layer.appendChild(c); extraClouds.push(c);
             }
-
-            state.snowInterval = setInterval(() => {
-                spawnSnow(Math.random() * 100, -10); 
-            }, 300); 
-
-            setTimeout(() => {
-                state.isStorming = false;
-                clearInterval(state.snowInterval);
-                extraClouds.forEach(c => c.remove());
-                startSnowstormCycle(); 
-            }, 120000);
-        }
-
-        function getRestingPosition() {
-            const w = window.innerWidth;
-            const h = window.innerHeight;
-            const centerX = w / 2;
-            let centerY;
-
-            // Portrait (Vertical) vs Landscape (Horizontal)
-            if (h > w) {
-                // Vertical: 33% from bottom (which is 67% from top)
-                centerY = h * 0.67; 
-            } else {
-                // Horizontal: Dead center
-                centerY = h * 0.5;
-            }
-
-            return { x: centerX, y: centerY };
+            state.snowInterval = setInterval(() => { spawnSnow(Math.random() * 100, -10); }, 300); 
+            setTimeout(() => { state.isStorming = false; clearInterval(state.snowInterval); extraClouds.forEach(c => c.remove()); startSnowstormCycle(); }, 120000);
         }
 
         function isPalm(e) {
-            const touch = e.touches ? e.touches[0] : e;
-            const x = touch.clientX;
-            const y = touch.clientY;
-            const w = window.innerWidth;
-            const h = window.innerHeight;
-            const edge = 30; 
-            if (y < 100) return false;
-            return (x < edge || x > w - edge || y > h - edge);
+            const touch = e.touches ? e.touches[0] : e; const x = touch.clientX; const y = touch.clientY;
+            if (y < 100) return false; return (x < 30 || x > window.innerWidth - 30 || y > window.innerHeight - 30);
         }
 
         function canSkip() {
-            const now = Date.now();
-            if (now - state.spawnTime < 5000) return false;
-            state.skipsInMinute = state.skipsInMinute.filter(t => now - t < 60000);
-            if (state.skipsInMinute.length >= 2) return false;
-            return true;
+            const now = Date.now(); if (now - state.spawnTime < 5000) return false;
+            state.skipsInMinute = state.skipsInMinute.filter(t => now - t < 60000); return state.skipsInMinute.length < 2;
         }
 
         function spawnItem() {
-            zoneLeft.classList.remove('hovered');
-            zoneRight.classList.remove('hovered');
+            zoneLeft.classList.remove('hovered'); zoneRight.classList.remove('hovered');
             if (state.dropTimeout) { clearTimeout(state.dropTimeout); state.dropTimeout = null; }
             if (state.cancelReGrab) { state.cancelReGrab(); state.cancelReGrab = null; }
-            
             state.isProcessingSuccess = false;
-            let data;
-            let attempts = 0;
             
+            let data; let attempts = 0;
             const leftItems = state.activeLeft.items.filter(i => !state.blockedItems.includes(i));
             const rightItems = state.activeRight.items.filter(i => !state.blockedItems.includes(i));
-            const pool = [...leftItems.map(i => ({emoji: i, cat: 'left'})), 
-                          ...rightItems.map(i => ({emoji: i, cat: 'right'}))];
-            
+            const pool = [...leftItems.map(i => ({emoji: i, cat: 'left'})), ...rightItems.map(i => ({emoji: i, cat: 'right'}))];
             if (pool.length === 0) pool.push({emoji: "⭐", cat: 'left'});
 
-            do {
-                data = pool[Math.floor(Math.random() * pool.length)];
-                attempts++;
-            } while (state.recentItems.includes(data.emoji) && attempts < 20);
-            
-            state.recentItems.push(data.emoji);
-            if (state.recentItems.length > 5) state.recentItems.shift();
-            
+            do { data = pool[Math.floor(Math.random() * pool.length)]; attempts++; } while (state.recentItems.includes(data.emoji) && attempts < 20);
+            state.recentItems.push(data.emoji); if (state.recentItems.length > 5) state.recentItems.shift();
             state.spawnTime = Date.now();
 
             const el = document.createElement('div');
@@ -853,17 +741,20 @@
             content.className = 'emoji-content';
             content.innerHTML = data.emoji;
             el.appendChild(content);
-
             if (state.inParentMode) el.style.display = 'none';
 
-            // Calculate Resting Pos
+            // --- SMART POSITIONING ---
             document.body.appendChild(el);
             const w = el.offsetWidth;
             const h = el.offsetHeight;
             
-            const centerPos = getRestingPosition();
-            const startX = centerPos.x - (w/2);
-            const startY = centerPos.y - (h/2);
+            // 1. Resolve Layout Conflicts (Shrink zones if needed)
+            resolveLayout(w);
+
+            // 2. Find Safe Spawn Point
+            const safePos = getSafeSpawnPoint(w, h);
+            const startX = safePos.x - (w/2);
+            const startY = safePos.y - (h/2);
 
             el.style.left = startX + 'px';
             el.style.top = startY + 'px';
@@ -875,11 +766,7 @@
                 { transform: `scale(1.1)`, opacity: 1, offset: 0.6 },
                 { transform: `scale(0.9)`, opacity: 1, offset: 0.8 }, 
                 { transform: `scale(1)`, opacity: 1, offset: 1 }
-            ], {
-                duration: 800,
-                easing: 'cubic-bezier(0.175, 0.885, 0.32, 1.275)', 
-                fill: 'forwards'
-            });
+            ], { duration: 800, easing: 'cubic-bezier(0.175, 0.885, 0.32, 1.275)', fill: 'forwards' });
             
             state.currentAnimation.onfinish = () => {
                 content.classList.add('wiggle-idle');
@@ -894,265 +781,133 @@
         }
 
         function makeDraggable(el, content) {
-            let startX, startY;
-            let initialLeft, initialTop;
-            let itemWidth = 0, itemHeight = 0;
-            
+            let startX, startY; let initialLeft, initialTop; let itemWidth = 0, itemHeight = 0;
             const onStart = (e) => {
-                if (state.inParentMode) return;
-                if (e.touches && isPalm(e)) return; 
-
+                if (state.inParentMode) return; if (e.touches && isPalm(e)) return; 
                 e.preventDefault(); 
-                
                 if (state.returnTimer) { clearTimeout(state.returnTimer); state.returnTimer = null; }
                 if (state.currentAnimation) { state.currentAnimation.cancel(); state.currentAnimation = null; }
-                
-                state.isDragging = true;
-                playSound('pop'); 
-                startWoodenPurr(); 
-                
-                content.classList.remove('wiggle-idle');
-                content.classList.add('wiggle-drag');
-
-                const point = e.touches ? e.touches[0] : e;
-                startX = point.clientX;
-                startY = point.clientY;
-                
-                initialLeft = parseFloat(el.style.left);
-                initialTop = parseFloat(el.style.top);
-                
-                itemWidth = el.offsetWidth;
-                itemHeight = el.offsetHeight;
-
-                el.style.transition = 'none';
-                el.style.zIndex = 1000; 
-                el.style.transform = 'scale(1.15)'; 
-                
-                document.addEventListener('mousemove', onMove, {passive: false});
-                document.addEventListener('touchmove', onMove, {passive: false});
-                document.addEventListener('mouseup', onEnd);
-                document.addEventListener('touchend', onEnd);
+                state.isDragging = true; playSound('pop'); startWoodenPurr(); 
+                content.classList.remove('wiggle-idle'); content.classList.add('wiggle-drag');
+                const point = e.touches ? e.touches[0] : e; startX = point.clientX; startY = point.clientY;
+                initialLeft = parseFloat(el.style.left); initialTop = parseFloat(el.style.top);
+                itemWidth = el.offsetWidth; itemHeight = el.offsetHeight;
+                el.style.transition = 'none'; el.style.zIndex = 1000; el.style.transform = 'scale(1.15)'; 
+                document.addEventListener('mousemove', onMove, {passive: false}); document.addEventListener('touchmove', onMove, {passive: false});
+                document.addEventListener('mouseup', onEnd); document.addEventListener('touchend', onEnd);
             };
-
             const onMove = (e) => {
-                if (!state.isDragging) return;
-                e.preventDefault(); 
-
-                const point = e.touches ? e.touches[0] : e;
-                const dx = point.clientX - startX;
-                const dy = point.clientY - startY;
-
+                if (!state.isDragging) return; e.preventDefault(); 
+                const point = e.touches ? e.touches[0] : e; const dx = point.clientX - startX; const dy = point.clientY - startY;
                 if (Math.hypot(dx, dy) < 5) return;
-
-                let newLeft = initialLeft + dx;
-                let newTop = initialTop + dy;
-
-                const maxLeft = window.innerWidth - itemWidth;
-                const maxTop = window.innerHeight - itemHeight;
-                newLeft = Math.max(0, Math.min(newLeft, maxLeft));
-                newTop = Math.max(0, Math.min(newTop, maxTop));
-
-                el.style.left = `${newLeft}px`;
-                el.style.top = `${newTop}px`;
-
-                const centerX = newLeft + itemWidth / 2;
-                const centerY = newTop + itemHeight / 2;
-
-                checkHover(centerX, centerY);
+                let newLeft = initialLeft + dx; let newTop = initialTop + dy;
+                newLeft = Math.max(0, Math.min(newLeft, window.innerWidth - itemWidth));
+                newTop = Math.max(0, Math.min(newTop, window.innerHeight - itemHeight));
+                el.style.left = `${newLeft}px`; el.style.top = `${newTop}px`;
+                checkHover(newLeft + itemWidth / 2, newTop + itemHeight / 2);
             };
-
             const onEnd = (e) => {
                 if (!state.isDragging) return;
-                
                 if (e.type === 'touchend') {
                     stopWoodenPurr();
                     state.dropTimeout = setTimeout(() => { commitDrop(el, content); }, 400); 
-                    
                     const reGrab = (ev) => {
                         if (ev.type === 'touchstart') {
-                            clearTimeout(state.dropTimeout);
-                            state.dropTimeout = null;
-                            document.removeEventListener('touchstart', reGrab);
+                            clearTimeout(state.dropTimeout); state.dropTimeout = null; document.removeEventListener('touchstart', reGrab);
                             stopWoodenPurr(); startWoodenPurr();
-                            const point = ev.touches[0];
-                            startX = point.clientX;
-                            startY = point.clientY;
-                            
-                            initialLeft = parseFloat(el.style.left);
-                            initialTop = parseFloat(el.style.top);
+                            const point = ev.touches[0]; startX = point.clientX; startY = point.clientY;
+                            initialLeft = parseFloat(el.style.left); initialTop = parseFloat(el.style.top);
                         }
                     };
                     document.addEventListener('touchstart', reGrab, {once: true});
                     state.cancelReGrab = () => document.removeEventListener('touchstart', reGrab);
                     return; 
                 }
-
                 commitDrop(el, content);
             };
-            
             const commitDrop = (el, content) => {
-                state.isDragging = false;
-                stopWoodenPurr();
-                content.classList.remove('wiggle-drag');
-                
+                state.isDragging = false; stopWoodenPurr(); content.classList.remove('wiggle-drag');
                 if (state.cancelReGrab) { state.cancelReGrab(); state.cancelReGrab = null; }
-
-                document.removeEventListener('mousemove', onMove);
-                document.removeEventListener('touchmove', onMove);
-                document.removeEventListener('mouseup', onEnd);
-                document.removeEventListener('touchend', onEnd);
-
-                const rect = el.getBoundingClientRect();
-                const centerX = rect.left + rect.width / 2;
-                const centerY = rect.top + rect.height / 2;
-                
-                const distBox = getDistance(centerX, centerY, toyBox);
-                if (distBox < 200) { 
-                    if (canSkip()) { handleSkip(el); return; } 
-                    else {
-                        toyBox.classList.add('toy-box-reject');
-                        setTimeout(() => toyBox.classList.remove('toy-box-reject'), 300);
-                        playSound('fail'); 
-                    }
+                document.removeEventListener('mousemove', onMove); document.removeEventListener('touchmove', onMove);
+                document.removeEventListener('mouseup', onEnd); document.removeEventListener('touchend', onEnd);
+                const rect = el.getBoundingClientRect(); const centerX = rect.left + rect.width / 2; const centerY = rect.top + rect.height / 2;
+                if (getDistance(centerX, centerY, toyBox) < 200) { 
+                    if (canSkip()) { handleSkip(el); return; } else { toyBox.classList.add('toy-box-reject'); setTimeout(() => toyBox.classList.remove('toy-box-reject'), 300); playSound('fail'); }
                 }
-
                 const targetZone = checkCollision(centerX, centerY);
-                let isSuccess = false;
-                let snapTarget = null;
-                
-                if (targetZone) {
-                    if (el.dataset.type === targetZone) isSuccess = true;
-                } else {
-                    const distLeft = getDistance(centerX, centerY, zoneLeft);
-                    const distRight = getDistance(centerX, centerY, zoneRight);
-                    const threshold = 250; 
-                    if (distLeft < threshold) snapTarget = 'left';
-                    else if (distRight < threshold) snapTarget = 'right';
-
-                    if (snapTarget && el.dataset.type === snapTarget) {
-                        isSuccess = true;
-                    }
+                let isSuccess = false; let snapTarget = null;
+                if (targetZone) { if (el.dataset.type === targetZone) isSuccess = true; } 
+                else {
+                    const distLeft = getDistance(centerX, centerY, zoneLeft); const distRight = getDistance(centerX, centerY, zoneRight);
+                    if (distLeft < 250) snapTarget = 'left'; else if (distRight < 250) snapTarget = 'right';
+                    if (snapTarget && el.dataset.type === snapTarget) isSuccess = true;
                 }
-
-                if (isSuccess) handleSuccess(el, snapTarget || targetZone);
-                else handleFail(el, content);
-                
-                zoneLeft.classList.remove('hovered');
-                zoneRight.classList.remove('hovered');
+                if (isSuccess) handleSuccess(el, snapTarget || targetZone); else handleFail(el, content);
+                zoneLeft.classList.remove('hovered'); zoneRight.classList.remove('hovered');
             };
-
-            el.addEventListener('mousedown', onStart);
-            el.addEventListener('touchstart', onStart, {passive: false});
+            el.addEventListener('mousedown', onStart); el.addEventListener('touchstart', onStart, {passive: false});
         }
 
         function getDistance(x, y, element) {
-            const rect = element.getBoundingClientRect();
-            const elX = rect.left + rect.width/2;
-            const elY = rect.top + rect.height/2;
-            return Math.sqrt(Math.pow(x - elX, 2) + Math.pow(y - elY, 2));
+            const rect = element.getBoundingClientRect(); return Math.sqrt(Math.pow(x - (rect.left + rect.width/2), 2) + Math.pow(y - (rect.top + rect.height/2), 2));
         }
-
         function checkHover(x, y) {
-            const distLeft = getDistance(x, y, zoneLeft);
-            const distRight = getDistance(x, y, zoneRight);
-            const threshold = 220; 
-
-            if (distLeft < threshold) zoneLeft.classList.add('hovered');
-            else zoneLeft.classList.remove('hovered');
-
-            if (distRight < threshold) zoneRight.classList.add('hovered');
-            else zoneRight.classList.remove('hovered');
+            const distLeft = getDistance(x, y, zoneLeft); const distRight = getDistance(x, y, zoneRight);
+            if (distLeft < 220) zoneLeft.classList.add('hovered'); else zoneLeft.classList.remove('hovered');
+            if (distRight < 220) zoneRight.classList.add('hovered'); else zoneRight.classList.remove('hovered');
         }
-
         function checkCollision(x, y) {
             if (isInside(x, y, zoneLeft.getBoundingClientRect())) return 'left';
             if (isInside(x, y, zoneRight.getBoundingClientRect())) return 'right';
             return null;
         }
-
-        function isInside(x, y, rect) {
-            return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
-        }
+        function isInside(x, y, rect) { return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom; }
 
         function handleSuccess(el, targetZone) {
-            if (state.isProcessingSuccess) return; 
-            state.isProcessingSuccess = true;
+            if (state.isProcessingSuccess) return; state.isProcessingSuccess = true;
             if (state.returnTimer) { clearTimeout(state.returnTimer); state.returnTimer = null; }
             if (state.dropTimeout) { clearTimeout(state.dropTimeout); state.dropTimeout = null; }
             if (state.cancelReGrab) { state.cancelReGrab(); state.cancelReGrab = null; }
-
-            state.score++;
-            document.getElementById('score-display').innerText = state.score;
-            playSound('success');
-            updateBeau('success');
-            
+            state.score++; document.getElementById('score-display').innerText = state.score;
+            playSound('success'); updateBeau('success');
             const targetEl = targetZone === 'left' ? zoneLeft : zoneRight;
-            targetEl.classList.add('happy-bounce');
-            setTimeout(() => targetEl.classList.remove('happy-bounce'), 500);
-
-            const rect = el.getBoundingClientRect();
-            createConfetti(rect.left, rect.top);
-            
+            targetEl.classList.add('happy-bounce'); setTimeout(() => targetEl.classList.remove('happy-bounce'), 500);
+            const rect = el.getBoundingClientRect(); createConfetti(rect.left, rect.top);
             const targetRect = targetEl.getBoundingClientRect();
             const tx = targetRect.left + targetRect.width/2 - rect.width/2;
             const ty = targetRect.top + targetRect.height/2 - rect.height/2;
-
             el.style.transition = 'all 0.8s cubic-bezier(0.25, 1, 0.5, 1)';
-            el.style.left = tx + 'px';
-            el.style.top = ty + 'px';
-            el.style.transform = 'scale(0.1) rotate(180deg)';
-            el.style.opacity = '0';
-
-            setTimeout(() => {
-                el.remove();
-                setTimeout(spawnItem, 300);
-            }, 800);
+            el.style.left = tx + 'px'; el.style.top = ty + 'px';
+            el.style.transform = 'scale(0.1) rotate(180deg)'; el.style.opacity = '0';
+            setTimeout(() => { el.remove(); setTimeout(spawnItem, 300); }, 800);
         }
 
         function handleSkip(el) {
-            if (state.isProcessingSuccess) return;
-            state.isProcessingSuccess = true;
+            if (state.isProcessingSuccess) return; state.isProcessingSuccess = true;
             if (state.returnTimer) { clearTimeout(state.returnTimer); state.returnTimer = null; }
-            
-            state.skipsInMinute.push(Date.now());
-            playSound('whoosh');
-            
-            const boxRect = toyBox.getBoundingClientRect();
-            const elRect = el.getBoundingClientRect();
+            state.skipsInMinute.push(Date.now()); playSound('whoosh');
+            const boxRect = toyBox.getBoundingClientRect(); const elRect = el.getBoundingClientRect();
             const tx = boxRect.left + boxRect.width/2 - elRect.width/2;
             const ty = boxRect.top + boxRect.height/2 - elRect.height/2;
-            
-            el.style.transition = 'all 0.5s ease-in';
-            el.style.left = tx + 'px';
-            el.style.top = ty + 'px';
-            el.style.transform = 'scale(0.1)';
-            el.style.opacity = '0';
-            
-            setTimeout(() => {
-                el.remove();
-                setTimeout(spawnItem, 300);
-            }, 500);
+            el.style.transition = 'all 0.5s ease-in'; el.style.left = tx + 'px'; el.style.top = ty + 'px';
+            el.style.transform = 'scale(0.1)'; el.style.opacity = '0';
+            setTimeout(() => { el.remove(); setTimeout(spawnItem, 300); }, 500);
         }
 
         function handleFail(el, content) {
-            playSound('fail');
-            updateBeau('idle');
-            
+            playSound('fail'); updateBeau('idle');
             if (state.returnTimer) clearTimeout(state.returnTimer);
             state.returnTimer = setTimeout(() => {
                 el.style.transition = 'all 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55)';
+                const w = el.offsetWidth; const h = el.offsetHeight;
                 
-                const w = el.offsetWidth;
-                const h = el.offsetHeight;
-                const centerPos = getRestingPosition();
-                const startX = centerPos.x - (w/2);
-                const startY = centerPos.y - (h/2);
+                // Smart return: use safe spawn logic
+                const safePos = getSafeSpawnPoint(w, h);
+                const startX = safePos.x - (w/2);
+                const startY = safePos.y - (h/2);
 
-                el.style.left = startX + 'px'; 
-                el.style.top = startY + 'px';
-                el.style.transform = 'scale(1)'; 
-                el.style.zIndex = 50;
-                
+                el.style.left = startX + 'px'; el.style.top = startY + 'px';
+                el.style.transform = 'scale(1)'; el.style.zIndex = 50;
                 setTimeout(() => { content.classList.add('wiggle-idle'); }, 600);
                 state.returnTimer = null;
             }, 3000); 
@@ -1160,250 +915,107 @@
 
         function updateBeau(mood) {
             const speech = document.getElementById('beau-speech');
-            if (mood === 'success') {
-                speech.style.opacity = '1';
-                setTimeout(() => updateBeau('idle'), 2000);
-            } else {
-                speech.style.opacity = '0';
-            }
+            if (mood === 'success') { speech.style.opacity = '1'; setTimeout(() => updateBeau('idle'), 2000); } else speech.style.opacity = '0';
         }
 
         function createConfetti(x, y) {
             for (let i = 0; i < 60; i++) {
-                const conf = document.createElement('div');
-                conf.className = 'confetti-piece';
-                conf.style.left = (x + 40) + 'px';
-                conf.style.top = (y + 40) + 'px';
+                const conf = document.createElement('div'); conf.className = 'confetti-piece';
+                conf.style.left = (x + 40) + 'px'; conf.style.top = (y + 40) + 'px';
                 conf.style.backgroundColor = ['#FFD700', '#FF69B4', '#00BFFF', '#E60026', '#4CAF50'][Math.floor(Math.random()*5)];
                 conf.style.transform = `rotate(${Math.random() * 360}deg)`;
-                
-                const angle = Math.random() * Math.PI * 2;
-                const velocity = 80 + Math.random() * 100; 
-                const tx = Math.cos(angle) * velocity;
-                const ty = Math.sin(angle) * velocity - 150; 
-
-                conf.animate([
-                    { transform: 'translate(0,0) rotate(0)', opacity: 1 },
-                    { transform: `translate(${tx}px, ${ty}px) rotate(360deg)`, opacity: 0 }
-                ], { duration: 1000 + Math.random() * 500, easing: 'ease-out' });
-
-                document.body.appendChild(conf);
-                setTimeout(() => conf.remove(), 1500);
+                const angle = Math.random() * Math.PI * 2; const velocity = 80 + Math.random() * 100; 
+                const tx = Math.cos(angle) * velocity; const ty = Math.sin(angle) * velocity - 150; 
+                conf.animate([{ transform: 'translate(0,0) rotate(0)', opacity: 1 }, { transform: `translate(${tx}px, ${ty}px) rotate(360deg)`, opacity: 0 }], { duration: 1000 + Math.random() * 500, easing: 'ease-out' });
+                document.body.appendChild(conf); setTimeout(() => conf.remove(), 1500);
             }
         }
 
-        function handleCloudTap(e) {
-            playSound('pop');
-            const xPct = (e.clientX / window.innerWidth) * 100;
-            const yPct = (e.clientY / window.innerHeight) * 100;
-            spawnSnow(xPct, yPct);
-        }
-
+        function handleCloudTap(e) { playSound('pop'); spawnSnow((e.clientX / window.innerWidth) * 100, (e.clientY / window.innerHeight) * 100); }
         function spawnSnow(xPercent, yPercent) {
             for(let i=0; i<5; i++) {
-                const flake = document.createElement('div');
-                flake.className = 'snowflake';
-                flake.innerText = '❄️';
-                flake.style.left = `${xPercent + (Math.random()*6 - 3)}%`;
-                flake.style.top = `${yPercent}%`;
-                flake.style.animationDuration = `${3 + Math.random() * 2}s`;
-                document.body.appendChild(flake);
-                setTimeout(() => flake.remove(), 5000);
+                const flake = document.createElement('div'); flake.className = 'snowflake'; flake.innerText = '❄️';
+                flake.style.left = `${xPercent + (Math.random()*6 - 3)}%`; flake.style.top = `${yPercent}%`;
+                flake.style.animationDuration = `${3 + Math.random() * 2}s`; document.body.appendChild(flake); setTimeout(() => flake.remove(), 5000);
             }
         }
         
         function foundPickle(e) {
-            e.stopPropagation();
-            state.pickleFoundCount++;
-            playSound('success');
-            createConfetti(e.clientX - 50, e.clientY - 50);
+            e.stopPropagation(); state.pickleFoundCount++; playSound('success'); createConfetti(e.clientX - 50, e.clientY - 50);
             const speech = document.getElementById('beau-speech');
             if (state.pickleFoundCount <= 2) {
-                updateBeau('success'); 
-                speech.innerText = "You found the pickle!";
-                speech.style.width = '200px';
-                speech.style.left = '-60px'; 
-                setTimeout(() => {
-                    speech.innerText = "Yay!";
-                    speech.style.width = '';
-                    speech.style.left = '';
-                    updateBeau('idle');
-                }, 3000);
-            } else {
-                speech.innerText = "Yay!";
-                speech.style.width = '';
-                speech.style.left = '';
-                updateBeau('success');
-            }
+                updateBeau('success'); speech.innerText = "You found the pickle!"; speech.style.width = '200px'; speech.style.left = '-60px'; 
+                setTimeout(() => { speech.innerText = "Yay!"; speech.style.width = ''; speech.style.left = ''; updateBeau('idle'); }, 3000);
+            } else { speech.innerText = "Yay!"; speech.style.width = ''; speech.style.left = ''; updateBeau('success'); }
         }
 
-        // --- NEW RESIZE LOGIC ---
         window.addEventListener('resize', () => {
             clearTimeout(state.resizeTimeout);
-            // Increased delay to 300ms to allow mobile rotation animations to complete
             state.resizeTimeout = setTimeout(() => {
-                
-                // 1. Reflow background decorations
                 const leftCat = state.config.leftCat === 'random' ? state.activeLeft.id : state.config.leftCat;
                 const rightCat = state.config.rightCat === 'random' ? state.activeRight.id : state.config.rightCat;
-                renderBackgroundDecorations(leftCat, 'left');
-                renderBackgroundDecorations(rightCat, 'right');
+                renderBackgroundDecorations(leftCat, 'left'); renderBackgroundDecorations(rightCat, 'right');
                 
-                // 2. Move current item to new resting spot (if not dragging)
                 if (state.currentItem && !state.isDragging && !state.isProcessingSuccess) {
-                    const el = state.currentItem;
-                    el.style.transition = 'all 0.5s ease-out';
+                    const el = state.currentItem; el.style.transition = 'all 0.5s ease-out';
                     
-                    // Force browser to acknowledge new font size from CSS clamp() 
-                    // BEFORE measuring width/height
-                    const rect = el.getBoundingClientRect(); 
-                    const w = el.offsetWidth;
-                    const h = el.offsetHeight;
-                    
-                    const centerPos = getRestingPosition();
-                    const startX = centerPos.x - (w/2);
-                    const startY = centerPos.y - (h/2);
+                    // --- RE-RESOLVE LAYOUT ON RESIZE ---
+                    const rect = el.getBoundingClientRect(); const w = el.offsetWidth; const h = el.offsetHeight;
+                    resolveLayout(w); 
 
-                    el.style.left = startX + 'px';
-                    el.style.top = startY + 'px';
-                    
+                    const safePos = getSafeSpawnPoint(w, h);
+                    const startX = safePos.x - (w/2);
+                    const startY = safePos.y - (h/2);
+
+                    el.style.left = startX + 'px'; el.style.top = startY + 'px';
                     setTimeout(() => { el.style.transition = 'none'; }, 500);
                 }
             }, 300);
         });
 
-        /* --- 5. INITIALIZATION --- */
         window.onload = () => {
             document.addEventListener('contextmenu', event => event.preventDefault());
             document.addEventListener('touchstart', (e) => { state.totalTouches = e.touches.length; });
             document.addEventListener('touchend', (e) => { state.totalTouches = e.touches.length; });
-            
             const savedConfig = localStorage.getItem('belle_config_v2');
-            if (savedConfig) {
-                try {
-                    const c = JSON.parse(savedConfig);
-                    state.config = c;
-                    if (c.blockedItems) state.blockedItems = c.blockedItems;
-                } catch(e) {}
-            }
+            if (savedConfig) { try { const c = JSON.parse(savedConfig); state.config = c; if (c.blockedItems) state.blockedItems = c.blockedItems; } catch(e) {} }
 
-            initCategories();
-            setTimeout(spawnItem, 1000);
-            startSnowstormCycle();
+            initCategories(); setTimeout(spawnItem, 1000); startSnowstormCycle();
             
-            const star = document.getElementById('score-btn');
-            const angel = document.getElementById('angel-btn');
-            const ring = document.getElementById('unlock-progress');
-            const indicator = document.getElementById('unlock-indicator');
-            const overlay = document.getElementById('parent-overlay');
+            const star = document.getElementById('score-btn'); const angel = document.getElementById('angel-btn');
+            const ring = document.getElementById('unlock-progress'); const indicator = document.getElementById('unlock-indicator'); const overlay = document.getElementById('parent-overlay');
             
             function checkParentUnlock() {
-                const isStrictTwoFinger = state.totalTouches === 2;
-                const isHoldingBoth = state.unlockState.star && state.unlockState.angel;
-
-                if (isHoldingBoth && isStrictTwoFinger) {
+                if (state.totalTouches === 2 && state.unlockState.star && state.unlockState.angel) {
                     if (!state.unlockState.timer) {
-                        indicator.style.opacity = '1';
-                        ring.style.transition = 'stroke-dashoffset 5s linear'; 
-                        ring.getBoundingClientRect(); 
-                        ring.style.strokeDashoffset = '0';
-                        
+                        indicator.style.opacity = '1'; ring.style.transition = 'stroke-dashoffset 5s linear'; ring.getBoundingClientRect(); ring.style.strokeDashoffset = '0';
                         state.unlockState.timer = setTimeout(() => {
-                            state.inParentMode = true;
-                            if (state.currentItem) state.currentItem.style.display = 'none';
-                            overlay.classList.remove('hidden');
-                            indicator.style.opacity = '0';
-                            resetParentUnlock(); 
-                            renderParentModeItems();
+                            state.inParentMode = true; if (state.currentItem) state.currentItem.style.display = 'none';
+                            overlay.classList.remove('hidden'); indicator.style.opacity = '0'; resetParentUnlock(); renderParentModeItems();
                         }, 5000);
                     }
                 } else {
-                    if (state.unlockState.timer) {
-                        clearTimeout(state.unlockState.timer);
-                        state.unlockState.timer = null;
-                        indicator.style.opacity = '0';
-                        ring.style.transition = 'none';
-                        ring.style.strokeDashoffset = '283';
-                    }
+                    if (state.unlockState.timer) { clearTimeout(state.unlockState.timer); state.unlockState.timer = null; indicator.style.opacity = '0'; ring.style.transition = 'none'; ring.style.strokeDashoffset = '283'; }
                 }
             }
-            
             function resetParentUnlock() {
-                state.unlockState.star = false;
-                state.unlockState.angel = false;
+                state.unlockState.star = false; state.unlockState.angel = false;
                 if (state.unlockState.timer) clearTimeout(state.unlockState.timer);
-                state.unlockState.timer = null;
-                indicator.style.opacity = '0';
-                ring.style.transition = 'none';
-                ring.style.strokeDashoffset = '283';
+                state.unlockState.timer = null; indicator.style.opacity = '0'; ring.style.transition = 'none'; ring.style.strokeDashoffset = '283';
             }
-
             const bindHold = (el, prop) => {
                 let startHoldTime;
-                
-                el.addEventListener('touchstart', (e) => { 
-                    e.preventDefault(); 
-                    startHoldTime = Date.now();
-                    state.unlockState[prop] = true; 
-                    setTimeout(checkParentUnlock, 10);
-                });
-                
-                el.addEventListener('touchend', (e) => { 
-                    state.unlockState[prop] = false; 
-                    checkParentUnlock(); 
-                    
-                    if (Date.now() - startHoldTime < 300) {
-                       if (prop === 'star') playSound('chime');
-                       if (prop === 'angel') { playSound('giggle'); updateBeau('success'); }
-                    }
-                });
-                
-                el.addEventListener('mousedown', () => { 
-                    startHoldTime = Date.now();
-                    state.unlockState[prop] = true; 
-                    state.totalTouches=2; 
-                    state.unlockState.star = true;
-                    state.unlockState.angel = true;
-                    checkParentUnlock(); 
-                });
-                el.addEventListener('mouseup', () => { 
-                    state.unlockState[prop] = false; 
-                    state.totalTouches=0; 
-                    state.unlockState.star = false;
-                    state.unlockState.angel = false;
-                    checkParentUnlock(); 
-                    
-                    if (Date.now() - startHoldTime < 300) {
-                       if (prop === 'star') playSound('chime');
-                       if (prop === 'angel') { playSound('giggle'); updateBeau('success'); }
-                    }
-                });
+                el.addEventListener('touchstart', (e) => { e.preventDefault(); startHoldTime = Date.now(); state.unlockState[prop] = true; setTimeout(checkParentUnlock, 10); });
+                el.addEventListener('touchend', (e) => { state.unlockState[prop] = false; checkParentUnlock(); if (Date.now() - startHoldTime < 300) { if (prop === 'star') playSound('chime'); if (prop === 'angel') { playSound('giggle'); updateBeau('success'); } } });
+                el.addEventListener('mousedown', () => { startHoldTime = Date.now(); state.unlockState[prop] = true; state.totalTouches=2; state.unlockState.star = true; state.unlockState.angel = true; checkParentUnlock(); });
+                el.addEventListener('mouseup', () => { state.unlockState[prop] = false; state.totalTouches=0; state.unlockState.star = false; state.unlockState.angel = false; checkParentUnlock(); if (Date.now() - startHoldTime < 300) { if (prop === 'star') playSound('chime'); if (prop === 'angel') { playSound('giggle'); updateBeau('success'); } } });
             };
-            
-            bindHold(star, 'star');
-            bindHold(angel, 'angel');
+            bindHold(star, 'star'); bindHold(angel, 'angel');
         };
 
-        function saveConfig() {
-            const data = {
-                leftCat: state.config.leftCat,
-                rightCat: state.config.rightCat,
-                blockedItems: state.blockedItems
-            };
-            localStorage.setItem('belle_config_v2', JSON.stringify(data));
-        }
-
-        function resumeGame() {
-            state.inParentMode = false;
-            if (state.currentItem) state.currentItem.style.display = 'flex';
-            document.getElementById('parent-overlay').classList.add('hidden');
-        }
-
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js')
-                .then(reg => console.log('SW registered!', reg))
-                .catch(err => console.log('SW failed (likely preview mode):', err));
-        }
+        function saveConfig() { localStorage.setItem('belle_config_v2', JSON.stringify({ leftCat: state.config.leftCat, rightCat: state.config.rightCat, blockedItems: state.blockedItems })); }
+        function resumeGame() { state.inParentMode = false; if (state.currentItem) state.currentItem.style.display = 'flex'; document.getElementById('parent-overlay').classList.add('hidden'); }
+        if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').then(reg => console.log('SW registered!', reg)).catch(err => console.log('SW failed:', err));
     </script>
 </body>
 </html>
