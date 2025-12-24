@@ -85,7 +85,6 @@
             padding: 0;
             border: 2px solid rgba(255,255,255,0.6); 
             box-shadow: 0 10px 15px rgba(0,0,0,0.05);
-            /* Reduced size by additional 10% */
             width: clamp(5.4rem, 12vw, 10.8rem);
             height: clamp(5.4rem, 12vw, 10.8rem);
             display: flex;
@@ -95,7 +94,6 @@
         }
         
         .zone-icon {
-            /* Reduced font size by additional 10% */
             font-size: clamp(4.5rem, 10.8vw, 9rem);
             line-height: 1;
             margin-top: 0.1em; 
@@ -159,6 +157,8 @@
             justify-content: center;
             font-size: clamp(3.5rem, 12vw, 7rem); 
             z-index: 1000; 
+            transition: none;
+            position: absolute; /* Enforce absolute for pixel positioning */
         }
         
         .draggable-item::after {
@@ -212,15 +212,11 @@
 </head>
 <body>
 
-    <!-- --- PAPER TEXTURE OVERLAY --- -->
     <div class="paper-texture-overlay z-0"></div>
 
-    <!-- --- GAME CONTAINER --- -->
     <div id="game-app" class="relative w-full h-full overflow-hidden z-10">
         
-        <!-- 1. BACKGROUND LAYER -->
         <div class="absolute inset-0 z-0">
-            <!-- Organic Horizon (SVG) -->
             <div class="absolute bottom-0 w-full h-[45%] pointer-events-none paper-layer">
                 <svg viewBox="0 0 1440 320" class="w-full h-full" preserveAspectRatio="none">
                     <defs>
@@ -234,15 +230,12 @@
                     </defs>
                     <path fill="url(#snowGrad)" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,149.3C960,160,1056,160,1152,138.7C1248,117,1344,75,1392,53.3L1440,32L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
                     
-                    <!-- Papercraft Elements (Filtered) -->
                     <path class="paper-cutout-shadow" d="M-100,320 Q300,100 800,280 T1500,180" fill="none" stroke="#cfd8dc" stroke-width="30" stroke-linecap="round" stroke-dasharray="25,15" />
                     <ellipse class="paper-cutout-shadow" cx="20%" cy="85%" rx="60" ry="15" fill="#BBDEFB" stroke="#90CAF9" stroke-width="3" />
                 </svg>
             </div>
             
-            <!-- Decoration Layer -->
             <div id="bg-decorations" class="deco-container">
-                <!-- Static elements -->
                 <div class="paper-emoji absolute" style="left:2%; bottom:15%; font-size:20px;">🌲</div>
                 <div class="paper-emoji absolute" style="left:5%; bottom:12%; font-size:25px;">🌲</div>
                 <div class="paper-emoji absolute" style="left:8%; bottom:10%; font-size:22px;">🌲</div>
@@ -252,21 +245,17 @@
                 <div class="paper-emoji absolute" style="left:90%; bottom:10%; font-size:30px;">🌲</div>
                 <div class="paper-emoji absolute" style="left:95%; bottom:14%; font-size:25px;">🌲</div>
                 
-                <!-- Tiny Houses & Cars -->
                 <div class="paper-emoji absolute" style="left:25%; bottom:15%; font-size:30px;">🏠</div>
                 <div class="paper-emoji absolute" style="left:30%; bottom:12%; font-size:20px;">🚗</div>
                 <div class="paper-emoji absolute" style="left:75%; bottom:15%; font-size:25px;">🏠</div>
                 <div class="paper-emoji absolute" style="left:70%; bottom:12%; font-size:20px; transform: scaleX(-1);">🚗</div>
 
-                <!-- Dynamic Groups -->
                 <div id="deco-left"></div>
                 <div id="deco-right"></div>
                 
-                <!-- Chicken Coop (Hidden by default, populated by JS) -->
                 <div id="chicken-coop" class="absolute left-1/2 -translate-x-1/2 bottom-[5%] flex justify-center gap-2 pointer-events-none" style="width: 300px;"></div>
             </div>
 
-            <!-- Clouds -->
             <div id="cloud-layer">
                 <div onclick="handleCloudTap(event)" class="absolute top-10 left-[-150px] cloud-slow text-white opacity-90 cursor-pointer active:scale-95 z-10 w-48 h-24 flex items-center justify-center drop-shadow-md">
                     <svg width="100%" height="100%" viewBox="0 0 100 60" fill="currentColor"><path d="M10,40 Q0,40 0,30 Q0,10 20,10 Q25,0 40,0 Q60,0 65,10 Q80,5 90,20 Q100,20 100,40 Z" /></svg>
@@ -280,15 +269,12 @@
             </div>
         </div>
 
-        <!-- TITLE (Fades on portrait) -->
         <div class="absolute top-4 left-0 right-0 flex justify-center z-10 pointer-events-none title-fade">
             <h1 class="text-4xl lg:text-6xl font-bold paper-title tracking-wide text-center px-4 leading-tight">Belle's Winter Adventure</h1>
         </div>
 
-        <!-- 2. DROP ZONES -->
         <div class="absolute inset-0 z-10 flex justify-between items-center px-4 lg:px-20 pointer-events-none" style="padding-bottom: 25vh;">
             
-            <!-- LEFT ZONE -->
             <div id="zone-left" class="drop-zone relative pointer-events-auto origin-bottom-left active:scale-95 flex flex-col items-center w-1/3">
                 <div class="zone-bg">
                     <div id="left-icon" class="zone-icon paper-emoji select-none"></div>
@@ -296,11 +282,9 @@
                 <div id="left-label" class="absolute -bottom-16 w-full text-center text-3xl lg:text-4xl font-bold tracking-wider uppercase text-blue-800 drop-shadow-md paper-title" style="text-shadow: 2px 2px 0 white;"></div>
             </div>
 
-            <!-- RIGHT ZONE -->
             <div id="zone-right" class="drop-zone relative pointer-events-auto origin-bottom-right active:scale-95 flex flex-col items-center w-1/3">
                 <div class="zone-bg">
                     <div id="right-icon" class="zone-icon paper-emoji select-none"></div>
-                    <!-- Pickle -->
                     <div id="hidden-pickle" class="absolute top-1/2 left-1/2 cursor-pointer opacity-80 pointer-events-auto hidden paper-emoji" onclick="foundPickle(event)">
                         <text class="text-xl" style="transform: rotate(15deg);">🥒</text>
                     </div>
@@ -309,27 +293,21 @@
             </div>
         </div>
 
-        <!-- 3. TOY BOX (HOUSE) -->
         <div id="toy-box-container" onclick="playSound('doorbell')" class="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-20 pointer-events-auto cursor-pointer toy-box active:scale-95 transition-transform flex flex-col items-center">
-             <!-- Scaled down house -->
              <div class="relative flex items-center justify-center">
                 <div class="text-[4rem] lg:text-[7rem] leading-none paper-emoji select-none drop-shadow-2xl">🏠</div>
              </div>
         </div>
 
-        <!-- 4. SPAWN ANCHOR -->
         <div id="spawn-anchor" class="absolute bottom-20 left-1/2 transform -translate-x-1/2 w-1 h-1"></div>
 
-        <!-- SCORE -->
         <div id="score-btn" class="absolute top-6 left-4 z-30 flex items-center bg-white/90 rounded-full px-4 py-2 border-4 border-blue-300 cursor-pointer active:scale-95 transition-transform shadow-lg h-16 pointer-events-auto paper-layer">
             <span class="text-3xl mr-2 paper-emoji">⭐</span>
             <span id="score-display" class="text-3xl text-blue-800 font-bold">0</span>
         </div>
 
-        <!-- 5. ANGEL -->
         <div id="angel-btn" class="absolute top-6 right-4 z-30 flex flex-col items-center cursor-pointer active:scale-95 transition-transform pointer-events-auto">
             <div id="beau-container" class="w-16 h-16 bg-white/90 rounded-full border-4 border-yellow-400 shadow-lg flex items-center justify-center overflow-hidden paper-layer">
-                <!-- Tries to load beau.png, falls back to Emoji -->
                 <img src="beau.png" alt="Beau" class="w-full h-full object-cover" onerror="this.style.display='none'; document.getElementById('fallback-angel').style.display='block';">
                 <span id="fallback-angel" class="text-4xl select-none paper-emoji" style="display:none;">👼</span>
             </div>
@@ -338,7 +316,6 @@
             </div>
         </div>
 
-        <!-- 6. PARENT MODE -->
         <div id="parent-overlay" class="absolute inset-0 z-[3000] bg-black/80 flex items-center justify-center hidden">
             <div class="bg-white rounded-2xl p-4 lg:p-8 w-[95%] max-w-4xl max-h-[90%] text-center minnie-border flex flex-col border-4 border-white shadow-2xl">
                 <div class="flex justify-between items-center mb-4 border-b-2 border-red-200 pb-2">
@@ -373,11 +350,9 @@
 
                 <div class="flex-1 overflow-y-auto scroller border-2 border-gray-200 rounded-xl bg-gray-50 p-2">
                     <div class="grid grid-cols-2 gap-4 text-center select-none h-full">
-                        <!-- Left Col -->
                         <div class="flex flex-col">
                             <div id="col-left-preview" class="flex flex-wrap content-start justify-center gap-2 p-2"></div>
                         </div>
-                        <!-- Right Col -->
                         <div class="flex flex-col border-l-2 border-gray-200 pl-2">
                             <div id="col-right-preview" class="flex flex-wrap content-start justify-center gap-2 p-2"></div>
                         </div>
@@ -386,24 +361,21 @@
             </div>
         </div>
 
-        <!-- 7. UNLOCK INDICATOR -->
         <div id="unlock-indicator" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-0 transition-opacity z-[4000]">
             <svg width="120" height="120" viewBox="0 0 100 100">
                 <circle cx="50" cy="50" r="40" stroke="white" stroke-width="8" fill="rgba(0,0,0,0.5)"/>
                 <circle id="unlock-progress" cx="50" cy="50" r="40" stroke="#4ade80" stroke-width="8" fill="none" class="unlock-ring" stroke-linecap="round" transform="rotate(-90 50 50)"/>
-                <path d="M50 35 V45 M50 55 V65" stroke="white" stroke-width="4" stroke-linecap="round" /> <!-- Lock icon hint -->
-                <rect x="35" y="45" width="30" height="25" rx="3" fill="white" />
+                <path d="M50 35 V45 M50 55 V65" stroke="white" stroke-width="4" stroke-linecap="round" /> <rect x="35" y="45" width="30" height="25" rx="3" fill="white" />
             </svg>
         </div>
 
     </div>
 
-    <!-- GAME ENGINE -->
     <script>
         /* --- DATASETS --- */
         const CATEGORIES = {
             smileys: { id: 'smileys', label: "FACES", icon: "😃", items: ["😀","😃","😄","😁","😆","😅","🤣","😂","🙂","🙃","😉","😊","😇","🥰","😍","🤩","😘","😗","😚","😙","😋","😛","😜","🤪","😝","🤑","🤗","🤭","🤫","🤔","🤐","🤨","😐","😑","😏","😒","🙄","😬","🤥","😌","😔","😪","🤤","😴","😷","🤒","🤕","🤢","🤮","🤧","🥵","🥶","🥴","😵","🤯","🤠","🥳","😎","🤓","🧐","😕","😟","🙁","☹️","😮","😯","😲","😳","🥺","😦","😧","😨","😰","😥","😢","😭","😱","😖","😣","😞","😓","😩","😫","🥱","😤","😡","😠","🤬","😈","👿"] },
-            animals: { id: 'animals', label: "ANIMALS", icon: "🦎", items: ["🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼","🐨","🐯","🦁","🐮","🐷","🐽","🐸","🐵","🙈","🙉","🙊","🐒","🐔","🐧","🐦","🐤","🐣","🐥","🦆","🦅","🦉","🦇","🐺","🐗","🐴","🦄","🐝","🐛","🦋","🐌","🐞","🐜","🦟","🦗","🕷️","🕸️","🦂","🐢","🐍","🦎","🦖","🦕","🐙","🦑","🦐","🦞","🦀","🐡","🐠","🐟","🐬","🐳","🐋","🦈","🐊","🐅","🐆","🦓","🦍","🦧","🐘","🦛","🦏","🐪","🐫","🦒","🦘","🐃","🐂","🐄","🐎","🐖","🐏","🐑","🦙","🐐","🦌","🐕","🐩","🦮","🐕‍🦺","🐈","🐓","🦃","🦚","🦜","🦢","🦩","🕊️","🐇","🦝","🦨","🦡","🦦","🦥","🐁","🐀","🐿️","🦔"] },
+            animals: { id: 'animals', label: "ANIMALS", icon: "🦎", items: ["🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼","🐨","🐯","🦁","🐮","🐷","🐽","🐸","🐵","🙉","🙉","🙊","🐒","🐔","🐧","🐦","🐤","🐣","🐥","🦆","🦅","🦉","🦇","🐺","🐗","🐴","🦄","🐝","🐛","🦋","🐌","🐞","🐜","🦟","🦗","🕷️","🕸️","🦂","🐢","🐍","🦎","🦖","🦕","🐙","🦑","🦐","🦞","🦀","🐡","🐠","🐟","🐬","🐳","🐋","🦈","🐊","🐅","🐆","🦓","🦍","🦧","🐘","🦛","🦏","🐪","🐫","🦒","🦘","🐃","🐂","🐄","🐎","🐖","🐏","🐑","🦙","🐐","🦌","🐕","🐩","🦮","🐕‍🦺","🐈","🐓","🦃","🦚","🦜","🦢","🦩","🕊️","🐇","🦝","🦨","🦡","🦦","🦥","🐁","🐀","🐿️","🦔"] },
             food: { id: 'food', label: "FOOD", icon: "🍎", items: ["🍏","🍎","🍐","🍊","🍋","🍌","🍉","🍇","🍓","🍈","🍒","🍑","🥭","🍍","🥥","🥝","🍅","🍆","🥑","🥦","🥬","🥒","🌶️","🌽","🥕","🧄","🧅","🥔","🍠","🥐","🥯","🍞","🥖","🥨","🧀","🥚","🍳","🥞","🧇","🥓","🥩","🍗","🍖","🦴","🌭","🍔","🍟","🍕","🥪","🥙","🧆","🌮","🌯","🥗","🥘","🥫","🍝","🍜","🍲","🍛","🍣","🍱","🥟","🦪","🍤","🍙","🍚","🍘","🍥","🥠","🍢","🍡","🍧","🍨","🍦","🥧","🧁","🍰","🎂","🍮","🍭","🍬","🍫","🍿","🍩","🍪"] },
             vehicles: { id: 'vehicles', label: "VEHICLES", icon: "🚗", items: ["🚗","🚕","🚙","🚌","🚎","🏎️","🚓","🚑","🚒","🚐","🚚","🚛","🚜","🛴","🚲","🛵","🏍️","🚨","🚔","🚍","🚘","🚖","🚡","🚠","🚟","🚃","🚋","🚞","🚝","🚄","🚅","🚈","🚂","🚆","🚇","🚊","🚉","✈️","🛫","🛬","🛩️","💺","🛰️","🚀","🛸","🚁","🛶","⛵","🚤","🛥️","🛳️","⛴️","🚢"] },
             nature: { 
@@ -447,6 +419,7 @@
             stormTimer: null,
             snowInterval: null,
             totalTouches: 0, 
+            // Parent Mode Trigger
             unlockState: { star: false, angel: false, timer: null, tapStartTime: 0 }
         };
 
@@ -881,23 +854,34 @@
             // Hide if parent mode active
             if (state.inParentMode) el.style.display = 'none';
 
-            const landingY = getSafeLandingY();
-            const centerX = window.innerWidth / 2;
-            el.style.left = '50%'; 
-            el.style.transform = 'translate(-50%, 0)';
-            el.style.top = landingY + 'px';
-            el.dataset.type = data.cat; 
+            // --- ARCHITECTURAL FIX: PIXEL PERFECT POSITIONING ---
+            // Instead of using left:50% and transform:translate(-50%), we calculate the exact
+            // pixel coordinates immediately. This prevents the "jump" when dragging starts.
             
+            // 1. Temporarily append to measure size
             document.body.appendChild(el);
+            const w = el.offsetWidth;
+            const h = el.offsetHeight;
+            const landingY = getSafeLandingY();
+
+            // 2. Calculate center X
+            const centerX = (window.innerWidth / 2) - (w / 2);
+            
+            // 3. Set absolute pixel values
+            el.style.left = centerX + 'px';
+            el.style.top = landingY + 'px';
+            el.style.transform = 'scale(0)'; // Start small for animation
+            el.dataset.type = data.cat; 
             
             const boxY = window.innerHeight - 100;
             const deltaY = boxY - landingY;
 
+            // Updated animation keyframes (removed translations, only scale/opacity)
             state.currentAnimation = el.animate([
-                { transform: `translate(-50%, ${deltaY}px) scale(0)`, opacity: 0, offset: 0 },
-                { transform: `translate(-50%, 0px) scale(1.1)`, opacity: 1, offset: 0.6 },
-                { transform: `translate(-50%, -30px) scale(1)`, opacity: 1, offset: 0.8 }, 
-                { transform: `translate(-50%, 0px) scale(1)`, opacity: 1, offset: 1 }
+                { transform: `scale(0)`, opacity: 0, offset: 0 },
+                { transform: `scale(1.1)`, opacity: 1, offset: 0.6 },
+                { transform: `scale(0.9)`, opacity: 1, offset: 0.8 }, 
+                { transform: `scale(1)`, opacity: 1, offset: 1 }
             ], {
                 duration: 800,
                 easing: 'cubic-bezier(0.175, 0.885, 0.32, 1.275)', 
@@ -907,7 +891,8 @@
             state.currentAnimation.onfinish = () => {
                 content.classList.add('wiggle-idle');
                 state.currentAnimation = null;
-                el.style.transform = 'translate(-50%, 0)';
+                // Ensure final state matches style
+                el.style.transform = 'scale(1)';
             };
 
             makeDraggable(el, content);
@@ -941,28 +926,18 @@
                 startX = point.clientX;
                 startY = point.clientY;
                 
-                const rect = el.getBoundingClientRect();
-                const centerX = rect.left + rect.width / 2;
-                const centerY = rect.top + rect.height / 2;
+                // --- FIXED START LOGIC ---
+                // We trust the style.left/top because spawnItem set them in pixels.
+                // No need for getBoundingClientRect() coordinate conversion here.
+                initialLeft = parseFloat(el.style.left);
+                initialTop = parseFloat(el.style.top);
                 
-                el.style.transform = 'none'; 
-                const w = el.offsetWidth;
-                const h = el.offsetHeight;
-                
-                const newLeft = centerX - w / 2;
-                const newTop = centerY - h / 2;
-
-                el.style.left = newLeft + 'px';
-                el.style.top = newTop + 'px';
-                
-                initialLeft = newLeft;
-                initialTop = newTop;
-                itemWidth = w;
-                itemHeight = h;
+                itemWidth = el.offsetWidth;
+                itemHeight = el.offsetHeight;
 
                 el.style.transition = 'none';
                 el.style.zIndex = 1000; 
-                el.style.transform = 'scale(1.15)'; 
+                el.style.transform = 'scale(1.15)'; // Just scale, no translation needed
                 
                 document.addEventListener('mousemove', onMove, {passive: false});
                 document.addEventListener('touchmove', onMove, {passive: false});
@@ -977,6 +952,11 @@
                 const point = e.touches ? e.touches[0] : e;
                 const dx = point.clientX - startX;
                 const dy = point.clientY - startY;
+
+                // --- DRAG THRESHOLD ---
+                // Don't move unless dragged at least 5 pixels. 
+                // Fixes "moves when tapped" bug.
+                if (Math.hypot(dx, dy) < 5) return;
 
                 let newLeft = initialLeft + dx;
                 let newTop = initialTop + dy;
@@ -1012,18 +992,9 @@
                             startX = point.clientX;
                             startY = point.clientY;
                             
-                            const rect = el.getBoundingClientRect();
-                            const centerX = rect.left + rect.width / 2;
-                            const centerY = rect.top + rect.height / 2;
-                            
-                            const newLeft = centerX - itemWidth / 2;
-                            const newTop = centerY - itemHeight / 2;
-                            
-                            el.style.left = newLeft + 'px';
-                            el.style.top = newTop + 'px';
-                            
-                            initialLeft = newLeft;
-                            initialTop = newTop;
+                            // Re-init values for continued drag
+                            initialLeft = parseFloat(el.style.left);
+                            initialTop = parseFloat(el.style.top);
                         }
                     };
                     document.addEventListener('touchstart', reGrab, {once: true});
@@ -1185,11 +1156,17 @@
             if (state.returnTimer) clearTimeout(state.returnTimer);
             state.returnTimer = setTimeout(() => {
                 el.style.transition = 'all 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55)';
+                
+                // Recalculate original center pos (re-using logic from spawnItem)
+                const w = el.offsetWidth;
+                const centerX = (window.innerWidth / 2) - (w / 2);
                 const landingY = getSafeLandingY();
-                el.style.left = '50%'; 
-                el.style.transform = 'translate(-50%, 0) scale(1)';
+
+                el.style.left = centerX + 'px'; 
                 el.style.top = landingY + 'px';
+                el.style.transform = 'scale(1)'; // Reset scale
                 el.style.zIndex = 50;
+                
                 setTimeout(() => { content.classList.add('wiggle-idle'); }, 600);
                 state.returnTimer = null;
             }, 3000); 
