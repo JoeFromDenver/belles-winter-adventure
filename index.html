@@ -29,6 +29,17 @@
 
         /* --- PAPERCRAFT AESTHETIC --- */
         
+        /* Global Paper Texture Overlay */
+        .paper-texture-overlay {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            opacity: 0.2; 
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.5'/%3E%3C/svg%3E");
+            z-index: 0;
+            mix-blend-mode: overlay;
+        }
+
         /* White Outline + Shadow for Emojis */
         .paper-emoji {
             text-shadow: 
@@ -38,10 +49,24 @@
                 0px 2px 0px white, 0px -2px 0px white;
             filter: drop-shadow(3px 5px 2px rgba(0,0,0,0.2));
         }
+        
+        /* Paper Title Style */
+        .paper-title {
+            color: #fff;
+            text-shadow: 
+                3px 3px 0px #88c0eb, 
+                -1px -1px 0px rgba(0,0,0,0.1);
+            filter: drop-shadow(0 4px 3px rgba(0,0,0,0.3)); 
+        }
 
         /* Layered look for Backgrounds */
         .paper-layer {
             filter: drop-shadow(0px -4px 6px rgba(0,0,0,0.1));
+        }
+
+        /* SVG Filters for Road/Lake */
+        .paper-cutout-shadow {
+            filter: drop-shadow(2px 4px 2px rgba(0,0,0,0.15));
         }
 
         /* --- ZONES --- */
@@ -54,26 +79,27 @@
         }
         
         .zone-bg {
-            background-color: rgba(255, 255, 255, 0.2); /* More transparent */
+            background-color: rgba(255, 255, 255, 0.2); 
             backdrop-filter: blur(2px);
             border-radius: 50%;
             padding: 0;
-            border: 2px solid rgba(255,255,255,0.6); /* Thinner border */
+            border: 2px solid rgba(255,255,255,0.6); 
             box-shadow: 0 10px 15px rgba(0,0,0,0.05);
-            width: clamp(7rem, 16vw, 14rem); /* Slightly smaller container */
-            height: clamp(7rem, 16vw, 14rem);
+            /* Reduced size by additional 10% */
+            width: clamp(5.4rem, 12vw, 10.8rem);
+            height: clamp(5.4rem, 12vw, 10.8rem);
             display: flex;
             align-items: center;
             justify-content: center;
-            overflow: visible; /* Allow spillover */
+            overflow: visible; 
         }
         
-        /* Emoji fills the area and spills over */
         .zone-icon {
-            font-size: clamp(6rem, 14vw, 12rem);
+            /* Reduced font size by additional 10% */
+            font-size: clamp(4.5rem, 10.8vw, 9rem);
             line-height: 1;
             margin-top: 0.1em; 
-            transform: scale(1.1); /* Slight zoom for pop-out effect */
+            transform: scale(1.1); 
         }
 
         /* --- ANIMATIONS --- */
@@ -131,7 +157,6 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            /* Smaller item size: 3.5rem min, 12% viewport, 7rem max */
             font-size: clamp(3.5rem, 12vw, 7rem); 
             z-index: 1000; 
         }
@@ -164,11 +189,6 @@
         .scroller::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
         .scroller::-webkit-scrollbar-thumb { background: #E60026; border-radius: 4px; }
 
-        .title-text {
-            color: #fff;
-            text-shadow: 2px 2px 0px #88c0eb, 4px 4px 0px rgba(0,0,0,0.1);
-        }
-        
         .deco-container {
             position: absolute;
             bottom: 0;
@@ -176,15 +196,27 @@
             height: 45%; 
             pointer-events: none;
             overflow: hidden;
+            z-index: 1; /* Above snow, below UI */
         }
 
         .blocked-item { opacity: 0.2; filter: grayscale(100%); }
+
+        /* Media Query for Vertical Phone Layout */
+        @media (orientation: portrait) {
+            .title-fade {
+                opacity: 0;
+                transition: opacity 0.5s ease;
+            }
+        }
     </style>
 </head>
 <body>
 
+    <!-- --- PAPER TEXTURE OVERLAY --- -->
+    <div class="paper-texture-overlay z-0"></div>
+
     <!-- --- GAME CONTAINER --- -->
-    <div id="game-app" class="relative w-full h-full overflow-hidden">
+    <div id="game-app" class="relative w-full h-full overflow-hidden z-10">
         
         <!-- 1. BACKGROUND LAYER -->
         <div class="absolute inset-0 z-0">
@@ -196,10 +228,15 @@
                             <stop offset="0%" style="stop-color:white;stop-opacity:1" />
                             <stop offset="100%" style="stop-color:#E3F2FD;stop-opacity:1" />
                         </linearGradient>
+                        <filter id="paperShadow" x="-20%" y="-20%" width="140%" height="140%">
+                            <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="rgba(0,0,0,0.15)"/>
+                        </filter>
                     </defs>
                     <path fill="url(#snowGrad)" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,149.3C960,160,1056,160,1152,138.7C1248,117,1344,75,1392,53.3L1440,32L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
-                    <path d="M-100,320 Q300,100 800,280 T1500,180" fill="none" stroke="#cfd8dc" stroke-width="25" opacity="0.6" stroke-linecap="round" stroke-dasharray="20,10" />
-                    <ellipse cx="20%" cy="85%" rx="60" ry="15" fill="#BBDEFB" stroke="#90CAF9" stroke-width="2" />
+                    
+                    <!-- Papercraft Elements (Filtered) -->
+                    <path class="paper-cutout-shadow" d="M-100,320 Q300,100 800,280 T1500,180" fill="none" stroke="#cfd8dc" stroke-width="30" stroke-linecap="round" stroke-dasharray="25,15" />
+                    <ellipse class="paper-cutout-shadow" cx="20%" cy="85%" rx="60" ry="15" fill="#BBDEFB" stroke="#90CAF9" stroke-width="3" />
                 </svg>
             </div>
             
@@ -207,23 +244,26 @@
             <div id="bg-decorations" class="deco-container">
                 <!-- Static elements -->
                 <div class="paper-emoji absolute" style="left:2%; bottom:15%; font-size:20px;">🌲</div>
-                <div class="paper-emoji absolute" style="left:5%; bottom:20%; font-size:25px;">🌲</div>
+                <div class="paper-emoji absolute" style="left:5%; bottom:12%; font-size:25px;">🌲</div>
                 <div class="paper-emoji absolute" style="left:8%; bottom:10%; font-size:22px;">🌲</div>
-                <div class="paper-emoji absolute" style="left:12%; bottom:18%; font-size:28px;">🌲</div>
-                <div class="paper-emoji absolute" style="left:85%; bottom:25%; font-size:22px;">🌲</div>
-                <div class="paper-emoji absolute" style="left:88%; bottom:35%; font-size:18px;">🌲</div>
-                <div class="paper-emoji absolute" style="left:90%; bottom:20%; font-size:30px;">🌲</div>
-                <div class="paper-emoji absolute" style="left:95%; bottom:30%; font-size:25px;">🌲</div>
+                <div class="paper-emoji absolute" style="left:12%; bottom:15%; font-size:28px;">🌲</div>
+                <div class="paper-emoji absolute" style="left:85%; bottom:15%; font-size:22px;">🌲</div>
+                <div class="paper-emoji absolute" style="left:88%; bottom:12%; font-size:18px;">🌲</div>
+                <div class="paper-emoji absolute" style="left:90%; bottom:10%; font-size:30px;">🌲</div>
+                <div class="paper-emoji absolute" style="left:95%; bottom:14%; font-size:25px;">🌲</div>
                 
                 <!-- Tiny Houses & Cars -->
-                <div class="paper-emoji absolute" style="left:25%; bottom:55%; font-size:30px;">🏠</div>
-                <div class="paper-emoji absolute" style="left:30%; bottom:58%; font-size:20px;">🚗</div>
-                <div class="paper-emoji absolute" style="left:75%; bottom:50%; font-size:25px;">🏠</div>
-                <div class="paper-emoji absolute" style="left:70%; bottom:52%; font-size:20px; transform: scaleX(-1);">🚗</div>
+                <div class="paper-emoji absolute" style="left:25%; bottom:15%; font-size:30px;">🏠</div>
+                <div class="paper-emoji absolute" style="left:30%; bottom:12%; font-size:20px;">🚗</div>
+                <div class="paper-emoji absolute" style="left:75%; bottom:15%; font-size:25px;">🏠</div>
+                <div class="paper-emoji absolute" style="left:70%; bottom:12%; font-size:20px; transform: scaleX(-1);">🚗</div>
 
                 <!-- Dynamic Groups -->
                 <div id="deco-left"></div>
                 <div id="deco-right"></div>
+                
+                <!-- Chicken Coop (Hidden by default, populated by JS) -->
+                <div id="chicken-coop" class="absolute left-1/2 -translate-x-1/2 bottom-[5%] flex justify-center gap-2 pointer-events-none" style="width: 300px;"></div>
             </div>
 
             <!-- Clouds -->
@@ -240,9 +280,9 @@
             </div>
         </div>
 
-        <!-- TITLE -->
-        <div class="absolute top-4 left-0 right-0 flex justify-center z-10 pointer-events-none">
-            <h1 class="text-4xl lg:text-6xl font-bold title-text tracking-wide text-center px-4 leading-tight">Belle's Winter Adventure</h1>
+        <!-- TITLE (Fades on portrait) -->
+        <div class="absolute top-4 left-0 right-0 flex justify-center z-10 pointer-events-none title-fade">
+            <h1 class="text-4xl lg:text-6xl font-bold paper-title tracking-wide text-center px-4 leading-tight">Belle's Winter Adventure</h1>
         </div>
 
         <!-- 2. DROP ZONES -->
@@ -253,7 +293,7 @@
                 <div class="zone-bg">
                     <div id="left-icon" class="zone-icon paper-emoji select-none"></div>
                 </div>
-                <div id="left-label" class="absolute -bottom-16 w-full text-center text-3xl lg:text-4xl font-bold tracking-wider uppercase text-blue-800 drop-shadow-md paper-emoji" style="text-shadow: 2px 2px 0 white;"></div>
+                <div id="left-label" class="absolute -bottom-16 w-full text-center text-3xl lg:text-4xl font-bold tracking-wider uppercase text-blue-800 drop-shadow-md paper-title" style="text-shadow: 2px 2px 0 white;"></div>
             </div>
 
             <!-- RIGHT ZONE -->
@@ -265,7 +305,7 @@
                         <text class="text-xl" style="transform: rotate(15deg);">🥒</text>
                     </div>
                 </div>
-                <div id="right-label" class="absolute -bottom-16 w-full text-center text-3xl lg:text-4xl font-bold tracking-wider uppercase text-blue-800 drop-shadow-md paper-emoji" style="text-shadow: 2px 2px 0 white;"></div>
+                <div id="right-label" class="absolute -bottom-16 w-full text-center text-3xl lg:text-4xl font-bold tracking-wider uppercase text-blue-800 drop-shadow-md paper-title" style="text-shadow: 2px 2px 0 white;"></div>
             </div>
         </div>
 
@@ -281,14 +321,15 @@
         <div id="spawn-anchor" class="absolute bottom-20 left-1/2 transform -translate-x-1/2 w-1 h-1"></div>
 
         <!-- SCORE -->
-        <div id="score-btn" class="absolute top-6 left-4 z-30 flex items-center bg-white/90 rounded-full px-4 py-2 border-4 border-blue-300 cursor-pointer active:scale-95 transition-transform shadow-lg h-16 pointer-events-auto">
+        <div id="score-btn" class="absolute top-6 left-4 z-30 flex items-center bg-white/90 rounded-full px-4 py-2 border-4 border-blue-300 cursor-pointer active:scale-95 transition-transform shadow-lg h-16 pointer-events-auto paper-layer">
             <span class="text-3xl mr-2 paper-emoji">⭐</span>
             <span id="score-display" class="text-3xl text-blue-800 font-bold">0</span>
         </div>
 
         <!-- 5. ANGEL -->
         <div id="angel-btn" class="absolute top-6 right-4 z-30 flex flex-col items-center cursor-pointer active:scale-95 transition-transform pointer-events-auto">
-            <div id="beau-container" class="w-16 h-16 bg-white/90 rounded-full border-4 border-yellow-400 shadow-lg flex items-center justify-center overflow-hidden">
+            <div id="beau-container" class="w-16 h-16 bg-white/90 rounded-full border-4 border-yellow-400 shadow-lg flex items-center justify-center overflow-hidden paper-layer">
+                <!-- Tries to load beau.png, falls back to Emoji -->
                 <img src="beau.png" alt="Beau" class="w-full h-full object-cover" onerror="this.style.display='none'; document.getElementById('fallback-angel').style.display='block';">
                 <span id="fallback-angel" class="text-4xl select-none paper-emoji" style="display:none;">👼</span>
             </div>
@@ -322,7 +363,7 @@
 
                     <div class="flex-1 flex flex-col gap-2 bg-blue-50 p-3 rounded-xl border-2 border-blue-200">
                         <span class="text-xl font-bold text-blue-800 text-center">RIGHT SIDE</span>
-                        <button id="btn-cat-right" onclick="cycleCategoryConfig('right')" class="w-full px-4 py-2 bg-blue-500 text-white rounded-full active:scale-95 font-bold shadow-md">
+                        <button id="btn-cat-right" onclick="cycleCategoryConfig('right')" class="w-full px-4 py-2 bg-indigo-500 text-white rounded-full active:scale-95 font-bold shadow-md">
                             Animals
                         </button>
                     </div>
@@ -406,7 +447,6 @@
             stormTimer: null,
             snowInterval: null,
             totalTouches: 0, 
-            // Parent Mode Trigger
             unlockState: { star: false, angel: false, timer: null, tapStartTime: 0 }
         };
 
@@ -436,7 +476,25 @@
             
             renderBackgroundDecorations(leftKey, 'left');
             renderBackgroundDecorations(rightKey, 'right');
+            updateChickenCoop(); // Check for animals
             updateConfigButtons();
+        }
+
+        function updateChickenCoop() {
+            const coop = document.getElementById('chicken-coop');
+            coop.innerHTML = '';
+            
+            // If animals active on either side
+            if (state.activeLeft.id === 'animals' || state.activeRight.id === 'animals') {
+                for(let i=0; i<7; i++) {
+                    const c = document.createElement('div');
+                    c.className = 'paper-emoji';
+                    c.style.fontSize = (15 + Math.random()*10) + 'px';
+                    c.style.transform = `scaleX(${Math.random() > 0.5 ? 1 : -1})`;
+                    c.innerText = '🐓';
+                    coop.appendChild(c);
+                }
+            }
         }
 
         function renderBackgroundDecorations(catId, side) {
@@ -447,6 +505,7 @@
                 const d = document.createElement('div');
                 d.className = 'paper-emoji absolute';
                 d.style.left = x + '%';
+                // Grounded items: fixed between 2-15% bottom
                 d.style.bottom = y + '%';
                 d.style.fontSize = size + 'px';
                 d.innerText = emoji;
@@ -454,65 +513,61 @@
                 container.appendChild(d);
             };
 
-            // GROUND LEVEL Logic: bottom 2% - 25%
-            // SKY LEVEL Logic: bottom 60% - 90%
-
             if (side === 'left') {
                 if (catId === 'animals') {
-                    createEmoji(15, 5, 30, "🦆"); // Ground
-                    createEmoji(22, 8, 25, "🐢"); // Ground
-                    createEmoji(18, 12, 20, "🐸"); // Ground
-                    createEmoji(5, 10, 40, "🌲"); // Ground
+                    createEmoji(15, 5, 30, "🦆"); 
+                    createEmoji(22, 8, 25, "🐢"); 
+                    createEmoji(18, 12, 20, "🐸"); 
+                    createEmoji(5, 10, 40, "🌲"); 
                 } else if (catId === 'vehicles') {
-                    createEmoji(10, 15, 35, "🚜"); // Ground
-                    createEmoji(25, 12, 30, "🚛"); // Ground
-                    createEmoji(5, 5, 20, "🚧"); // Ground
+                    createEmoji(10, 15, 35, "🚜"); 
+                    createEmoji(25, 12, 30, "🚛"); 
+                    createEmoji(5, 5, 20, "🚧"); 
                 } else if (catId === 'food') {
-                    createEmoji(15, 10, 40, "🧺"); // Ground
+                    createEmoji(15, 10, 40, "🧺"); 
                     createEmoji(20, 5, 20, "🍎");
                     createEmoji(10, 5, 20, "🍇");
                     createEmoji(18, 15, 15, "🐜");
                 } else if (catId === 'smileys') {
-                    createEmoji(15, 10, 40, "⛄"); // Ground
+                    createEmoji(15, 10, 40, "⛄"); 
                     createEmoji(25, 8, 30, "⛄");
                     createEmoji(20, 2, 20, "❄️");
                 } else if (catId === 'nature') {
-                    createEmoji(10, 80, 50, "☀️"); // Sky
-                    // Rainbow (Sky/Ground mix)
+                    createEmoji(10, 80, 50, "☀️"); 
                     const rainbow = document.createElement('div');
                     rainbow.className = 'absolute paper-emoji';
                     rainbow.style.left = '5%'; rainbow.style.bottom = '10%';
                     rainbow.innerHTML = `<span style="font-size:70px; position:absolute; left:0;">🌈</span><span style="font-size:70px; position:absolute; left:55px; transform:scaleX(-1);">🌈</span>`;
                     container.appendChild(rainbow);
-                    createEmoji(5, 5, 25, "🌻"); // Ground
-                    createEmoji(25, 5, 25, "🌹"); // Ground
+                    createEmoji(5, 5, 25, "🌻"); 
+                    createEmoji(25, 5, 25, "🌹"); 
                 } else if (catId === 'shapes') {
                     createEmoji(10, 80, 30, "❤️"); createEmoji(5, 50, 35, "🔺");
                 }
             } else {
                 if (catId === 'animals') {
-                    createEmoji(85, 10, 35, "🦌"); // Ground
-                    createEmoji(75, 5, 30, "🐻"); // Ground
-                    createEmoji(80, 70, 20, "🦉"); // Sky/High
-                    createEmoji(92, 15, 40, "🌲"); // Ground
+                    createEmoji(85, 10, 35, "🦌"); 
+                    createEmoji(75, 5, 30, "🐻"); 
+                    createEmoji(80, 70, 20, "🦉"); 
+                    createEmoji(92, 15, 40, "🌲"); 
                 } else if (catId === 'vehicles') {
-                    createEmoji(80, 75, 40, "✈️"); // Sky
-                    createEmoji(65, 80, 30, "🚁"); // Sky
-                    createEmoji(88, 85, 25, "🚀"); // Sky
+                    createEmoji(80, 75, 40, "✈️"); 
+                    createEmoji(65, 80, 30, "🚁"); 
+                    createEmoji(88, 85, 25, "🚀"); 
                 } else if (catId === 'food') {
-                    createEmoji(85, 10, 40, "🍭"); // Ground
-                    createEmoji(75, 15, 35, "🍬"); // Ground
-                    createEmoji(90, 5, 35, "🍩"); // Ground
-                    createEmoji(80, 2, 25, "🧁"); // Ground
+                    createEmoji(85, 10, 40, "🍭"); 
+                    createEmoji(75, 15, 35, "🍬"); 
+                    createEmoji(90, 5, 35, "🍩"); 
+                    createEmoji(80, 2, 25, "🧁"); 
                 } else if (catId === 'smileys') {
-                    createEmoji(90, 75, 50, "🌞"); // Sky
-                    createEmoji(75, 70, 30, "☁️"); // Sky
-                    createEmoji(85, 60, 25, "🌈"); // Sky
+                    createEmoji(90, 75, 50, "🌞"); 
+                    createEmoji(75, 70, 30, "☁️"); 
+                    createEmoji(85, 60, 25, "🌈"); 
                 } else if (catId === 'nature') {
-                    createEmoji(85, 12, 60, "🏔️"); // Ground
-                    createEmoji(70, 12, 40, "🌋"); // Ground
-                    createEmoji(90, 80, 30, "🌙"); // Sky
-                    createEmoji(80, 85, 20, "⭐"); // Sky
+                    createEmoji(85, 12, 60, "🏔️"); 
+                    createEmoji(70, 12, 40, "🌋"); 
+                    createEmoji(90, 80, 30, "🌙"); 
+                    createEmoji(80, 85, 20, "⭐"); 
                 } else if (catId === 'shapes') {
                     createEmoji(90, 80, 35, "🟦"); createEmoji(75, 60, 30, "🔶"); createEmoji(65, 30, 40, "♾️");
                 }
@@ -546,7 +601,7 @@
             playSound('pop');
             saveConfig();
             
-            // Refresh Item
+            // Refresh Item: force new item from correct category
             if (state.currentItem) { state.currentItem.remove(); spawnItem(); }
         }
 
@@ -687,6 +742,7 @@
                 if (state.humOscillators.length > 0) return; 
                 if (!state.soundEnabled) return;
                 if (audioCtx.state === 'suspended') audioCtx.resume();
+
                 const vol = getVolumeMultiplier();
                 const now = audioCtx.currentTime;
                 
@@ -698,8 +754,10 @@
                 const freqs = [100, 105, 95];
                 freqs.forEach(f => {
                     const osc = audioCtx.createOscillator();
-                    osc.type = 'triangle'; osc.frequency.value = f;
-                    osc.connect(state.humGain); osc.start(now);
+                    osc.type = 'triangle'; 
+                    osc.frequency.value = f;
+                    osc.connect(state.humGain);
+                    osc.start(now);
                     state.humOscillators.push(osc);
                 });
             } catch (e) {}
@@ -820,7 +878,11 @@
             content.innerHTML = data.emoji;
             el.appendChild(content);
 
+            // Hide if parent mode active
+            if (state.inParentMode) el.style.display = 'none';
+
             const landingY = getSafeLandingY();
+            const centerX = window.innerWidth / 2;
             el.style.left = '50%'; 
             el.style.transform = 'translate(-50%, 0)';
             el.style.top = landingY + 'px';
@@ -857,11 +919,12 @@
         function makeDraggable(el, content) {
             let startX, startY;
             let initialLeft, initialTop;
+            let itemWidth = 0, itemHeight = 0;
             
             const onStart = (e) => {
                 if (state.inParentMode) return;
-                
-                // --- Single Tap Detection for Start ---
+                if (e.touches && isPalm(e)) return; 
+
                 e.preventDefault(); 
                 
                 if (state.returnTimer) { clearTimeout(state.returnTimer); state.returnTimer = null; }
@@ -879,12 +942,23 @@
                 startY = point.clientY;
                 
                 const rect = el.getBoundingClientRect();
-                el.style.transform = 'none'; 
-                el.style.left = rect.left + 'px';
-                el.style.top = rect.top + 'px';
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
                 
-                initialLeft = rect.left;
-                initialTop = rect.top;
+                el.style.transform = 'none'; 
+                const w = el.offsetWidth;
+                const h = el.offsetHeight;
+                
+                const newLeft = centerX - w / 2;
+                const newTop = centerY - h / 2;
+
+                el.style.left = newLeft + 'px';
+                el.style.top = newTop + 'px';
+                
+                initialLeft = newLeft;
+                initialTop = newTop;
+                itemWidth = w;
+                itemHeight = h;
 
                 el.style.transition = 'none';
                 el.style.zIndex = 1000; 
@@ -907,45 +981,22 @@
                 let newLeft = initialLeft + dx;
                 let newTop = initialTop + dy;
 
-                const maxLeft = window.innerWidth - el.offsetWidth;
-                const maxTop = window.innerHeight - el.offsetHeight;
+                const maxLeft = window.innerWidth - itemWidth;
+                const maxTop = window.innerHeight - itemHeight;
                 newLeft = Math.max(0, Math.min(newLeft, maxLeft));
                 newTop = Math.max(0, Math.min(newTop, maxTop));
 
                 el.style.left = `${newLeft}px`;
                 el.style.top = `${newTop}px`;
 
-                const centerX = newLeft + el.offsetWidth / 2;
-                const centerY = newTop + el.offsetHeight / 2;
+                const centerX = newLeft + itemWidth / 2;
+                const centerY = newTop + itemHeight / 2;
 
                 checkHover(centerX, centerY);
             };
 
             const onEnd = (e) => {
                 if (!state.isDragging) return;
-                
-                // --- CHECK VALID DROP FIRST (No Delay) ---
-                const rect = el.getBoundingClientRect();
-                const centerX = rect.left + rect.width / 2;
-                const centerY = rect.top + rect.height / 2;
-                
-                const targetZone = checkCollision(centerX, centerY);
-                let isHit = false;
-                
-                if (targetZone) {
-                    if (el.dataset.type === targetZone) isHit = true;
-                } else {
-                    const distLeft = getDistance(centerX, centerY, zoneLeft);
-                    const distRight = getDistance(centerX, centerY, zoneRight);
-                    const threshold = 250; 
-                    if (distLeft < threshold && el.dataset.type === 'left') isHit = true;
-                    if (distRight < threshold && el.dataset.type === 'right') isHit = true;
-                }
-                
-                if (isHit) {
-                    commitDrop(el, content);
-                    return;
-                }
                 
                 if (e.type === 'touchend') {
                     stopWoodenPurr();
@@ -960,9 +1011,19 @@
                             const point = ev.touches[0];
                             startX = point.clientX;
                             startY = point.clientY;
+                            
                             const rect = el.getBoundingClientRect();
-                            initialLeft = rect.left;
-                            initialTop = rect.top;
+                            const centerX = rect.left + rect.width / 2;
+                            const centerY = rect.top + rect.height / 2;
+                            
+                            const newLeft = centerX - itemWidth / 2;
+                            const newTop = centerY - itemHeight / 2;
+                            
+                            el.style.left = newLeft + 'px';
+                            el.style.top = newTop + 'px';
+                            
+                            initialLeft = newLeft;
+                            initialTop = newTop;
                         }
                     };
                     document.addEventListener('touchstart', reGrab, {once: true});
@@ -1292,6 +1353,7 @@
                     startHoldTime = Date.now();
                     state.unlockState[prop] = true; 
                     // touchstart updates state.totalTouches via window listener
+                    // but we need to wait a tick for it to propagate or check length here
                     setTimeout(checkParentUnlock, 10);
                 });
                 
@@ -1311,13 +1373,17 @@
                     startHoldTime = Date.now();
                     state.unlockState[prop] = true; 
                     state.totalTouches=2; 
-                    state.unlockState.star = true; state.unlockState.angel = true;
+                    // Mouse Hack for testing: Set BOTH true
+                    state.unlockState.star = true;
+                    state.unlockState.angel = true;
                     checkParentUnlock(); 
                 });
                 el.addEventListener('mouseup', () => { 
                     state.unlockState[prop] = false; 
                     state.totalTouches=0; 
-                    state.unlockState.star = false; state.unlockState.angel = false;
+                    // Reset Both
+                    state.unlockState.star = false;
+                    state.unlockState.angel = false;
                     checkParentUnlock(); 
                     
                     // Mouse Click Logic
