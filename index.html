@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Belle's Winter Adventure 2.2</title>
+    <title>Belle's Winter Adventure 2.3</title>
     <link rel="manifest" href="manifest.json">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -88,7 +88,6 @@
             overflow: visible; 
         }
         
-        /* FIX #1: Removed margin-top, tweaked line-height for better centering */
         .zone-icon {
             font-size: clamp(4.5rem, 10.8vw, 9rem);
             line-height: 1.1; 
@@ -98,7 +97,7 @@
             align-items: center;
             justify-content: center;
             height: 100%;
-            padding-bottom: 5%; /* Slight optical adjustment for emoji baseline */
+            padding-bottom: 5%; 
         }
 
         /* --- ANIMATIONS --- */
@@ -129,7 +128,6 @@
         }
         .wiggle-idle { animation: idleShimmy 4s ease-in-out infinite; }
 
-        /* FIX #4: Clouds drift to 120vw to ensure they clear the screen completely */
         @keyframes drift {
             from { transform: translateX(-150px); }
             to { transform: translateX(120vw); } 
@@ -469,7 +467,6 @@
             }
         }
 
-        // FIX #5: This function is now recalled on resize to "reflow" the decorations
         function renderBackgroundDecorations(catId, side) {
             const container = document.getElementById(side === 'left' ? 'deco-left' : 'deco-right');
             container.innerHTML = ''; 
@@ -763,7 +760,7 @@
             
             const layer = document.getElementById('cloud-layer');
             const extraClouds = [];
-            for (let i = 0; i < 3; i++) {
+            for (let i = 3; i < 6; i++) {
                 const c = document.createElement('div');
                 c.className = `absolute text-white opacity-60 cursor-pointer cloud-${i%2===0?'fast':'medium'}`;
                 c.style.top = Math.random() * 20 + '%';
@@ -786,7 +783,6 @@
             }, 120000);
         }
 
-        // FIX #2: Dynamic Resting Position Logic based on orientation
         function getRestingPosition() {
             const w = window.innerWidth;
             const h = window.innerHeight;
@@ -1241,21 +1237,29 @@
             }
         }
 
-        // FIX #3 & #5: Resize handler to reflow ground decorations and move active item
+        // --- NEW RESIZE LOGIC ---
         window.addEventListener('resize', () => {
             clearTimeout(state.resizeTimeout);
+            // Increased delay to 300ms to allow mobile rotation animations to complete
             state.resizeTimeout = setTimeout(() => {
+                
                 // 1. Reflow background decorations
-                renderBackgroundDecorations(state.config.leftCat === 'random' ? state.activeLeft.id : state.config.leftCat, 'left');
-                renderBackgroundDecorations(state.config.rightCat === 'random' ? state.activeRight.id : state.config.rightCat, 'right');
+                const leftCat = state.config.leftCat === 'random' ? state.activeLeft.id : state.config.leftCat;
+                const rightCat = state.config.rightCat === 'random' ? state.activeRight.id : state.config.rightCat;
+                renderBackgroundDecorations(leftCat, 'left');
+                renderBackgroundDecorations(rightCat, 'right');
                 
                 // 2. Move current item to new resting spot (if not dragging)
                 if (state.currentItem && !state.isDragging && !state.isProcessingSuccess) {
                     const el = state.currentItem;
                     el.style.transition = 'all 0.5s ease-out';
                     
+                    // Force browser to acknowledge new font size from CSS clamp() 
+                    // BEFORE measuring width/height
+                    const rect = el.getBoundingClientRect(); 
                     const w = el.offsetWidth;
                     const h = el.offsetHeight;
+                    
                     const centerPos = getRestingPosition();
                     const startX = centerPos.x - (w/2);
                     const startY = centerPos.y - (h/2);
@@ -1263,10 +1267,9 @@
                     el.style.left = startX + 'px';
                     el.style.top = startY + 'px';
                     
-                    // Remove transition after move to avoid lag during subsequent drags
                     setTimeout(() => { el.style.transition = 'none'; }, 500);
                 }
-            }, 150);
+            }, 300);
         });
 
         /* --- 5. INITIALIZATION --- */
