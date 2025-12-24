@@ -12,7 +12,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Mouse+Memoirs&display=swap" rel="stylesheet">
 
     <style>
-        /* --- CORE --- */
+        /* --- CORE DISABLES --- */
         body {
             overscroll-behavior: none;
             touch-action: none;
@@ -20,7 +20,7 @@
             -webkit-user-select: none;
             -webkit-touch-callout: none;
             font-family: 'Mouse Memoirs', sans-serif;
-            background-color: #dbeafe; /* Sky Blue */
+            background-color: #dbeafe;
             overflow: hidden;
             position: fixed;
             width: 100%;
@@ -54,24 +54,26 @@
         }
         
         .zone-bg {
-            background-color: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(4px);
+            background-color: rgba(255, 255, 255, 0.2); /* More transparent */
+            backdrop-filter: blur(2px);
             border-radius: 50%;
             padding: 0;
-            border: 6px solid white;
-            box-shadow: 0 10px 15px rgba(0,0,0,0.1);
-            width: clamp(8rem, 18vw, 16rem); /* Consistent circle size */
-            height: clamp(8rem, 18vw, 16rem);
+            border: 2px solid rgba(255,255,255,0.6); /* Thinner border */
+            box-shadow: 0 10px 15px rgba(0,0,0,0.05);
+            width: clamp(7rem, 16vw, 14rem); /* Slightly smaller container */
+            height: clamp(7rem, 16vw, 14rem);
             display: flex;
             align-items: center;
             justify-content: center;
+            overflow: visible; /* Allow spillover */
         }
         
-        /* Ensure emoji is dead center in the circle */
+        /* Emoji fills the area and spills over */
         .zone-icon {
-            font-size: clamp(5rem, 10vw, 10rem);
+            font-size: clamp(6rem, 14vw, 12rem);
             line-height: 1;
-            margin-top: 0.1em; /* Optical center adjustment */
+            margin-top: 0.1em; 
+            transform: scale(1.1); /* Slight zoom for pop-out effect */
         }
 
         /* --- ANIMATIONS --- */
@@ -129,11 +131,11 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: clamp(5rem, 18vw, 9rem); 
+            /* Smaller item size: 3.5rem min, 12% viewport, 7rem max */
+            font-size: clamp(3.5rem, 12vw, 7rem); 
             z-index: 1000; 
         }
         
-        /* Oversized Hitbox */
         .draggable-item::after {
             content: '';
             position: absolute;
@@ -144,7 +146,6 @@
         .emoji-content {
             display: block;
             pointer-events: none; 
-            /* Paper effect on the item itself */
             text-shadow: 
                 3px 3px 0px white, -3px -3px 0px white, 
                 3px -3px 0px white, -3px 3px 0px white;
@@ -164,7 +165,6 @@
         .scroller::-webkit-scrollbar-thumb { background: #E60026; border-radius: 4px; }
 
         .title-text {
-            /* Paper cutout text style */
             color: #fff;
             text-shadow: 2px 2px 0px #88c0eb, 4px 4px 0px rgba(0,0,0,0.1);
         }
@@ -173,7 +173,7 @@
             position: absolute;
             bottom: 0;
             width: 100%;
-            height: 45%; /* Raised slightly */
+            height: 45%; 
             pointer-events: none;
             overflow: hidden;
         }
@@ -198,21 +198,18 @@
                         </linearGradient>
                     </defs>
                     <path fill="url(#snowGrad)" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,149.3C960,160,1056,160,1152,138.7C1248,117,1344,75,1392,53.3L1440,32L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"></path>
-                    <!-- Road -->
                     <path d="M-100,320 Q300,100 800,280 T1500,180" fill="none" stroke="#cfd8dc" stroke-width="25" opacity="0.6" stroke-linecap="round" stroke-dasharray="20,10" />
-                    <!-- Tiny Lake -->
                     <ellipse cx="20%" cy="85%" rx="60" ry="15" fill="#BBDEFB" stroke="#90CAF9" stroke-width="2" />
                 </svg>
             </div>
             
-            <!-- Decoration Layer (HTML DOM) -->
+            <!-- Decoration Layer -->
             <div id="bg-decorations" class="deco-container">
-                <!-- Static elements moved here to prevent squishing -->
+                <!-- Static elements -->
                 <div class="paper-emoji absolute" style="left:2%; bottom:15%; font-size:20px;">🌲</div>
                 <div class="paper-emoji absolute" style="left:5%; bottom:20%; font-size:25px;">🌲</div>
                 <div class="paper-emoji absolute" style="left:8%; bottom:10%; font-size:22px;">🌲</div>
                 <div class="paper-emoji absolute" style="left:12%; bottom:18%; font-size:28px;">🌲</div>
-                
                 <div class="paper-emoji absolute" style="left:85%; bottom:25%; font-size:22px;">🌲</div>
                 <div class="paper-emoji absolute" style="left:88%; bottom:35%; font-size:18px;">🌲</div>
                 <div class="paper-emoji absolute" style="left:90%; bottom:20%; font-size:30px;">🌲</div>
@@ -274,9 +271,9 @@
 
         <!-- 3. TOY BOX (HOUSE) -->
         <div id="toy-box-container" onclick="playSound('doorbell')" class="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-20 pointer-events-auto cursor-pointer toy-box active:scale-95 transition-transform flex flex-col items-center">
-             <!-- Using standard div layout instead of SVG for better emoji handling -->
+             <!-- Scaled down house -->
              <div class="relative flex items-center justify-center">
-                <div class="text-[8rem] lg:text-[10rem] leading-none paper-emoji select-none drop-shadow-2xl">🏠</div>
+                <div class="text-[4rem] lg:text-[7rem] leading-none paper-emoji select-none drop-shadow-2xl">🏠</div>
              </div>
         </div>
 
@@ -292,7 +289,6 @@
         <!-- 5. ANGEL -->
         <div id="angel-btn" class="absolute top-6 right-4 z-30 flex flex-col items-center cursor-pointer active:scale-95 transition-transform pointer-events-auto">
             <div id="beau-container" class="w-16 h-16 bg-white/90 rounded-full border-4 border-yellow-400 shadow-lg flex items-center justify-center overflow-hidden">
-                <!-- Tries to load beau.png, falls back to Emoji -->
                 <img src="beau.png" alt="Beau" class="w-full h-full object-cover" onerror="this.style.display='none'; document.getElementById('fallback-angel').style.display='block';">
                 <span id="fallback-angel" class="text-4xl select-none paper-emoji" style="display:none;">👼</span>
             </div>
@@ -409,11 +405,12 @@
             isStorming: false,
             stormTimer: null,
             snowInterval: null,
+            totalTouches: 0, 
             // Parent Mode Trigger
             unlockState: { star: false, angel: false, timer: null, tapStartTime: 0 }
         };
 
-        /* --- SETUP --- */
+        /* --- SETUP & DECORATIONS --- */
         function initCategories() {
             let leftKey = state.config.leftCat;
             if (leftKey === 'random') {
@@ -457,39 +454,65 @@
                 container.appendChild(d);
             };
 
+            // GROUND LEVEL Logic: bottom 2% - 25%
+            // SKY LEVEL Logic: bottom 60% - 90%
+
             if (side === 'left') {
                 if (catId === 'animals') {
-                    createEmoji(15, 12, 30, "🦆"); createEmoji(22, 15, 25, "🐢"); createEmoji(5, 45, 40, "🌲");
+                    createEmoji(15, 5, 30, "🦆"); // Ground
+                    createEmoji(22, 8, 25, "🐢"); // Ground
+                    createEmoji(18, 12, 20, "🐸"); // Ground
+                    createEmoji(5, 10, 40, "🌲"); // Ground
                 } else if (catId === 'vehicles') {
-                    createEmoji(10, 30, 35, "🚜"); createEmoji(25, 32, 30, "🚛");
+                    createEmoji(10, 15, 35, "🚜"); // Ground
+                    createEmoji(25, 12, 30, "🚛"); // Ground
+                    createEmoji(5, 5, 20, "🚧"); // Ground
                 } else if (catId === 'food') {
-                    createEmoji(15, 45, 40, "🧺"); createEmoji(20, 40, 20, "🍎"); createEmoji(18, 50, 15, "🐜");
+                    createEmoji(15, 10, 40, "🧺"); // Ground
+                    createEmoji(20, 5, 20, "🍎");
+                    createEmoji(10, 5, 20, "🍇");
+                    createEmoji(18, 15, 15, "🐜");
                 } else if (catId === 'smileys') {
-                    createEmoji(15, 35, 40, "⛄"); createEmoji(25, 35, 30, "⛄");
+                    createEmoji(15, 10, 40, "⛄"); // Ground
+                    createEmoji(25, 8, 30, "⛄");
+                    createEmoji(20, 2, 20, "❄️");
                 } else if (catId === 'nature') {
-                    createEmoji(10, 80, 50, "☀️");
-                    // Connected Rainbows container
+                    createEmoji(10, 80, 50, "☀️"); // Sky
+                    // Rainbow (Sky/Ground mix)
                     const rainbow = document.createElement('div');
                     rainbow.className = 'absolute paper-emoji';
-                    rainbow.style.left = '5%'; rainbow.style.bottom = '35%';
-                    // Using fixed pixel gap inside container to ensure connection
+                    rainbow.style.left = '5%'; rainbow.style.bottom = '10%';
                     rainbow.innerHTML = `<span style="font-size:70px; position:absolute; left:0;">🌈</span><span style="font-size:70px; position:absolute; left:55px; transform:scaleX(-1);">🌈</span>`;
                     container.appendChild(rainbow);
-                    createEmoji(5, 30, 25, "🌻"); createEmoji(25, 30, 25, "🌹");
+                    createEmoji(5, 5, 25, "🌻"); // Ground
+                    createEmoji(25, 5, 25, "🌹"); // Ground
                 } else if (catId === 'shapes') {
                     createEmoji(10, 80, 30, "❤️"); createEmoji(5, 50, 35, "🔺");
                 }
             } else {
                 if (catId === 'animals') {
-                    createEmoji(85, 45, 35, "🦌"); createEmoji(75, 35, 30, "🐻"); createEmoji(92, 40, 40, "🌲");
+                    createEmoji(85, 10, 35, "🦌"); // Ground
+                    createEmoji(75, 5, 30, "🐻"); // Ground
+                    createEmoji(80, 70, 20, "🦉"); // Sky/High
+                    createEmoji(92, 15, 40, "🌲"); // Ground
                 } else if (catId === 'vehicles') {
-                    createEmoji(80, 60, 40, "✈️"); createEmoji(65, 65, 30, "🚁");
+                    createEmoji(80, 75, 40, "✈️"); // Sky
+                    createEmoji(65, 80, 30, "🚁"); // Sky
+                    createEmoji(88, 85, 25, "🚀"); // Sky
                 } else if (catId === 'food') {
-                    createEmoji(85, 40, 40, "🍭"); createEmoji(90, 30, 35, "🍩");
+                    createEmoji(85, 10, 40, "🍭"); // Ground
+                    createEmoji(75, 15, 35, "🍬"); // Ground
+                    createEmoji(90, 5, 35, "🍩"); // Ground
+                    createEmoji(80, 2, 25, "🧁"); // Ground
                 } else if (catId === 'smileys') {
-                    createEmoji(90, 75, 50, "🌞"); createEmoji(75, 70, 30, "☁️");
+                    createEmoji(90, 75, 50, "🌞"); // Sky
+                    createEmoji(75, 70, 30, "☁️"); // Sky
+                    createEmoji(85, 60, 25, "🌈"); // Sky
                 } else if (catId === 'nature') {
-                    createEmoji(85, 50, 60, "🏔️"); createEmoji(70, 50, 40, "🌋"); createEmoji(90, 80, 30, "🌙");
+                    createEmoji(85, 12, 60, "🏔️"); // Ground
+                    createEmoji(70, 12, 40, "🌋"); // Ground
+                    createEmoji(90, 80, 30, "🌙"); // Sky
+                    createEmoji(80, 85, 20, "⭐"); // Sky
                 } else if (catId === 'shapes') {
                     createEmoji(90, 80, 35, "🟦"); createEmoji(75, 60, 30, "🔶"); createEmoji(65, 30, 40, "♾️");
                 }
@@ -696,7 +719,7 @@
             } catch (e) {}
         }
 
-        /* --- 4. GAME LOGIC --- */
+        /* --- 4. GAME LOGIC & SNOWSTORM --- */
         const zoneLeft = document.getElementById('zone-left');
         const zoneRight = document.getElementById('zone-right');
         const toyBox = document.getElementById('toy-box-container');
@@ -737,14 +760,21 @@
 
         function getSafeLandingY() {
             const h = window.innerHeight;
-            const w = window.innerWidth;
             let targetY = h * 0.33;
-            // Vertical phone check: Ensure high clearance above house
-            if (h > w) { 
-                targetY = h * 0.60; // Lower on screen (closer to house) as requested
-            }
+            if (h - targetY < 350) targetY = h * 0.20; 
             if (targetY < h * 0.15) targetY = h * 0.15;
             return targetY;
+        }
+
+        function isPalm(e) {
+            const touch = e.touches ? e.touches[0] : e;
+            const x = touch.clientX;
+            const y = touch.clientY;
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            const edge = 30; 
+            if (y < 100) return false;
+            return (x < edge || x > w - edge || y > h - edge);
         }
 
         function canSkip() {
@@ -832,7 +862,6 @@
                 if (state.inParentMode) return;
                 
                 // --- Single Tap Detection for Start ---
-                // We don't block preventDefault here if we want drag, but we handle taps via touchend timing
                 e.preventDefault(); 
                 
                 if (state.returnTimer) { clearTimeout(state.returnTimer); state.returnTimer = null; }
@@ -906,7 +935,6 @@
                 if (targetZone) {
                     if (el.dataset.type === targetZone) isHit = true;
                 } else {
-                    // Check magnetic snap
                     const distLeft = getDistance(centerX, centerY, zoneLeft);
                     const distRight = getDistance(centerX, centerY, zoneRight);
                     const threshold = 250; 
@@ -914,16 +942,13 @@
                     if (distRight < threshold && el.dataset.type === 'right') isHit = true;
                 }
                 
-                // If it's a valid hit, commit IMMEDIATELY (no delay)
                 if (isHit) {
                     commitDrop(el, content);
                     return;
                 }
                 
-                // If not a hit, and it was a touch end, trigger Grace Period
                 if (e.type === 'touchend') {
                     stopWoodenPurr();
-                    // Just wait 400ms to see if she grabs it again
                     state.dropTimeout = setTimeout(() => { commitDrop(el, content); }, 400); 
                     
                     const reGrab = (ev) => {
@@ -931,8 +956,6 @@
                             clearTimeout(state.dropTimeout);
                             state.dropTimeout = null;
                             document.removeEventListener('touchstart', reGrab);
-                            
-                            // Resume Drag
                             stopWoodenPurr(); startWoodenPurr();
                             const point = ev.touches[0];
                             startX = point.clientX;
@@ -947,7 +970,6 @@
                     return; 
                 }
 
-                // Mouse up commits immediately
                 commitDrop(el, content);
             };
             
@@ -967,7 +989,6 @@
                 const centerX = rect.left + rect.width / 2;
                 const centerY = rect.top + rect.height / 2;
                 
-                // Check Box Skip
                 const distBox = getDistance(centerX, centerY, toyBox);
                 if (distBox < 200) { 
                     if (canSkip()) { handleSkip(el); return; } 
@@ -1287,6 +1308,7 @@
                 
                 // Mouse fallback
                 el.addEventListener('mousedown', () => { 
+                    startHoldTime = Date.now();
                     state.unlockState[prop] = true; 
                     state.totalTouches=2; 
                     state.unlockState.star = true; state.unlockState.angel = true;
@@ -1297,6 +1319,12 @@
                     state.totalTouches=0; 
                     state.unlockState.star = false; state.unlockState.angel = false;
                     checkParentUnlock(); 
+                    
+                    // Mouse Click Logic
+                    if (Date.now() - startHoldTime < 300) {
+                       if (prop === 'star') playSound('chime');
+                       if (prop === 'angel') { playSound('giggle'); updateBeau('success'); }
+                    }
                 });
             };
             
