@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Belle's Winter Adventure 2.1</title>
+    <title>Belle's Winter Adventure 2.2</title>
     <link rel="manifest" href="manifest.json">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -29,7 +29,6 @@
 
         /* --- PAPERCRAFT AESTHETIC --- */
         
-        /* Global Paper Texture Overlay */
         .paper-texture-overlay {
             position: absolute;
             inset: 0;
@@ -40,7 +39,6 @@
             mix-blend-mode: overlay;
         }
 
-        /* White Outline + Shadow for Emojis */
         .paper-emoji {
             text-shadow: 
                 2px 2px 0px white, -2px -2px 0px white, 
@@ -50,7 +48,6 @@
             filter: drop-shadow(3px 5px 2px rgba(0,0,0,0.2));
         }
         
-        /* Paper Title Style */
         .paper-title {
             color: #fff;
             text-shadow: 
@@ -59,12 +56,10 @@
             filter: drop-shadow(0 4px 3px rgba(0,0,0,0.3)); 
         }
 
-        /* Layered look for Backgrounds */
         .paper-layer {
             filter: drop-shadow(0px -4px 6px rgba(0,0,0,0.1));
         }
 
-        /* SVG Filters for Road/Lake */
         .paper-cutout-shadow {
             filter: drop-shadow(2px 4px 2px rgba(0,0,0,0.15));
         }
@@ -93,11 +88,17 @@
             overflow: visible; 
         }
         
+        /* FIX #1: Removed margin-top, tweaked line-height for better centering */
         .zone-icon {
             font-size: clamp(4.5rem, 10.8vw, 9rem);
-            line-height: 1;
-            margin-top: 0.1em; 
+            line-height: 1.1; 
+            margin-top: 0; 
             transform: scale(1.1); 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            padding-bottom: 5%; /* Slight optical adjustment for emoji baseline */
         }
 
         /* --- ANIMATIONS --- */
@@ -128,9 +129,10 @@
         }
         .wiggle-idle { animation: idleShimmy 4s ease-in-out infinite; }
 
+        /* FIX #4: Clouds drift to 120vw to ensure they clear the screen completely */
         @keyframes drift {
             from { transform: translateX(-150px); }
-            to { transform: translateX(100vw); }
+            to { transform: translateX(120vw); } 
         }
         .cloud-slow { animation: drift 60s linear infinite; }
         .cloud-medium { animation: drift 40s linear infinite; }
@@ -158,7 +160,7 @@
             font-size: clamp(3.5rem, 12vw, 7rem); 
             z-index: 1000; 
             transition: none;
-            position: absolute; /* Enforce absolute for pixel positioning */
+            position: absolute; 
         }
         
         .draggable-item::after {
@@ -196,12 +198,11 @@
             height: 45%; 
             pointer-events: none;
             overflow: hidden;
-            z-index: 1; /* Above snow, below UI */
+            z-index: 1; 
         }
 
         .blocked-item { opacity: 0.2; filter: grayscale(100%); }
 
-        /* Media Query for Vertical Phone Layout */
         @media (orientation: portrait) {
             .title-fade {
                 opacity: 0;
@@ -299,8 +300,6 @@
              </div>
         </div>
 
-        <div id="spawn-anchor" class="absolute bottom-20 left-1/2 transform -translate-x-1/2 w-1 h-1"></div>
-
         <div id="score-btn" class="absolute top-6 left-4 z-30 flex items-center bg-white/90 rounded-full px-4 py-2 border-4 border-blue-300 cursor-pointer active:scale-95 transition-transform shadow-lg h-16 pointer-events-auto paper-layer">
             <span class="text-3xl mr-2 paper-emoji">⭐</span>
             <span id="score-display" class="text-3xl text-blue-800 font-bold">0</span>
@@ -365,7 +364,8 @@
             <svg width="120" height="120" viewBox="0 0 100 100">
                 <circle cx="50" cy="50" r="40" stroke="white" stroke-width="8" fill="rgba(0,0,0,0.5)"/>
                 <circle id="unlock-progress" cx="50" cy="50" r="40" stroke="#4ade80" stroke-width="8" fill="none" class="unlock-ring" stroke-linecap="round" transform="rotate(-90 50 50)"/>
-                <path d="M50 35 V45 M50 55 V65" stroke="white" stroke-width="4" stroke-linecap="round" /> <rect x="35" y="45" width="30" height="25" rx="3" fill="white" />
+                <path d="M50 35 V45 M50 55 V65" stroke="white" stroke-width="4" stroke-linecap="round" /> 
+                <rect x="35" y="45" width="30" height="25" rx="3" fill="white" />
             </svg>
         </div>
 
@@ -419,8 +419,8 @@
             stormTimer: null,
             snowInterval: null,
             totalTouches: 0, 
-            // Parent Mode Trigger
-            unlockState: { star: false, angel: false, timer: null, tapStartTime: 0 }
+            unlockState: { star: false, angel: false, timer: null, tapStartTime: 0 },
+            resizeTimeout: null
         };
 
         /* --- SETUP & DECORATIONS --- */
@@ -449,7 +449,7 @@
             
             renderBackgroundDecorations(leftKey, 'left');
             renderBackgroundDecorations(rightKey, 'right');
-            updateChickenCoop(); // Check for animals
+            updateChickenCoop(); 
             updateConfigButtons();
         }
 
@@ -457,7 +457,6 @@
             const coop = document.getElementById('chicken-coop');
             coop.innerHTML = '';
             
-            // If animals active on either side
             if (state.activeLeft.id === 'animals' || state.activeRight.id === 'animals') {
                 for(let i=0; i<7; i++) {
                     const c = document.createElement('div');
@@ -470,6 +469,7 @@
             }
         }
 
+        // FIX #5: This function is now recalled on resize to "reflow" the decorations
         function renderBackgroundDecorations(catId, side) {
             const container = document.getElementById(side === 'left' ? 'deco-left' : 'deco-right');
             container.innerHTML = ''; 
@@ -478,7 +478,6 @@
                 const d = document.createElement('div');
                 d.className = 'paper-emoji absolute';
                 d.style.left = x + '%';
-                // Grounded items: fixed between 2-15% bottom
                 d.style.bottom = y + '%';
                 d.style.fontSize = size + 'px';
                 d.innerText = emoji;
@@ -574,7 +573,6 @@
             playSound('pop');
             saveConfig();
             
-            // Refresh Item: force new item from correct category
             if (state.currentItem) { state.currentItem.remove(); spawnItem(); }
         }
 
@@ -709,7 +707,6 @@
             } catch (e) {}
         }
 
-        // Additive Synthesis for Wooden Purr
         function startWoodenPurr() {
             try {
                 if (state.humOscillators.length > 0) return; 
@@ -756,7 +753,7 @@
         const toyBox = document.getElementById('toy-box-container');
 
         function startSnowstormCycle() {
-            const nextStorm = 180000 + Math.random() * 180000; // 3-6 mins
+            const nextStorm = 180000 + Math.random() * 180000; 
             setTimeout(triggerSnowstorm, nextStorm);
         }
 
@@ -789,12 +786,23 @@
             }, 120000);
         }
 
-        function getSafeLandingY() {
+        // FIX #2: Dynamic Resting Position Logic based on orientation
+        function getRestingPosition() {
+            const w = window.innerWidth;
             const h = window.innerHeight;
-            let targetY = h * 0.33;
-            if (h - targetY < 350) targetY = h * 0.20; 
-            if (targetY < h * 0.15) targetY = h * 0.15;
-            return targetY;
+            const centerX = w / 2;
+            let centerY;
+
+            // Portrait (Vertical) vs Landscape (Horizontal)
+            if (h > w) {
+                // Vertical: 33% from bottom (which is 67% from top)
+                centerY = h * 0.67; 
+            } else {
+                // Horizontal: Dead center
+                centerY = h * 0.5;
+            }
+
+            return { x: centerX, y: centerY };
         }
 
         function isPalm(e) {
@@ -817,7 +825,6 @@
         }
 
         function spawnItem() {
-            // Safety Flush
             zoneLeft.classList.remove('hovered');
             zoneRight.classList.remove('hovered');
             if (state.dropTimeout) { clearTimeout(state.dropTimeout); state.dropTimeout = null; }
@@ -851,32 +858,22 @@
             content.innerHTML = data.emoji;
             el.appendChild(content);
 
-            // Hide if parent mode active
             if (state.inParentMode) el.style.display = 'none';
 
-            // --- ARCHITECTURAL FIX: PIXEL PERFECT POSITIONING ---
-            // Instead of using left:50% and transform:translate(-50%), we calculate the exact
-            // pixel coordinates immediately. This prevents the "jump" when dragging starts.
-            
-            // 1. Temporarily append to measure size
+            // Calculate Resting Pos
             document.body.appendChild(el);
             const w = el.offsetWidth;
             const h = el.offsetHeight;
-            const landingY = getSafeLandingY();
-
-            // 2. Calculate center X
-            const centerX = (window.innerWidth / 2) - (w / 2);
             
-            // 3. Set absolute pixel values
-            el.style.left = centerX + 'px';
-            el.style.top = landingY + 'px';
-            el.style.transform = 'scale(0)'; // Start small for animation
+            const centerPos = getRestingPosition();
+            const startX = centerPos.x - (w/2);
+            const startY = centerPos.y - (h/2);
+
+            el.style.left = startX + 'px';
+            el.style.top = startY + 'px';
+            el.style.transform = 'scale(0)'; 
             el.dataset.type = data.cat; 
             
-            const boxY = window.innerHeight - 100;
-            const deltaY = boxY - landingY;
-
-            // Updated animation keyframes (removed translations, only scale/opacity)
             state.currentAnimation = el.animate([
                 { transform: `scale(0)`, opacity: 0, offset: 0 },
                 { transform: `scale(1.1)`, opacity: 1, offset: 0.6 },
@@ -891,7 +888,6 @@
             state.currentAnimation.onfinish = () => {
                 content.classList.add('wiggle-idle');
                 state.currentAnimation = null;
-                // Ensure final state matches style
                 el.style.transform = 'scale(1)';
             };
 
@@ -926,9 +922,6 @@
                 startX = point.clientX;
                 startY = point.clientY;
                 
-                // --- FIXED START LOGIC ---
-                // We trust the style.left/top because spawnItem set them in pixels.
-                // No need for getBoundingClientRect() coordinate conversion here.
                 initialLeft = parseFloat(el.style.left);
                 initialTop = parseFloat(el.style.top);
                 
@@ -937,7 +930,7 @@
 
                 el.style.transition = 'none';
                 el.style.zIndex = 1000; 
-                el.style.transform = 'scale(1.15)'; // Just scale, no translation needed
+                el.style.transform = 'scale(1.15)'; 
                 
                 document.addEventListener('mousemove', onMove, {passive: false});
                 document.addEventListener('touchmove', onMove, {passive: false});
@@ -953,9 +946,6 @@
                 const dx = point.clientX - startX;
                 const dy = point.clientY - startY;
 
-                // --- DRAG THRESHOLD ---
-                // Don't move unless dragged at least 5 pixels. 
-                // Fixes "moves when tapped" bug.
                 if (Math.hypot(dx, dy) < 5) return;
 
                 let newLeft = initialLeft + dx;
@@ -992,7 +982,6 @@
                             startX = point.clientX;
                             startY = point.clientY;
                             
-                            // Re-init values for continued drag
                             initialLeft = parseFloat(el.style.left);
                             initialTop = parseFloat(el.style.top);
                         }
@@ -1157,14 +1146,15 @@
             state.returnTimer = setTimeout(() => {
                 el.style.transition = 'all 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55)';
                 
-                // Recalculate original center pos (re-using logic from spawnItem)
                 const w = el.offsetWidth;
-                const centerX = (window.innerWidth / 2) - (w / 2);
-                const landingY = getSafeLandingY();
+                const h = el.offsetHeight;
+                const centerPos = getRestingPosition();
+                const startX = centerPos.x - (w/2);
+                const startY = centerPos.y - (h/2);
 
-                el.style.left = centerX + 'px'; 
-                el.style.top = landingY + 'px';
-                el.style.transform = 'scale(1)'; // Reset scale
+                el.style.left = startX + 'px'; 
+                el.style.top = startY + 'px';
+                el.style.transform = 'scale(1)'; 
                 el.style.zIndex = 50;
                 
                 setTimeout(() => { content.classList.add('wiggle-idle'); }, 600);
@@ -1251,13 +1241,40 @@
             }
         }
 
+        // FIX #3 & #5: Resize handler to reflow ground decorations and move active item
+        window.addEventListener('resize', () => {
+            clearTimeout(state.resizeTimeout);
+            state.resizeTimeout = setTimeout(() => {
+                // 1. Reflow background decorations
+                renderBackgroundDecorations(state.config.leftCat === 'random' ? state.activeLeft.id : state.config.leftCat, 'left');
+                renderBackgroundDecorations(state.config.rightCat === 'random' ? state.activeRight.id : state.config.rightCat, 'right');
+                
+                // 2. Move current item to new resting spot (if not dragging)
+                if (state.currentItem && !state.isDragging && !state.isProcessingSuccess) {
+                    const el = state.currentItem;
+                    el.style.transition = 'all 0.5s ease-out';
+                    
+                    const w = el.offsetWidth;
+                    const h = el.offsetHeight;
+                    const centerPos = getRestingPosition();
+                    const startX = centerPos.x - (w/2);
+                    const startY = centerPos.y - (h/2);
+
+                    el.style.left = startX + 'px';
+                    el.style.top = startY + 'px';
+                    
+                    // Remove transition after move to avoid lag during subsequent drags
+                    setTimeout(() => { el.style.transition = 'none'; }, 500);
+                }
+            }, 150);
+        });
+
         /* --- 5. INITIALIZATION --- */
         window.onload = () => {
             document.addEventListener('contextmenu', event => event.preventDefault());
             document.addEventListener('touchstart', (e) => { state.totalTouches = e.touches.length; });
             document.addEventListener('touchend', (e) => { state.totalTouches = e.touches.length; });
             
-            // Load Config
             const savedConfig = localStorage.getItem('belle_config_v2');
             if (savedConfig) {
                 try {
@@ -1271,7 +1288,6 @@
             setTimeout(spawnItem, 1000);
             startSnowstormCycle();
             
-            // --- NEW PARENT MODE LISTENERS (Strict) ---
             const star = document.getElementById('score-btn');
             const angel = document.getElementById('angel-btn');
             const ring = document.getElementById('unlock-progress');
@@ -1279,14 +1295,12 @@
             const overlay = document.getElementById('parent-overlay');
             
             function checkParentUnlock() {
-                // Strict: Must have exactly 2 touches total on screen
                 const isStrictTwoFinger = state.totalTouches === 2;
                 const isHoldingBoth = state.unlockState.star && state.unlockState.angel;
 
                 if (isHoldingBoth && isStrictTwoFinger) {
                     if (!state.unlockState.timer) {
                         indicator.style.opacity = '1';
-                        // 5s hold
                         ring.style.transition = 'stroke-dashoffset 5s linear'; 
                         ring.getBoundingClientRect(); 
                         ring.style.strokeDashoffset = '0';
@@ -1301,7 +1315,6 @@
                         }, 5000);
                     }
                 } else {
-                    // Fail condition
                     if (state.unlockState.timer) {
                         clearTimeout(state.unlockState.timer);
                         state.unlockState.timer = null;
@@ -1329,8 +1342,6 @@
                     e.preventDefault(); 
                     startHoldTime = Date.now();
                     state.unlockState[prop] = true; 
-                    // touchstart updates state.totalTouches via window listener
-                    // but we need to wait a tick for it to propagate or check length here
                     setTimeout(checkParentUnlock, 10);
                 });
                 
@@ -1338,19 +1349,16 @@
                     state.unlockState[prop] = false; 
                     checkParentUnlock(); 
                     
-                    // Single Tap Logic for Buttons
                     if (Date.now() - startHoldTime < 300) {
                        if (prop === 'star') playSound('chime');
                        if (prop === 'angel') { playSound('giggle'); updateBeau('success'); }
                     }
                 });
                 
-                // Mouse fallback
                 el.addEventListener('mousedown', () => { 
                     startHoldTime = Date.now();
                     state.unlockState[prop] = true; 
                     state.totalTouches=2; 
-                    // Mouse Hack for testing: Set BOTH true
                     state.unlockState.star = true;
                     state.unlockState.angel = true;
                     checkParentUnlock(); 
@@ -1358,12 +1366,10 @@
                 el.addEventListener('mouseup', () => { 
                     state.unlockState[prop] = false; 
                     state.totalTouches=0; 
-                    // Reset Both
                     state.unlockState.star = false;
                     state.unlockState.angel = false;
                     checkParentUnlock(); 
                     
-                    // Mouse Click Logic
                     if (Date.now() - startHoldTime < 300) {
                        if (prop === 'star') playSound('chime');
                        if (prop === 'angel') { playSound('giggle'); updateBeau('success'); }
