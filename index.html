@@ -1250,21 +1250,46 @@
             const rect = el.getBoundingClientRect();
             createConfetti(rect.left, rect.top);
             
-            // Black hole animation
+            // --- NEW POP & VACUUM ANIMATION ---
+            // Calculate center of target
             const targetRect = targetEl.getBoundingClientRect();
-            const tx = targetRect.left + targetRect.width/2 - rect.width/2;
-            const ty = targetRect.top + targetRect.height/2 - rect.height/2;
+            const startLeft = parseFloat(el.style.left);
+            const startTop = parseFloat(el.style.top);
+            
+            // Center alignment math
+            const endLeft = (targetRect.left + targetRect.width / 2) - (rect.width / 2);
+            const endTop = (targetRect.top + targetRect.height / 2) - (rect.height / 2);
 
-            el.style.transition = 'all 0.8s cubic-bezier(0.25, 1, 0.5, 1)';
-            el.style.left = tx + 'px';
-            el.style.top = ty + 'px';
-            el.style.transform = 'scale(0.1) rotate(180deg)';
-            el.style.opacity = '0';
+            const anim = el.animate([
+                { 
+                    left: startLeft + 'px', 
+                    top: startTop + 'px', 
+                    transform: 'scale(1.15) rotate(0deg)', // Match drag state
+                    opacity: 1
+                },
+                {
+                    left: startLeft + 'px', 
+                    top: startTop + 'px', 
+                    transform: 'scale(1.5) rotate(10deg)', // POP UP!
+                    opacity: 1,
+                    offset: 0.2 // First 20% is just popping
+                },
+                { 
+                    left: endLeft + 'px', 
+                    top: endTop + 'px', 
+                    transform: 'scale(0) rotate(720deg)', // SUCK IN!
+                    opacity: 0 
+                }
+            ], {
+                duration: 700,
+                easing: 'cubic-bezier(0.2, 0, 0.2, 1)', // Acceleration curve
+                fill: 'forwards'
+            });
 
-            setTimeout(() => {
+            anim.onfinish = () => {
                 el.remove();
                 setTimeout(spawnItem, 300);
-            }, 800);
+            };
         }
 
         function handleSkip(el) {
