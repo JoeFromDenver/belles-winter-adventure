@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Belle's Winter Adventure 2.5</title>
+    <title>Belle's Winter Adventure 2.6</title>
     <link rel="manifest" href="manifest.json">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -342,6 +342,13 @@
                     </div>
                 </div>
                 
+                <div class="flex flex-col items-center justify-center mb-4 p-2 bg-yellow-50 rounded-xl border-2 border-yellow-200">
+                    <span id="version-display" class="text-xs text-gray-500 mb-1 font-mono">App Version: v2.6</span>
+                    <button onclick="forceUpdate()" class="px-4 py-1 bg-yellow-400 text-white rounded-full text-sm font-bold shadow active:scale-95">
+                        Force Update / Clear Cache
+                    </button>
+                </div>
+
                 <p class="text-gray-500 text-sm mb-2 text-center">Tap any emoji below to hide it from the game.</p>
 
                 <div class="flex-1 overflow-y-auto scroller border-2 border-gray-200 rounded-xl bg-gray-50 p-2">
@@ -369,6 +376,9 @@
     </div>
 
     <script>
+        const GAME_VERSION = "v2.6";
+        document.getElementById('version-display').innerText = `App Version: ${GAME_VERSION}`;
+
         const CATEGORIES = {
             smileys: { id: 'smileys', label: "FACES", icon: "😃", items: ["😀","😃","😄","😁","😆","😅","🤣","😂","🙂","🙃","😉","😊","😇","🥰","😍","🤩","😘","😗","😚","😙","😋","😛","😜","🤪","😝","🤑","🤗","🤭","🤫","🤔","🤐","🤨","😐","😑","😏","😒","🙄","😬","🤥","😌","😔","😪","🤤","😴","😷","🤒","🤕","🤢","🤮","🤧","🥵","🥶","🥴","😵","🤯","🤠","🥳","😎","🤓","🧐","😕","😟","🙁","☹️","😮","😯","😲","😳","🥺","😦","😧","😨","😰","😥","😢","😭","😱","😖","😣","😞","😓","😩","😫","🥱","😤","😡","😠","🤬","😈","👿"] },
             animals: { id: 'animals', label: "ANIMALS", icon: "🦎", items: ["🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼","🐨","🐯","🦁","🐮","🐷","🐽","🐸","🐵","🙉","🙉","🙊","🐒","🐔","🐧","🐦","🐤","🐣","🐥","🦆","🦅","🦉","🦇","🐺","🐗","🐴","🦄","🐝","🐛","🦋","🐌","🐞","🐜","🦟","🦗","🕷️","🕸️","🦂","🐢","🐍","🦎","🦖","🦕","🐙","🦑","🦐","🦞","🦀","🐡","🐠","🐟","🐬","🐳","🐋","🦈","🐊","🐅","🐆","🦓","🦍","🦧","🐘","🦛","🦏","🐪","🐫","🦒","🦘","🐃","🐂","🐄","🐎","🐖","🐏","🐑","🦙","🐐","🦌","🐕","🐩","🦮","🐕‍🦺","🐈","🐓","🦃","🦚","🦜","🦢","🦩","🕊️","🐇","🦝","🦨","🦡","🦦","🦥","🐁","🐀","🐿️","🦔"] },
@@ -430,6 +440,7 @@
         const toyBox = document.getElementById('toy-box-container');
 
         // --- CORE LOGIC: LAYOUT RESOLVER ---
+        // Returns the suggested scale for the item to fit
         function resolveLayout(itemW = 100, itemH = 100) {
             // 1. Reset everything
             zoneLeft.style.transform = '';
@@ -439,7 +450,7 @@
             const w = window.innerWidth;
             const h = window.innerHeight;
             
-            // --- A. Horizontal Resolve (Left vs Right) ---
+            // --- A. Horizontal Resolve (Left vs Right Zones) ---
             const lRect = zoneLeft.getBoundingClientRect();
             const rRect = zoneRight.getBoundingClientRect();
             const gap = rRect.left - lRect.right;
@@ -453,28 +464,49 @@
                 zoneRight.style.transform = `scale(${scaleFactor})`;
             }
 
-            // --- B. Vertical Resolve (Item vs House) ---
+            // --- B. Vertical Resolve (House vs Item Ideal) ---
             const houseRect = toyBox.getBoundingClientRect();
-            
-            // Calculate ideal item bottom position (without adjustment)
             const idealY = (h > w) ? h * 0.60 : h * 0.5;
             const itemBottom = idealY + itemH/2;
             const houseTop = houseRect.top;
-
-            // Check overlap with buffer (20px)
             const overlap = itemBottom - houseTop + 20;
 
             if (overlap > 0) {
-                // Shrink House to clear space
                 const houseHeight = houseRect.height;
                 const targetHeight = houseHeight - overlap;
                 let scale = targetHeight / houseHeight;
-                // Don't shrink below 60%
                 if (scale < 0.6) scale = 0.6;
-                
                 toyBox.style.transformOrigin = 'bottom center';
                 toyBox.style.transform = `scale(${scale})`;
             }
+
+            // --- C. Item Resolve (Priority: Shrink Item Last) ---
+            // Re-calculate gap after zone shrinking
+            const newLRect = zoneLeft.getBoundingClientRect();
+            const newRRect = zoneRight.getBoundingClientRect();
+            const newGap = newRRect.left - newLRect.right;
+            
+            // Re-calculate house top after house shrinking
+            const newHouseRect = toyBox.getBoundingClientRect();
+            const availHeight = newHouseRect.top - (idealY - itemH/2); // Space from item top to house top
+
+            let itemScale = 1.0;
+
+            // Check Width fit
+            if (itemW > newGap - 20) {
+                const widthScale = (newGap - 20) / itemW;
+                itemScale = Math.min(itemScale, widthScale);
+            }
+
+            // Check Height fit (rough approximation to avoid overlap)
+            // If the item is huge vertically, it might still clip
+            if (itemH > availHeight) {
+                 const heightScale = availHeight / itemH;
+                 // Be less aggressive on height scaling, it looks weird if too small
+                 itemScale = Math.min(itemScale, Math.max(0.7, heightScale));
+            }
+
+            return Math.max(0.5, itemScale); // Don't go below 50% size
         }
 
         // --- CORE LOGIC: SMART SPAWN POSITIONER ---
@@ -482,7 +514,6 @@
             const w = window.innerWidth;
             const h = window.innerHeight;
             
-            // Start at ideal position
             let centerX = w / 2;
             let centerY = (h > w) ? h * 0.60 : h * 0.5; 
             
@@ -490,7 +521,6 @@
             const leftRect = zoneLeft.getBoundingClientRect();
             const rightRect = zoneRight.getBoundingClientRect();
 
-            // Collision Check Function
             const checkCollision = (y) => {
                 const itemTop = y - itemH/2;
                 const itemBottom = y + itemH/2;
@@ -498,43 +528,22 @@
                 const itemRight = centerX + itemW/2;
                 const pad = 10; 
                 
-                const hitsHouse = !(itemLeft > houseRect.right + pad || 
-                                   itemRight < houseRect.left - pad || 
-                                   itemTop > houseRect.bottom + pad || 
-                                   itemBottom < houseRect.top - pad);
-                                   
-                const hitsLeft = !(itemLeft > leftRect.right + pad || 
-                                  itemRight < leftRect.left - pad || 
-                                  itemTop > leftRect.bottom + pad || 
-                                  itemBottom < leftRect.top - pad);
-
-                const hitsRight = !(itemLeft > rightRect.right + pad || 
-                                   itemRight < rightRect.left - pad || 
-                                   itemTop > rightRect.bottom + pad || 
-                                   itemBottom < rightRect.top - pad);
-                                   
+                const hitsHouse = !(itemLeft > houseRect.right + pad || itemRight < houseRect.left - pad || itemTop > houseRect.bottom + pad || itemBottom < houseRect.top - pad);
+                const hitsLeft = !(itemLeft > leftRect.right + pad || itemRight < leftRect.left - pad || itemTop > leftRect.bottom + pad || itemBottom < leftRect.top - pad);
+                const hitsRight = !(itemLeft > rightRect.right + pad || itemRight < rightRect.left - pad || itemTop > rightRect.bottom + pad || itemBottom < rightRect.top - pad);
                 return hitsHouse || hitsLeft || hitsRight;
             };
 
-            // SCANNER: Try to find a spot.
-            // If we collide, move UP (y -= 30). 
             let safeY = centerY;
             let moves = 0;
             const maxMoves = 15; 
             
-            while(checkCollision(safeY) && moves < maxMoves) {
-                safeY -= 30; 
-                moves++;
-            }
+            while(checkCollision(safeY) && moves < maxMoves) { safeY -= 30; moves++; }
             
-            // Fail safe: if pushed off top, try scanning DOWN
             if (safeY < 80) {
                 safeY = centerY;
                 moves = 0;
-                while(checkCollision(safeY) && moves < maxMoves) {
-                    safeY += 30;
-                    moves++;
-                }
+                while(checkCollision(safeY) && moves < maxMoves) { safeY += 30; moves++; }
             }
 
             return { x: centerX, y: safeY };
@@ -767,10 +776,10 @@
             const w = el.offsetWidth;
             const h = el.offsetHeight;
             
-            // 1. Resolve Layout Conflicts (Shrink zones/House if needed)
-            resolveLayout(w, h);
+            // 1. Resolve Layout (Shrink zones/House if needed, get max item scale)
+            const itemScale = resolveLayout(w, h);
 
-            // 2. Find Safe Spawn Point (using updated House dimensions)
+            // 2. Find Safe Spawn Point
             const safePos = getSafeSpawnPoint(w, h);
             const startX = safePos.x - (w/2);
             const startY = safePos.y - (h/2);
@@ -780,26 +789,27 @@
             el.style.transform = 'scale(0)'; 
             el.dataset.type = data.cat; 
             
+            // Item scaling happens via animation destination
             state.currentAnimation = el.animate([
                 { transform: `scale(0)`, opacity: 0, offset: 0 },
-                { transform: `scale(1.1)`, opacity: 1, offset: 0.6 },
-                { transform: `scale(0.9)`, opacity: 1, offset: 0.8 }, 
-                { transform: `scale(1)`, opacity: 1, offset: 1 }
+                { transform: `scale(${itemScale * 1.1})`, opacity: 1, offset: 0.6 },
+                { transform: `scale(${itemScale * 0.9})`, opacity: 1, offset: 0.8 }, 
+                { transform: `scale(${itemScale})`, opacity: 1, offset: 1 }
             ], { duration: 800, easing: 'cubic-bezier(0.175, 0.885, 0.32, 1.275)', fill: 'forwards' });
             
             state.currentAnimation.onfinish = () => {
                 content.classList.add('wiggle-idle');
                 state.currentAnimation = null;
-                el.style.transform = 'scale(1)';
+                el.style.transform = `scale(${itemScale})`;
             };
 
-            makeDraggable(el, content);
+            makeDraggable(el, content, itemScale); // Pass scale to draggable
             state.currentItem = el;
             playSound('pop'); 
             updateBeau('idle');
         }
 
-        function makeDraggable(el, content) {
+        function makeDraggable(el, content, baseScale) {
             let startX, startY; let initialLeft, initialTop; let itemWidth = 0, itemHeight = 0;
             const onStart = (e) => {
                 if (state.inParentMode) return; if (e.touches && isPalm(e)) return; 
@@ -811,7 +821,7 @@
                 const point = e.touches ? e.touches[0] : e; startX = point.clientX; startY = point.clientY;
                 initialLeft = parseFloat(el.style.left); initialTop = parseFloat(el.style.top);
                 itemWidth = el.offsetWidth; itemHeight = el.offsetHeight;
-                el.style.transition = 'none'; el.style.zIndex = 1000; el.style.transform = 'scale(1.15)'; 
+                el.style.transition = 'none'; el.style.zIndex = 1000; el.style.transform = `scale(${baseScale * 1.15})`; // Scale based on calc
                 document.addEventListener('mousemove', onMove, {passive: false}); document.addEventListener('touchmove', onMove, {passive: false});
                 document.addEventListener('mouseup', onEnd); document.addEventListener('touchend', onEnd);
             };
@@ -861,7 +871,7 @@
                     if (distLeft < 250) snapTarget = 'left'; else if (distRight < 250) snapTarget = 'right';
                     if (snapTarget && el.dataset.type === snapTarget) isSuccess = true;
                 }
-                if (isSuccess) handleSuccess(el, snapTarget || targetZone); else handleFail(el, content);
+                if (isSuccess) handleSuccess(el, snapTarget || targetZone); else handleFail(el, content, baseScale);
                 zoneLeft.classList.remove('hovered'); zoneRight.classList.remove('hovered');
             };
             el.addEventListener('mousedown', onStart); el.addEventListener('touchstart', onStart, {passive: false});
@@ -913,20 +923,17 @@
             setTimeout(() => { el.remove(); setTimeout(spawnItem, 300); }, 500);
         }
 
-        function handleFail(el, content) {
+        function handleFail(el, content, baseScale) {
             playSound('fail'); updateBeau('idle');
             if (state.returnTimer) clearTimeout(state.returnTimer);
             state.returnTimer = setTimeout(() => {
                 el.style.transition = 'all 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55)';
                 const w = el.offsetWidth; const h = el.offsetHeight;
-                
-                // Smart return: use safe spawn logic
                 const safePos = getSafeSpawnPoint(w, h);
                 const startX = safePos.x - (w/2);
                 const startY = safePos.y - (h/2);
-
                 el.style.left = startX + 'px'; el.style.top = startY + 'px';
-                el.style.transform = 'scale(1)'; el.style.zIndex = 50;
+                el.style.transform = `scale(${baseScale})`; el.style.zIndex = 50;
                 setTimeout(() => { content.classList.add('wiggle-idle'); }, 600);
                 state.returnTimer = null;
             }, 3000); 
@@ -978,23 +985,33 @@
                 if (state.currentItem && !state.isDragging && !state.isProcessingSuccess) {
                     const el = state.currentItem; el.style.transition = 'all 0.5s ease-out';
                     
-                    // --- RE-RESOLVE LAYOUT ON RESIZE ---
-                    // Must read dimension before math to catch font-size changes from clamp()
                     const rect = el.getBoundingClientRect(); 
-                    const w = el.offsetWidth; 
-                    const h = el.offsetHeight;
+                    const w = el.offsetWidth; const h = el.offsetHeight;
                     
-                    resolveLayout(w, h); 
-
+                    const itemScale = resolveLayout(w, h); 
                     const safePos = getSafeSpawnPoint(w, h);
                     const startX = safePos.x - (w/2);
                     const startY = safePos.y - (h/2);
 
                     el.style.left = startX + 'px'; el.style.top = startY + 'px';
+                    el.style.transform = `scale(${itemScale})`; // Apply scale on resize
                     setTimeout(() => { el.style.transition = 'none'; }, 500);
                 }
             }, 300);
         });
+
+        // --- FORCE UPDATE LOGIC ---
+        async function forceUpdate() {
+            if ('serviceWorker' in navigator) {
+                const regs = await navigator.serviceWorker.getRegistrations();
+                for (let reg of regs) await reg.unregister();
+            }
+            if ('caches' in window) {
+                const keys = await caches.keys();
+                for (let key of keys) await caches.delete(key);
+            }
+            window.location.reload(true);
+        }
 
         window.onload = () => {
             document.addEventListener('contextmenu', event => event.preventDefault());
