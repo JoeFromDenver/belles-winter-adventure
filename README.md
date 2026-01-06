@@ -1,18 +1,22 @@
 # ❄️ Belle's Winter Adventure
 
-![Belle's Winter Adventure Papercraft World](papercraft-preview.png)
+![Belle's Winter Adventure Gameplay](winter-adventure-screenshot.png)
 
 ## 📖 Project Overview
-**Belle's Winter Adventure** is a developmentally appropriate Progressive Web Application (PWA) designed for *and with* a 30-month-old toddler. It combines science-backed interaction design (fine motor skill calibration, immediate contingency feedback, and scaffolding) with a local theme (Wisconsin Christmas 2025 with family).
+**[Belle's Winter Adventure](https://joefromdenver.github.io/belles-winter-adventure/)** is a developmentally appropriate Progressive Web Application (PWA) designed for a 30-month-old toddler. It combines "science-backed" interaction design (fine motor skill calibration, immediate contingency feedback, and scaffolding) with a local theme (Wisconsin Christmas 2025 with family).
+
+### The "Science-Backed" Approach
+To ensure the experience is beneficial and "not mindless," the core game mechanics were selected to specifically target developmental milestones. **We prioritized complex "drag-and-drop" interactions over simple tapping to promote embodied cognition and fine motor planning, while the primary loop reinforces categorization skills (sorting by attribute) which are critical for this age group.**
 
 ### The Development Journey
 This project represents a rapid, iterative development cycle driven by real-world playtesting feedback:
-* **Research Phase:** Analysis of neurological capabilities of a 2.5-year-old (symbolic representation, dragging vs. tapping, "video deficit" mitigation).
+* **Research Phase:** Analysis of neurological capabilities of a 2.5-year-old (symbolic representation, "video deficit" mitigation).
 * **Initial Release (v1.0):** Single-file HTML/JS sorting task featuring custom family avatars.
 * **The "Papercraft" Evolution (v2.0+):** UI overhauled into a high-contrast "Paper Mario" aesthetic to improve visibility and engagement.
 * **Dynamic Expansion:** Engine upgraded to support randomized categories (Faces, Animals, Food, Vehicles) and procedural environments.
 
 ---
+![Belle's Winter Adventure Journey](papercraft-preview.png)
 
 ## 📜 Changelog
 
@@ -73,10 +77,20 @@ This project represents a rapid, iterative development cycle driven by real-worl
 * **Audio:** Implemented "Magical Hum" and "Fanfare" synths.
 * **Logic:** Added "Success Lock" to prevent double-triggering sounds/spawns.
 
-### Version 0.x (Prototype & Development)
-* **Feature:** Added "Idle Wiggle" animation to attract attention.
-* **Feature:** Replaced SVGs with Giant Emojis for Home/Tree.
-* **Fix:** Fixed touch event cleanup causing game freeze on second item.
-* **Feature:** Added "Toy Box" launch physics (Bouncing trajectory).
-* **Feature:** Interactive Clouds (Tap to snow).
-* **Init:** Initial PWA shell, `manifest.json`, and service worker.
+### Version 0.0 (Inception: The Concept)
+
+**The Original Prompt:**
+> My name is Joe. My wife Richelle and I are visiting family in Wisconsin for Christmas and I'd like to make a game for our 2 /12 year old niece Belle. There are only a few requirements.
+>
+> 1. It needs to be simple enough to entertain her on a phone or iPad screen, but it cannot be mindless. The core game loop must be science backed as educational and/or beneficial to the development of a girl her age.
+> 2. It must be simple enough to be hosted on GitHub pages like my other recent game which can be installed as an app.
+> 3. It needs to be touch centric and launch in "parent mode" which takes over as much screen input as possible so Belle can't accidentally quit it easily (she likes to mash things). Settings and controls (if needed) should be triggered by a hard to accidentally trigger method like long pressing with 3 fingers.
+> 4. The theme needs to incorporate one or more of her favorite things like dinosaurs (from Dinosaur Ranch), Minnie Mouse, Christmas in Wisconsin, the main characters from Cars the TV series, or her 10-year old brother Beau.
+
+**The Research Framework:**
+The project began with a technical specification analyzing the neurological capabilities of a 30-month-old to justify specific mechanics:
+
+* **Neurological Milestones:** At 30 months, children are in a rapid phase of synaptic pruning. The game targets **Symbolic Representation** (understanding objects can be grouped by attributes) and **Categorization** (Dino vs. Ornament), which validates their emerging worldview.
+* **The "Tap vs. Drag" Debate:** Research indicates that while tapping is often a "ballistic" or reflexive action for toddlers, **Dragging** engages "embodied cognition." To drag an object, the child must Plan, Inhibit (don't lift the finger), and Monitor. This results in higher retention and mathematical reasoning skills compared to simple tapping.
+* **Immediate Contingency:** To mitigate the "Video Deficit" (where toddlers learn less from screens), the game must provide immediate (<500ms) feedback. Responsiveness bridges the gap between digital and physical cause-and-effect.
+* **Parent Mode Architecture:** To handle the requirement for input hegemony, the game utilizes a "Triple-Finger Hold" trigger (anatomically difficult for toddlers) and aggressive `touch-action: none` CSS to prevent OS gestures like "swipe back" or "overscroll rubber-banding."
