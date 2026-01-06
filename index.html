@@ -1072,6 +1072,12 @@
             };
             bindHold(star, 'star'); bindHold(angel, 'angel');
         };
+        
+        function toggleInfo() {
+        const panel = document.getElementById('info-panel');
+        panel.classList.toggle('hidden');
+        playSound('pop');
+        }
 
         function saveConfig() { localStorage.setItem('belle_config_v2', JSON.stringify({ leftCat: state.config.leftCat, rightCat: state.config.rightCat, blockedItems: state.blockedItems })); }
         function resumeGame() { state.inParentMode = false; if (state.currentItem) state.currentItem.style.display = 'flex'; document.getElementById('parent-overlay').classList.add('hidden'); }
