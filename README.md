@@ -21,7 +21,10 @@ This project represents a rapid, iterative development cycle driven by real-worl
 ## 📜 Changelog
 
 ### Version 2.7 (Current)
-A brand new Info Button and [Guided Access for Apple](https://support.apple.com/en-us/111795) / [App Pinning for Android](https://support.google.com/android/answer/9455138?hl=en) recommendation in Parent Mode. Seriously consider following those steps, it'll keep your toddler from deleting all your crypto wallets.
+* **FEATURE:** A brand new Info Button and [Guided Access for Apple](https://support.apple.com/en-us/111795) / [App Pinning for Android](https://support.google.com/android/answer/9455138?hl=en) recommendation in Parent Mode.
+   * Seriously consider following those steps, it'll keep your toddler from deleting all your crypto wallets.
+
+* **OPEN ISSUES:** I know there are plenty of bugs left but without our primary playtester this game might not get many future updates. 😔
 
 ### Version 2.1.3
 * **Polish:** Reduced category zone size by 10% for better screen real estate.
