@@ -7,7 +7,7 @@
 
 ### The Development Journey
 This project represents a rapid, iterative development cycle driven by real-world playtesting feedback:
-* **Research Phase:** Analysis of neurological capabilities of a 2.5-year-old (symbolic representation, "video deficit" mitigation).
+* **Research Phase:** Analysis of neurological capabilities of a 2.5-year-old (symbolic representation, dragging vs. tapping, "video deficit" mitigation).
 * **Initial Release (v1.0):** Single-file HTML/JS sorting task featuring custom family avatars.
 * **The "Papercraft" Evolution (v2.0+):** UI overhauled into a high-contrast "Paper Mario" aesthetic to improve visibility and engagement.
 * **Dynamic Expansion:** Engine upgraded to support randomized categories (Faces, Animals, Food, Vehicles) and procedural environments.
