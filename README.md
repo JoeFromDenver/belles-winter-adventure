@@ -20,12 +20,15 @@ This project represents a rapid, iterative development cycle driven by real-worl
 
 ## 📜 Changelog
 
-### Version 2.1.3 (Current)
+### Version 2.7 (Current)
+A brand new Info Button and [Guided Access for Apple](https://support.apple.com/en-us/111795) / [App Pinning for Android](https://support.google.com/android/answer/9455138?hl=en) recommendation in Parent Mode. Seriously consider following those steps, it'll keep your toddler from deleting all your crypto wallets.
+
+### Version 2.1.3
 * **Polish:** Reduced category zone size by 10% for better screen real estate.
 * **Polish:** Lowered maximum ground decoration height to 15% to match terrain.
 * **Fix:** Hide active item when entering Parent Mode to prevent UI obstruction.
 
-### Version 2.2 (The Stability Update)
+### Version 2.1.2 (The Stability Update)
 * **CRITICAL:** Refactored drag physics to use `transform: translate3d`.
     * Fixes "Scale Feedback Loop" bug where items drifted left/up on tap.
     * Decoupled visual scale animations from logical coordinate system.
